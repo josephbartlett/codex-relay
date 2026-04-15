@@ -1,6 +1,6 @@
 id: CFO-0038
 title: Publish v0.1.4 documentation hygiene patch
-status: active
+status: done
 owner: lead
 role: release
 priority: p1
@@ -32,16 +32,32 @@ verification:
     - npm run check
     - git diff --check
     - targeted public-risk string scan
-  completed: []
-  evidence: []
+  completed:
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - Full release gate passed with setup validation, typecheck, build, 102 tests, work-packet validation, release readiness, high-severity npm audit, and secret scan.
+    - Targeted public-risk scan returned no unexpected matches; only the intentional `AGENTS.md` publication guardrail lines remain.
+    - Release metadata commit is `1dee71c`.
 handoff:
   expected:
     - Report commit SHA, tag, GitHub release URL, verification, and remaining operator actions.
-  completed: []
-  next: []
+  completed:
+    - Prepared release metadata, packet, task tracker, and maintenance audit for `v0.1.4`.
+  next:
+    - Push `main`, push tag `v0.1.4`, and publish the GitHub release after the clean gate.
 risks:
   - A docs-only patch can still create public confusion if release notes over-explain internal maintenance context.
 maintenance_audit:
   assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  commit: 1dee71c
   notes:
-    - Created after maintainer approval to publish the documentation hygiene cleanup.
+    - Created after maintainer authorization to publish the documentation hygiene cleanup.
+    - Release publication proceeded under maintainer authorization.

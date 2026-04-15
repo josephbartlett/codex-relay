@@ -261,6 +261,15 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 ## 2026-04-15
 
+### CFO-0038: Publish v0.1.4 Documentation Hygiene Patch
+
+- owner: lead
+- reviewer: lead
+- status: done
+- verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+- commit: `1dee71c`
+- notes: Prepared the patch release for public documentation hygiene updates. Release publication proceeded under maintainer authorization.
+
 ### CFO-0037: Public Language Sanitization Follow-Up
 
 - owner: lead

@@ -4,12 +4,7 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 ## Active
 
-- owner: lead
-  scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/work-packets/0038-v0.1.4-release.yaml`
-  status: In progress
-  objective: Prepare, verify, tag, push, and publish the `v0.1.4` documentation hygiene patch release after explicit maintainer approval.
-  verification: pending
-  handoff: pending
+- No active release chunk is assigned after this checkpoint.
 
 ## Next
 
@@ -22,10 +17,10 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 - owner: lead
   scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/work-packets/0038-v0.1.4-release.yaml`
-  status: In progress
+  status: Done
   objective: Prepare, verify, tag, push, and publish the `v0.1.4` documentation hygiene patch release after explicit maintainer approval.
-  verification: pending
-  handoff: pending
+  verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Release metadata commit is `1dee71c`; tag, push, and GitHub release publication follow after final clean-tree gate.
 
 - owner: lead
   scope: `CHANGELOG.md`; `CONTRIBUTING.md`; `docs/DECISIONS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/RELEASE_PROCESS.md`; `docs/ROADMAP.md`; selected historical work packets
