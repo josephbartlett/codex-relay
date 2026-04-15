@@ -24,10 +24,10 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 - owner: lead
   scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/work-packets/0035-link-official-codex-cli.yaml`; `docs/work-packets/0036-v0.1.3-release.yaml`
-  status: Review
+  status: Done
   objective: Prepare, verify, tag, push, and publish the `v0.1.3` documentation patch release after explicit maintainer approval.
-  verification: pending `npm run check`; `git diff --check`; targeted public-risk string scan
-  handoff: Release remains in progress until the tag and GitHub release are verified.
+  verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Release metadata commit is `1a8ba87`; tag, push, and GitHub release publication follow after final clean-tree gate.
 
 - owner: lead
   scope: `AGENTS.md`; `CONTRIBUTING.md`; `docs/RELEASE_PROCESS.md`; `docs/DECISIONS.md`; `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/work-packets/0032-public-publish-approval-policy.yaml`

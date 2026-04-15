@@ -1,6 +1,6 @@
 id: CFO-0036
 title: Publish v0.1.3 documentation patch
-status: review
+status: done
 owner: lead
 role: release
 priority: p1
@@ -33,17 +33,31 @@ verification:
     - npm run check
     - git diff --check
     - targeted public-risk string scan
-  completed: []
-  evidence: []
+  completed:
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - Full release gate passed with 102 tests, release readiness, high-severity npm audit, and secret scan.
+    - Targeted public-risk string scan returned no matches.
+    - Release metadata commit is `1a8ba87`.
 handoff:
   expected:
     - Report commit SHA, tag, GitHub release URL, verification, and remaining operator actions.
-  completed: []
+  completed:
+    - Prepared release metadata, packet, task tracker, and maintenance audit for `v0.1.3`.
   next:
     - Push `main`, push tag `v0.1.3`, and publish the GitHub release after the clean gate.
 risks:
   - A docs-only patch can still create public confusion if release notes overstate project affiliation with OpenAI or the reusable scaffold.
 maintenance_audit:
   assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  commit: 1a8ba87
   notes:
     - Maintainer explicitly approved doing the release actions for both repositories in the current conversation.

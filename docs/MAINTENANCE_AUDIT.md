@@ -328,7 +328,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 - owner: lead
 - reviewer: lead
-- status: review
-- verification: pending `npm run check`, `git diff --check`, and targeted public-risk string scan
-- commit: pending
-- notes: Preparing the patch release that publishes the public documentation polish, reusable Custody-First scaffold reference, and official Codex CLI documentation link. Maintainer explicitly approved release actions for both repositories in the current conversation.
+- status: done
+- verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+- commit: `1a8ba87`
+- notes: Prepared the patch release that publishes the public documentation polish, reusable Custody-First scaffold reference, and official Codex CLI documentation link. Maintainer explicitly approved release actions for both repositories in the current conversation.
