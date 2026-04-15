@@ -4,7 +4,12 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 ## Active
 
-- No active release chunk is assigned after this checkpoint.
+- owner: lead
+  scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/work-packets/0038-v0.1.4-release.yaml`
+  status: In progress
+  objective: Prepare, verify, tag, push, and publish the `v0.1.4` documentation hygiene patch release after explicit maintainer approval.
+  verification: pending
+  handoff: pending
 
 ## Next
 
@@ -14,6 +19,13 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 - Keep external Custody-First scaffold work tabled unless the user explicitly reopens it.
 
 ## Delegated Work Log
+
+- owner: lead
+  scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/work-packets/0038-v0.1.4-release.yaml`
+  status: In progress
+  objective: Prepare, verify, tag, push, and publish the `v0.1.4` documentation hygiene patch release after explicit maintainer approval.
+  verification: pending
+  handoff: pending
 
 - owner: lead
   scope: `CHANGELOG.md`; `CONTRIBUTING.md`; `docs/DECISIONS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/RELEASE_PROCESS.md`; `docs/ROADMAP.md`; selected historical work packets

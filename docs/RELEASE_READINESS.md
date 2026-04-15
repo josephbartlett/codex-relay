@@ -4,9 +4,9 @@ This document is the human-readable release gate for Codex Relay releases.
 
 ## Current Status
 
-Status: Release readiness materials are current through `v0.1.3`. Local operator `.env` strict-mode posture may still need a protected-file update before normal live use on a new machine or workspace.
+Status: Release readiness materials are current through `v0.1.4`. Local operator `.env` strict-mode posture may still need a protected-file update before normal live use on a new machine or workspace.
 
-Reason: the automated local gate is repeatable, the live Slack smoke tests passed against the test repository for the runtime release line, and changelog/release notes are current through `v0.1.3`. The local `.env` file remains protected by repo safety rules and must be updated explicitly for strict-mode normal operation if validation reports missing policy values.
+Reason: the automated local gate is repeatable, the live Slack smoke tests passed against the test repository for the runtime release line, and changelog/release notes are current through `v0.1.4`. The local `.env` file remains protected by repo safety rules and must be updated explicitly for strict-mode normal operation if validation reports missing policy values.
 
 ## Automated Gates
 

@@ -6,6 +6,12 @@ This project uses Semantic Versioning. Release entries are written when a versio
 
 ## [Unreleased]
 
+No unreleased changes.
+
+## [0.1.4] - 2026-04-15
+
+Patch release for public documentation hygiene after the reusable Custody-First Orchestration release review.
+
 ### Changed
 
 - Sanitized public maintenance and release-history wording while preserving the `AGENTS.md` approval guardrails for future agent work.
