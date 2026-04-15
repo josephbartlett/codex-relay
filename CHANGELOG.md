@@ -6,7 +6,9 @@ This project uses Semantic Versioning. Release entries are written when a versio
 
 ## [Unreleased]
 
-No unreleased changes.
+### Changed
+
+- Updated public security and release-readiness documentation after the `v0.1.1` release.
 
 ## [0.1.1] - 2026-04-15
 

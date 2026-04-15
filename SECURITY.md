@@ -4,9 +4,9 @@ Codex Relay controls local or self-hosted code execution from Slack. Treat it as
 
 ## Supported Versions
 
-No public stable release exists yet. The first supported release target is `v0.1.0`.
+The supported public release line is `v0.1.x`.
 
-Until `v0.1.0` is tagged, security fixes land on `main`.
+Security fixes land on `main` first, then ship in the next patch release when appropriate.
 
 ## Reporting Vulnerabilities
 

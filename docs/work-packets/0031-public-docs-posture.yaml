@@ -1,0 +1,52 @@
+id: CFO-0031
+title: Public documentation posture follow-up
+status: review
+owner: lead
+role: verifier
+priority: p1
+objective: Remove stale public release/security wording found during the post-public sanity audit.
+paths:
+  - README.md
+  - SECURITY.md
+  - CHANGELOG.md
+  - docs/RELEASE_READINESS.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0031-public-docs-posture.yaml
+  - scripts/release-readiness.mjs
+concerns:
+  - public documentation
+  - security policy
+  - release readiness
+dependencies: []
+non_goals:
+  - Do not change runtime code.
+  - Do not edit protected local `.env` files.
+  - Do not promote unapproved visual assets.
+acceptance:
+  - Top-level security policy no longer says no public release exists.
+  - Release readiness document reflects the published `v0.1.1` posture.
+  - README current-scope wording no longer describes the project as pre-release.
+  - Changelog records the unreleased docs correction.
+  - Release-readiness checker no longer hardcodes first-release tag language.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+  completed:
+    - npm run check
+  evidence:
+    - Full local gate passed with 102 tests, work-packet validation, release readiness, npm audit, and secret scan.
+handoff:
+  expected:
+    - Summarize the post-public audit result and remaining recommendations.
+  completed:
+    - Public docs were corrected after audit.
+  next:
+    - Consider enabling branch protection for `main`.
+risks:
+  - Documentation may drift again after future releases if release-readiness prose is not updated during closeout.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  notes:
+    - Follow-up from post-public repo sanity audit.

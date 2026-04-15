@@ -1,16 +1,16 @@
-# v0.1.0 Release Readiness
+# Release Readiness
 
-This document is the human-readable release gate for the first public Codex Relay release.
+This document is the human-readable release gate for Codex Relay releases.
 
 ## Current Status
 
-Status: tracked release materials are ready for `v0.1.0` tagging and GitHub release publication. Local operator `.env` strict-mode posture may still need a protected-file update before normal live use.
+Status: `v0.1.0` and `v0.1.1` have been tagged and published. Local operator `.env` strict-mode posture may still need a protected-file update before normal live use on a new machine or workspace.
 
-Reason: the automated local gate is repeatable, the live Slack smoke test passed against the test repository, and the changelog/release notes are finalized for `v0.1.0`. The local `.env` file remains protected by repo safety rules and must be updated explicitly for strict-mode normal operation if validation reports missing policy values.
+Reason: the automated local gate is repeatable, the live Slack smoke tests passed against the test repository, and changelog/release notes are published through `v0.1.1`. The local `.env` file remains protected by repo safety rules and must be updated explicitly for strict-mode normal operation if validation reports missing policy values.
 
 ## Automated Gates
 
-Required before tagging:
+Required before each release tag:
 
 ```bash
 npm run check
@@ -45,17 +45,17 @@ It reads the local `.env`, validates strict-mode Slack user/channel/repo policy,
 
 ## Manual Gates
 
-Required before tagging:
+Required before each release tag:
 
-- Run a live Slack task against a disposable or test repository. Status: passed on 2026-04-13.
-- Approve an implementation and verify the write happens in the session worktree. Status: passed on 2026-04-13.
-- Create or update a draft PR from the session branch. Status: passed on 2026-04-13.
-- Verify compact PR status and ready-for-review behavior if a test PR is available. Status: covered by deterministic tests; live PR was left open as a draft smoke artifact.
-- Review `CHANGELOG.md` and convert `## [0.1.0] - Pending` into a dated release entry. Status: completed for 2026-04-15.
+- Run a live Slack task against a disposable or test repository. Status: passed for `v0.1.0` and `v0.1.1`.
+- Approve an implementation and verify the write happens in the session worktree. Status: passed for `v0.1.0` and `v0.1.1`.
+- Create or update a draft PR from the session branch. Status: passed for `v0.1.0` and `v0.1.1`.
+- Verify compact PR status and ready-for-review behavior if a test PR is available. Status: covered by deterministic tests; live PR handoff was exercised during `v0.1.1`.
+- Review `CHANGELOG.md` and convert the pending release section into a dated release entry.
 - Confirm no unapproved `brand-candidates/` assets are tracked. Status: completed by release-readiness gate.
-- Confirm `docs/TASKS.md` has no active release-blocking packet. Status: current active packet is release publication only; close it before tagging.
-- Confirm GitHub branch protection and private vulnerability reporting settings are acceptable for the first release. Status: repository is private at the time of release preparation, issues are enabled, wiki is disabled, top-level security policy is enabled, and current authenticated user has admin permission. Branch protection is not queryable while the repo is private under the current account/plan response; enable or re-check after making the repository public or changing the plan.
-- Configure strict-mode Slack user/channel/repo allowlists in `.env` for the live workspace. Status: local `.env` currently does not pass `npm run validate:live-config`; repo safety rules prevent automated `.env` edits without an explicit targeted operator request.
+- Confirm `docs/TASKS.md` has no active release-blocking packet.
+- Confirm GitHub branch protection and private vulnerability reporting settings are acceptable for the release.
+- Configure strict-mode Slack user/channel/repo allowlists in `.env` for the live workspace. Status: `.env` remains protected; repo safety rules prevent automated `.env` edits without an explicit targeted operator request.
 
 ## Live Smoke Result
 
@@ -79,34 +79,47 @@ Notes:
 - The gateway was temporarily restarted with process-level `CODEX_POLICY_MODE=local-dev` for the isolated smoke test; `.env` was not edited.
 - The Slack Create PR button action did not arrive during the monitored window, so PR handoff was completed by invoking the same orchestrator PR lifecycle against the completed session. Earlier live testing already exercised Slack-triggered PR creation, and deterministic tests cover the action handler.
 
+## v0.1.1 Live Smoke Result
+
+Date: 2026-04-15
+
+Repository: disposable test repository configured as `repo:default`
+
+Result:
+
+- Slack thread follow-up asked Relay to check the diff and create a draft PR if file changes existed.
+- The follow-up routed to deterministic PR handoff instead of starting a generic Codex continuation plan.
+- Draft PR creation succeeded against the test repository.
+- The full local release gate passed after the fix.
+
 ## GitHub Repository Posture
 
 Checked on 2026-04-15 with the authenticated GitHub CLI session:
 
 - Repository: `josephbartlett/codex-relay`
-- Visibility: private
+- Visibility: public
 - Default branch: `main`
 - Issues: enabled
 - Wiki: disabled
 - Security policy: enabled at https://github.com/josephbartlett/codex-relay/security/policy
 - Authenticated permission: admin
-- Branch protection: GitHub API returned that protection requires GitHub Pro or public repository visibility under the current account posture. Re-check and enable branch protection before or immediately after public visibility is turned on.
+- Branch protection: not enabled at the time of the latest check. Enable branch protection for `main` once the first public-collaboration settings are finalized.
 
 ## Known Limitations
 
-These are acceptable for `v0.1.0` if they remain documented:
+These are acceptable for the `v0.1.x` local-first release line if they remain documented:
 
 - `ExecAdapter` is the only implemented runner adapter.
 - Slack gateway direct execution remains the default solo-local path.
 - Durable queue, runner leases, worker daemon, and queued Slack notifications exist, but Slack mention/action flows are not queue-by-default yet.
 - The audit viewer is local/read-only and remote mode requires explicit operator hardening.
 - Brand and diagram assets remain untracked until rendered screenshot review and maintainer approval.
-- Email is roadmap-only and has no implementation in `v0.1.0`.
+- Email is roadmap-only and has no implementation in `v0.1.x`.
 - `SdkAdapter`, `AppServerAdapter`, multi-runner pools, and container isolation are deferred.
 
 ## Tag Recommendation
 
-Do not tag `v0.1.0` until:
+Do not tag a release until:
 
 - `npm run check` passes on a clean checkout;
 - release notes are finalized;

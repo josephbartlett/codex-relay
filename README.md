@@ -2,7 +2,7 @@
 
 Slack is the control plane. Codex is the execution plane. Codex Relay lets a user start, approve, monitor, and hand off local or self-hosted Codex work from Slack without turning Slack into a terminal.
 
-`v0.1.0` is the first local-first release. It is intended for trusted operators who are comfortable running a local Slack Socket Mode app, a local Codex CLI, and one or more explicitly bound repositories.
+`v0.1.x` is the first local-first release line. It is intended for trusted operators who are comfortable running a local Slack Socket Mode app, a local Codex CLI, and one or more explicitly bound repositories.
 
 ## How It Works With Codex
 
@@ -176,7 +176,7 @@ In an existing Codex Relay thread, mention the bot with follow-up intents such a
 
 ## Current Scope
 
-This is a local-first pre-release product. Runners are local, and the implemented runner is `ExecAdapter`. Follow-up tasks in the same Slack thread reuse the saved Codex exec session when available. The interfaces are already shaped so a later `SdkAdapter` or `AppServerAdapter` can replace subprocess orchestration without rewriting Slack listeners.
+This is an early local-first product. Runners are local, and the implemented runner is `ExecAdapter`. Follow-up tasks in the same Slack thread reuse the saved Codex exec session when available. The interfaces are already shaped so a later `SdkAdapter` or `AppServerAdapter` can replace subprocess orchestration without rewriting Slack listeners.
 
 Team-mode queue primitives are present but still incremental: the gateway can keep using direct execution while durable queue jobs and the local worker daemon are used for the runner split. Queued runner lifecycle notifications are durable and deliverable through the Slack gateway. Converting all Slack mention/action execution to queue-by-default remains follow-on work.
 
@@ -196,7 +196,7 @@ Local session handoff is implemented for Relay-started sessions. Arbitrary attac
 - `apps/local-runner/src/worktreeManager.ts` creates git worktrees.
 - `infra/slack/app-manifest.yaml` contains the Slack app manifest.
 - `infra/codex/default.rules` is the starter exec policy ruleset.
-- `docs/ROADMAP.md` tracks the public path to `v0.1.0`.
+- `docs/ROADMAP.md` tracks the path from the current local-first release line to the fully built product.
 - `docs/CUSTODY_FIRST_ORCHESTRATION.md` defines the multi-agent maintenance pattern used by this repo.
 - `docs/work-packets/` contains machine-readable custody packets.
 - `SECURITY.md` explains vulnerability reporting and security posture.

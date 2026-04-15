@@ -16,6 +16,13 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 ## Delegated Work Log
 
 - owner: lead
+  scope: `README.md`; `SECURITY.md`; `CHANGELOG.md`; `docs/RELEASE_READINESS.md`; `docs/work-packets/0031-public-docs-posture.yaml`; `scripts/release-readiness.mjs`
+  status: Review
+  objective: Correct stale post-public release/security wording and release-readiness gate wording found during repo sanity audit.
+  verification: `npm run check`
+  handoff: Remaining repo posture recommendations are branch protection and optional GitHub security-setting review.
+
+- owner: lead
   scope: `packages/shared/src/authorization.ts`; Slack listener auth prechecks; orchestrator auth enforcement; tests; security docs
   status: Done
   objective: Enforce fail-closed Slack user/channel/repo authorization before task start and mutating actions.

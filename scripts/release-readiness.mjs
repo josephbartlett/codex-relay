@@ -180,7 +180,7 @@ function checkReleaseDocs() {
     requireText(readiness, "docs/RELEASE_READINESS.md", "Automated Gates");
     requireText(readiness, "docs/RELEASE_READINESS.md", "Manual Gates");
     requireText(readiness, "docs/RELEASE_READINESS.md", "Known Limitations");
-    requireText(readiness, "docs/RELEASE_READINESS.md", "Do not tag `v0.1.0` until");
+    requireText(readiness, "docs/RELEASE_READINESS.md", "Do not tag a release until");
   }
 
   if (runbook) {
