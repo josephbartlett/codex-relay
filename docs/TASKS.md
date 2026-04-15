@@ -17,7 +17,7 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 - owner: lead
   scope: `AGENTS.md`; `CONTRIBUTING.md`; `docs/RELEASE_PROCESS.md`; `docs/DECISIONS.md`; `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/work-packets/0032-public-publish-approval-policy.yaml`
-  status: Review
+  status: Done
   objective: Document the explicit maintainer approval boundary for direct pushes, tags, GitHub releases, and repository-setting changes.
   verification: `npm run check`
   handoff: Push, tag, and GitHub release publication for `v0.1.2` are explicitly approved by the maintainer in the current conversation.

@@ -1,6 +1,6 @@
 id: CFO-0032
 title: Public repository publish approval policy
-status: review
+status: done
 owner: lead
 role: lead
 priority: p1
@@ -53,6 +53,11 @@ risks:
   - Future agents may confuse local commit permission with publication permission if this policy is not kept visible.
 maintenance_audit:
   assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check
+  commit: 339161a
   notes:
     - Created after a direct push exposed the need for a stricter documented public publication boundary.
     - Maintainer explicitly approved pushing, tagging, and publishing this patch release in the current conversation.

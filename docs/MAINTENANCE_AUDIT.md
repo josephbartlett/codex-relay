@@ -292,7 +292,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 - owner: lead
 - reviewer: lead
-- status: review
+- status: done
 - verification: `npm run check`
-- commit: pending
+- commit: `339161a`
 - notes: Documented that local commits are allowed verified checkpoints, while direct pushes to `main`, tags, GitHub releases, and repository-setting changes require explicit maintainer approval in the current conversation. Maintainer explicitly approved pushing, tagging, and publishing `v0.1.2` in the current conversation.
