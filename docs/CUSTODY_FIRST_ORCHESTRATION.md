@@ -8,6 +8,8 @@ The core idea is simple:
 
 That is what makes the work safe to parallelize. Not the number of agents. Not the size of the model. The custody rules.
 
+Codex Relay is the first production-shaped proving ground for this pattern. The reusable scaffold lives at https://github.com/josephbartlett/custody-first-orchestration.
+
 ## Why This Pattern Exists
 
 Common multi-agent setups are good at decomposition, but weak at custody.

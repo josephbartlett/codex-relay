@@ -182,6 +182,12 @@ Team-mode queue primitives are present but still incremental: the gateway can ke
 
 Local session handoff is implemented for Relay-started sessions. Arbitrary attachment to an already-running terminal Codex process remains a follow-on because Relay needs a trustworthy Slack thread, worktree, and Codex session id to continue safely.
 
+## Maintenance Pattern
+
+Codex Relay uses Custody-First Orchestration for agent and subagent maintenance. This repository was the proving ground for the pattern: work is split into bounded packets, active scopes are checked for overlap, verification is recorded before closure, and maintenance history stays human-readable.
+
+The standalone reusable scaffold lives at https://github.com/josephbartlett/custody-first-orchestration.
+
 ## Useful Files
 
 - `apps/slack-gateway/src/listeners/mentions.ts` handles thread mentions.
@@ -198,6 +204,7 @@ Local session handoff is implemented for Relay-started sessions. Arbitrary attac
 - `infra/codex/default.rules` is the starter exec policy ruleset.
 - `docs/ROADMAP.md` tracks the path from the current local-first release line to the fully built product.
 - `docs/CUSTODY_FIRST_ORCHESTRATION.md` defines the multi-agent maintenance pattern used by this repo.
+- `https://github.com/josephbartlett/custody-first-orchestration` contains the reusable Custody-First scaffold extracted from this work.
 - `docs/work-packets/` contains machine-readable custody packets.
 - `SECURITY.md` explains vulnerability reporting and security posture.
 

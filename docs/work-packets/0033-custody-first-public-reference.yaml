@@ -1,0 +1,46 @@
+id: CFO-0033
+title: Link Custody-First reusable scaffold
+status: review
+owner: lead
+role: lead
+priority: p2
+objective: Publicly identify Custody-First Orchestration as Codex Relay's maintenance pattern and link the reusable scaffold.
+paths:
+  - README.md
+  - docs/CUSTODY_FIRST_ORCHESTRATION.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0033-custody-first-public-reference.yaml
+concerns:
+  - public documentation
+dependencies: []
+non_goals:
+  - Do not tag or publish a Codex Relay release.
+  - Do not change runtime code.
+  - Do not change the external scaffold repository from this packet.
+acceptance:
+  - README links to the reusable Custody-First Orchestration repository.
+  - The local pattern doc states that Codex Relay is the first proving ground for the pattern.
+  - Work-packet and maintenance-audit records describe the documentation update.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+  evidence:
+    - Work-packet validation and typecheck passed for the docs-only reference update.
+handoff:
+  expected:
+    - Summarize changed docs, verification, and push status.
+  completed:
+    - Codex Relay now links to the reusable Custody-First scaffold.
+  next:
+    - Do not push without explicit maintainer approval in the current conversation.
+risks:
+  - The external repository should not be set public until its own public-readiness audit passes.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  notes:
+    - Created to make the first public Custody-First reference explicit in Codex Relay.
