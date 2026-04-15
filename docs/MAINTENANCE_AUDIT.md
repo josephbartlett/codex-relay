@@ -273,8 +273,8 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 ### CFO-0030: Fix Slack Follow-Up PR Intent Routing
 
 - owner: lead
-- reviewer: pending
-- status: active
-- verification: focused context/orchestrator regressions passed; full gate pending
-- commit: pending
-- notes: Live wrapper smoke testing showed that a compound "continue by checking diff, then create a draft PR if changed" reply was treated as a generic continuation plan. The patch routes create/draft PR language to deterministic PR handoff and returns a diff summary instead of attempting PR creation when the worktree is clean.
+- reviewer: lead
+- status: done
+- verification: focused context/orchestrator regressions, live Slack smoke workflow, `npm run check`
+- commit: `15fddbe`
+- notes: Live wrapper smoke testing showed that a compound "continue by checking diff, then create a draft PR if changed" reply was treated as a generic continuation plan. The patch routes create/draft PR language to deterministic PR handoff and returns a diff summary instead of attempting PR creation when the worktree is clean. The v0.1.1 live smoke created draft PR #3 directly from the follow-up without posting a second plan card.

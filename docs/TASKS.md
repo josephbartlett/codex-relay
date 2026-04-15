@@ -203,10 +203,10 @@ This file is the running implementation tracker for Codex Relay. Keep it current
   handoff: Current tracked tree is sanitized for targeted public-risk strings. The previous private repository history was discarded before the fresh public root commit.
 - owner: lead
   scope: Slack follow-up intent routing for diff-aware draft PR requests
-  status: Active
+  status: Done
   objective: Ship v0.1.1 so "create/draft PR" thread replies use deterministic PR handoff and clean worktrees return a diff summary.
-  verification: focused context/orchestrator tests passing; full `npm run check` pending
-  handoff: Regression fix is in progress under CFO-0030.
+  verification: focused context/orchestrator tests; live Slack smoke workflow; `npm run check`
+  handoff: Patch committed as `15fddbe`; live smoke created draft PR #3 directly from the follow-up without a second plan card. Release publication remains the final step.
 
 ## Done
 

@@ -1,6 +1,6 @@
 id: CFO-0030
 title: Fix Slack Follow-Up PR Intent Routing
-status: active
+status: done
 owner: lead
 role: lead
 priority: p1
@@ -33,17 +33,35 @@ verification:
   required:
     - node --import tsx --test tests/context.test.ts tests/orchestrator-flow.test.ts
     - npm run check
-  completed: []
-  evidence: []
+  completed:
+    - node --import tsx --test tests/context.test.ts tests/orchestrator-flow.test.ts
+    - live Slack smoke workflow against disposable test repo
+    - npm run check
+  evidence:
+    - Focused regression suite passed with 24 tests.
+    - Live Slack workflow created `V011_SMOKE.md`, then the patched thread reply created draft PR https://github.com/josephbartlett/codex-relay-test-repo/pull/3 without posting a second plan card.
+    - Full gate passed with 102 tests, work-packet validation, release-readiness, audit, and secret scan.
 handoff:
   expected:
     - Owner reports changed files, focused regression results, full check result, and release/tag status.
-  completed: []
-  next: []
+  completed:
+    - Intent routing now treats create/draft PR wording as deterministic PR handoff.
+    - Clean completed sessions return a diff summary instead of starting a new plan or attempting PR creation.
+    - v0.1.1 release metadata is ready for tag publication.
+  next:
+    - Push commit and publish v0.1.1 tag/release.
 risks:
   - Intent precedence can accidentally capture ready-for-review or pure diff-summary replies if ordering is wrong.
   - Clean worktree PR requests should be informative without mutating GitHub state.
 maintenance_audit:
   assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - node --import tsx --test tests/context.test.ts tests/orchestrator-flow.test.ts
+    - live Slack smoke workflow against disposable test repo
+    - npm run check
+  commit: 15fddbe
   notes:
     - Live wrapper smoke testing showed compound "continue + diff + create PR" wording routed to continuation planning instead of direct PR handoff.
+    - The v0.1.1 smoke follow-up created a draft PR directly after completion and did not emit a second plan card.
