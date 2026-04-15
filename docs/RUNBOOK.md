@@ -226,6 +226,8 @@ npm run validate:setup
 
 The validator checks Node, required npm scripts, `.env.example` coverage, runner env allowlist safety, Codex profile/rules files, Docker example files, and basic local command availability. It does not read or print `.env`, does not require real Slack tokens, and treats optional Codex/GitHub CLI availability as warnings when a live task is not being run.
 
+For Codex CLI installation, authentication, and option details, use OpenAI's official Codex CLI docs: https://developers.openai.com/codex/cli.
+
 ## Operational Checks
 
 - `npm run validate:setup`

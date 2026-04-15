@@ -1,6 +1,6 @@
 id: CFO-0034
 title: Public documentation polish audit
-status: review
+status: done
 owner: lead
 role: verifier
 priority: p2
@@ -53,6 +53,6 @@ maintenance_audit:
     - npm run typecheck
     - git diff --check
     - targeted public-risk string scan
-  commit: pending
+  commit: 1a0594b
   notes:
     - Created during a final public-readiness pass across both repositories.

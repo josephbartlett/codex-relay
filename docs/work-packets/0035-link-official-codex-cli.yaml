@@ -1,0 +1,56 @@
+id: CFO-0035
+title: Link official Codex CLI upstream
+status: review
+owner: lead
+role: lead
+priority: p2
+objective: Link the official OpenAI Codex CLI repository from Codex Relay docs where it helps operators understand the upstream execution plane.
+paths:
+  - README.md
+  - docs/RUNBOOK.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0035-link-official-codex-cli.yaml
+concerns:
+  - public documentation
+dependencies:
+  - CFO-0034
+non_goals:
+  - Do not imply Codex Relay is an official OpenAI project.
+  - Do not change runtime code.
+  - Do not tag or publish a release.
+acceptance:
+  - README links to the official `openai/codex` repository from the Codex CLI requirement.
+  - RUNBOOK links to the official repository near Codex CLI setup and troubleshooting.
+  - Documentation avoids implying endorsement or affiliation.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+  evidence:
+    - Confirmed upstream repository at https://github.com/openai/codex.
+    - Added links only as upstream dependency references.
+handoff:
+  expected:
+    - Summarize changed docs, verification, and push status.
+  completed:
+    - Official Codex CLI upstream link is present in operator-facing docs.
+  next:
+    - Do not push without explicit maintainer approval in the current conversation.
+risks:
+  - Overstating the relationship could imply official endorsement, so wording stays limited to dependency/upstream context.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+  commit: pending
+  notes:
+    - Created after maintainership review identified that operators should have an obvious path to the official Codex CLI upstream.

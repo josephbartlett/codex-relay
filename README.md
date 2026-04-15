@@ -20,7 +20,7 @@ Codex Relay does not replace Codex. It wraps local Codex execution with a safer 
 
 - Node.js 20 or newer.
 - Git.
-- Codex CLI available as `codex`.
+- Codex CLI available as `codex`. See the official Codex CLI docs at https://developers.openai.com/codex/cli.
 - GitHub CLI available as `gh` for draft PR creation.
 - A Slack workspace where you can install a Socket Mode app.
 - At least one local git repository you are willing to bind explicitly in `.env`.
@@ -196,6 +196,7 @@ The standalone reusable scaffold lives at https://github.com/josephbartlett/cust
 - `apps/orchestrator/src/persistence/sqliteStore.ts` stores durable state in SQLite.
 - `apps/orchestrator/src/queue.ts` owns queue job and lease transitions.
 - `apps/orchestrator/src/runner/ExecAdapter.ts` wraps `codex exec --json`.
+- `https://developers.openai.com/codex/cli` is the official Codex CLI documentation.
 - `apps/local-runner/src/daemon.ts` claims queued runner work and maintains leases.
 - `apps/local-runner/src/localSession.ts` creates Slack-bound local handoff sessions.
 - `apps/local-runner/src/startupChecks.ts` validates startup dependencies and runner policy posture.

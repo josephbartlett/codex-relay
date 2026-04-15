@@ -312,5 +312,14 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - reviewer: lead
 - status: done
 - verification: `npm run check:work-packets`; `npm run typecheck`; `git diff --check`; targeted public-risk string scan
-- commit: pending
+- commit: `1a0594b`
 - notes: Neutralized legacy maintenance wording around non-public preparation while preserving the audit record. Targeted scans found no personal email or first-collaborator language in tracked public files.
+
+### CFO-0035: Link Official Codex CLI Upstream
+
+- owner: lead
+- reviewer: lead
+- status: review
+- verification: `npm run check:work-packets`; `npm run typecheck`; `git diff --check`
+- commit: pending
+- notes: Added a minimal operator-facing link to OpenAI's official Codex CLI docs so users can find installation, authentication, and option details without implying official endorsement.
