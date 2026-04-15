@@ -8,6 +8,15 @@ This project uses Semantic Versioning. Release entries are written when a versio
 
 No unreleased changes.
 
+## [0.1.1] - 2026-04-15
+
+Patch release for Slack thread follow-up intent routing found during live wrapper smoke testing.
+
+### Fixed
+
+- Thread replies that ask Relay to create or draft a PR now use the deterministic PR handoff path instead of becoming generic continuation plans.
+- Compound replies such as "check the diff, then create a draft PR if there are file changes" now avoid unnecessary Codex planning and return a diff summary when the worktree is clean.
+
 ## [0.1.0] - 2026-04-15
 
 Initial official release. Release readiness was verified with the automated full check gate and a live Slack smoke test against a disposable test repository.

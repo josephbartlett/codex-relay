@@ -1,0 +1,49 @@
+id: CFO-0030
+title: Fix Slack Follow-Up PR Intent Routing
+status: active
+owner: lead
+role: lead
+priority: p1
+objective: Route Slack thread replies that ask to create or draft a PR through deterministic diff-aware PR handoff instead of generic continuation planning.
+paths:
+  - apps/orchestrator/src/context.ts
+  - apps/orchestrator/src/tasks.ts
+  - tests/context.test.ts
+  - tests/orchestrator-flow.test.ts
+  - CHANGELOG.md
+  - package.json
+  - package-lock.json
+  - scripts/release-readiness.mjs
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0030-follow-up-pr-intent.yaml
+concerns:
+  - concern:Slack follow-up intent routing
+dependencies: []
+non_goals:
+  - Do not change Slack token, `.env`, Socket Mode, or gateway startup behavior.
+  - Do not alter Codex execution sandbox or approval policy.
+  - Do not create draft PRs when a completed session worktree has no file changes.
+acceptance:
+  - Existing-session replies that include "create/draft PR" classify as PR handoff, even when they also include "continue" or "check diff".
+  - Completed sessions with changed files can create a draft PR from a thread reply without starting a new Codex plan.
+  - Completed sessions with no changed files return a diff summary and do not create a PR.
+  - Patch release metadata is updated for v0.1.1.
+verification:
+  required:
+    - node --import tsx --test tests/context.test.ts tests/orchestrator-flow.test.ts
+    - npm run check
+  completed: []
+  evidence: []
+handoff:
+  expected:
+    - Owner reports changed files, focused regression results, full check result, and release/tag status.
+  completed: []
+  next: []
+risks:
+  - Intent precedence can accidentally capture ready-for-review or pure diff-summary replies if ordering is wrong.
+  - Clean worktree PR requests should be informative without mutating GitHub state.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  notes:
+    - Live wrapper smoke testing showed compound "continue + diff + create PR" wording routed to continuation planning instead of direct PR handoff.

@@ -81,7 +81,7 @@ export type FollowUpResult =
     }
   | {
       kind: "diff";
-      intent: "summarize_diff";
+      intent: Extract<FollowUpIntent, "summarize_diff" | "update_pr">;
       session: Session;
       diff: DiffSummary;
     }
@@ -900,21 +900,22 @@ export class Orchestrator {
     }
 
     if (intent === "update_pr") {
-      if (session.draftPullRequest) {
-        const lifecycle = await this.createDraftPullRequest({
-          sessionId: session.id,
-          requestingUserId: slack.requestingUserId,
-          slackChannelId: slack.thread.channelId
-        });
-        return { kind: "pull_request", intent, session, lifecycle };
+      const diff = await this.collectSessionDiffSummaryForSlackUser({
+        sessionId: session.id,
+        requestingUserId: slack.requestingUserId,
+        slackChannelId: slack.thread.channelId
+      });
+
+      if (!session.draftPullRequest && diff.changedFiles.length === 0) {
+        return { kind: "diff", intent, session, diff };
       }
 
-      return {
-        kind: "guidance",
-        intent,
-        session,
-        message: "No draft PR exists for this session yet. Use the completion card's Create PR button after a completed run."
-      };
+      const lifecycle = await this.createDraftPullRequest({
+        sessionId: session.id,
+        requestingUserId: slack.requestingUserId,
+        slackChannelId: slack.thread.channelId
+      });
+      return { kind: "pull_request", intent, session, lifecycle };
     }
 
     if (intent === "ready_for_review") {

@@ -82,6 +82,7 @@ function checkRequiredFiles() {
 
 function checkPackageMetadata() {
   const packageJson = readJson("package.json");
+  const packageLock = readJson("package-lock.json");
 
   if (!packageJson) {
     return;
@@ -91,8 +92,16 @@ function checkPackageMetadata() {
     failures.push("package.json name must be codex-relay.");
   }
 
-  if (packageJson.version !== "0.1.0") {
-    failures.push("package.json version must remain 0.1.0 until the first release is tagged.");
+  if (!/^\d+\.\d+\.\d+$/u.test(packageJson.version ?? "")) {
+    failures.push("package.json version must use MAJOR.MINOR.PATCH SemVer.");
+  }
+
+  if (packageLock?.version && packageLock.version !== packageJson.version) {
+    failures.push("package-lock.json version must match package.json version.");
+  }
+
+  if (packageLock?.packages?.[""]?.version && packageLock.packages[""].version !== packageJson.version) {
+    failures.push("package-lock.json root package version must match package.json version.");
   }
 
   if (packageJson.private !== true) {
@@ -128,16 +137,25 @@ function checkPackageMetadata() {
 
 function checkChangelog() {
   const changelog = readText("CHANGELOG.md");
+  const packageJson = readJson("package.json");
 
   if (!changelog) {
     return;
   }
 
   requireText(changelog, "CHANGELOG.md", "## [Unreleased]");
+  if (packageJson?.version) {
+    requirePattern(
+      changelog,
+      "CHANGELOG.md",
+      new RegExp(`^## \\[${escapeRegExp(packageJson.version)}\\] - \\d{4}-\\d{2}-\\d{2}$`, "mu"),
+      `## [${packageJson.version}] - YYYY-MM-DD`
+    );
+  }
   requirePattern(changelog, "CHANGELOG.md", /^## \[0\.1\.0\] - (Pending|\d{4}-\d{2}-\d{2})$/mu, "## [0.1.0] - Pending or a release date");
   requireText(changelog, "CHANGELOG.md", "### Security");
   requireText(changelog, "CHANGELOG.md", "Release readiness");
-  ok.push("Changelog has unreleased and v0.1.0 release sections.");
+  ok.push("Changelog has unreleased, current release, and v0.1.0 release sections.");
 }
 
 function checkReleaseDocs() {
@@ -261,6 +279,10 @@ function requirePattern(text, file, pattern, description) {
   if (!pattern.test(text)) {
     failures.push(`${file} is missing required pattern: ${description}`);
   }
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
 }
 
 function readJson(relativePath) {

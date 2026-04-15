@@ -269,3 +269,12 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - verification: targeted public-hygiene scan, git history hygiene scan, `npm run check`, `git diff --cached --check`
 - commit: `97cb4e1`
 - notes: Removed tracked internal notes and extraction-detail docs, sanitized local path/private-project/live-smoke identifiers from current public docs and tests, and kept only intentional public ownership metadata. Current tracked tree is clean for the targeted public-risk strings. The previous private repository history was discarded before the fresh public root commit.
+
+### CFO-0030: Fix Slack Follow-Up PR Intent Routing
+
+- owner: lead
+- reviewer: pending
+- status: active
+- verification: focused context/orchestrator regressions passed; full gate pending
+- commit: pending
+- notes: Live wrapper smoke testing showed that a compound "continue by checking diff, then create a draft PR if changed" reply was treated as a generic continuation plan. The patch routes create/draft PR language to deterministic PR handoff and returns a diff summary instead of attempting PR creation when the worktree is clean.

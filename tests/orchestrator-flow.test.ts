@@ -465,6 +465,90 @@ test("existing draft PRs can be updated and checked without starting Codex runne
   }
 });
 
+test("draft PR follow-ups create PRs directly and return diff summary when clean", async () => {
+  const temp = mkdtempSync(join(tmpdir(), "codex-relay-pr-followup-"));
+
+  try {
+    const sourceRepo = join(temp, "source");
+    mkdirSync(sourceRepo);
+    await initRepo(sourceRepo);
+
+    const runner = new FakeRunner();
+    const store = new InMemoryStore();
+    const prInputs: Array<{ existing: boolean }> = [];
+    const orchestrator = new Orchestrator(makeConfig(temp, sourceRepo), store, runner, async (input) => {
+      prInputs.push({ existing: Boolean(input.existingPullRequest) });
+      return {
+        title: input.title,
+        body: input.body,
+        branchName: input.branchName,
+        commitSha: "c".repeat(40),
+        prUrl: "https://github.com/example/repo/pull/9",
+        changedFiles: ["src/codex-output.txt"]
+      };
+    });
+
+    const plan = await orchestrator.startPlanFromSlack({
+      thread: { teamId: "T1", channelId: "C1", threadTs: "1000.13" },
+      requestingUserId: "U1",
+      text: "repo:default add a generated output file"
+    });
+    await orchestrator.approveAndExecute(plan.approval.id, "U1");
+
+    const beforePrFollowUpRuns = runner.tasks.length;
+    const created = await orchestrator.handleFollowUpFromSlack({
+      thread: { teamId: "T1", channelId: "C1", threadTs: "1000.13" },
+      requestingUserId: "U1",
+      text: "continue by checking the current diff summary, then create a draft PR if there are file changes"
+    });
+
+    assert.equal(created.kind, "pull_request");
+    assert.equal(runner.tasks.length, beforePrFollowUpRuns);
+
+    if (created.kind !== "pull_request") {
+      throw new Error("Expected draft PR follow-up to return pull_request result.");
+    }
+
+    assert.equal(created.intent, "update_pr");
+    assert.equal(created.lifecycle.operation, "created");
+    assert.equal(created.lifecycle.result.prUrl, "https://github.com/example/repo/pull/9");
+    assert.deepEqual(prInputs, [{ existing: false }]);
+
+    const cleanPlan = await orchestrator.startPlanFromSlack({
+      thread: { teamId: "T1", channelId: "C1", threadTs: "1000.14" },
+      requestingUserId: "U1",
+      text: "repo:default add a generated output file"
+    });
+    await orchestrator.approveAndExecute(cleanPlan.approval.id, "U1");
+
+    const cleanSession = orchestrator.getSessionBySlackThread({ teamId: "T1", channelId: "C1", threadTs: "1000.14" });
+    assert.ok(cleanSession);
+    rmSync(join(cleanSession.workspacePath, "src"), { recursive: true, force: true });
+    rmSync(join(cleanSession.workspacePath, ".codex"), { force: true });
+
+    const beforeCleanFollowUpRuns = runner.tasks.length;
+    const clean = await orchestrator.handleFollowUpFromSlack({
+      thread: { teamId: "T1", channelId: "C1", threadTs: "1000.14" },
+      requestingUserId: "U1",
+      text: "create a draft PR"
+    });
+
+    assert.equal(clean.kind, "diff");
+    assert.equal(runner.tasks.length, beforeCleanFollowUpRuns);
+
+    if (clean.kind !== "diff") {
+      throw new Error("Expected clean draft PR follow-up to return diff result.");
+    }
+
+    assert.equal(clean.intent, "update_pr");
+    assert.deepEqual(clean.diff.changedFiles, []);
+    assert.equal(orchestrator.getSession(cleanSession.id)?.draftPullRequest, undefined);
+    assert.deepEqual(prInputs, [{ existing: false }]);
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
 test("PR status requires an existing PR and the session owner or maintainer", async () => {
   const temp = mkdtempSync(join(tmpdir(), "codex-relay-pr-status-auth-"));
 

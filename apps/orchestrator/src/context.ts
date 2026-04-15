@@ -35,16 +35,19 @@ export function classifyFollowUpIntent(input: { text: string; hasExistingSession
     return "cancel";
   }
 
-  if (/\b(show|summari[sz]e|open|view)\b/u.test(normalized) && /\b(diff|changes|changed files)\b/u.test(normalized)) {
-    return "summarize_diff";
+  if (/\b(ready|publish|undraft|finali[sz]e)\b/u.test(normalized) && /\b(review|pr|pull request)\b/u.test(normalized)) {
+    return "ready_for_review";
   }
 
-  if (/\b(update|refresh|sync)\b/u.test(normalized) && /\b(pr|pull request)\b/u.test(normalized)) {
+  if (
+    /\b(create|draft|make|open|update|refresh|sync)\b/u.test(normalized) &&
+    /\b(pr|pull request)\b/u.test(normalized)
+  ) {
     return "update_pr";
   }
 
-  if (/\b(ready|publish|undraft|finali[sz]e)\b/u.test(normalized) && /\b(review|pr|pull request)\b/u.test(normalized)) {
-    return "ready_for_review";
+  if (/\b(show|summari[sz]e|open|view|check)\b/u.test(normalized) && /\b(diff|changes|changed files)\b/u.test(normalized)) {
+    return "summarize_diff";
   }
 
   if (/\b(revise|adjust|change|redo|update)\b/u.test(normalized) && /\b(plan|proposal)\b/u.test(normalized)) {

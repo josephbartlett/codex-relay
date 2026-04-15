@@ -19,3 +19,21 @@ test("existing-session stop follow-ups still cancel", () => {
 
   assert.equal(intent, "cancel");
 });
+
+test("compound diff then draft PR follow-ups use deterministic PR handoff", () => {
+  const intent = classifyFollowUpIntent({
+    hasExistingSession: true,
+    text: "<@U123> continue by checking the current diff summary, then create a draft PR if there are file changes."
+  });
+
+  assert.equal(intent, "update_pr");
+});
+
+test("create draft PR follow-ups do not become generic continue plans", () => {
+  const intent = classifyFollowUpIntent({
+    hasExistingSession: true,
+    text: "<@U123> create a draft pull request"
+  });
+
+  assert.equal(intent, "update_pr");
+});
