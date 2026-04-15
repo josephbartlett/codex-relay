@@ -1,0 +1,58 @@
+id: CFO-0034
+title: Public documentation polish audit
+status: review
+owner: lead
+role: verifier
+priority: p2
+objective: Make public-facing maintenance notes read intentionally by neutralizing legacy publication-phase wording without changing product behavior.
+paths:
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0034-public-doc-polish.yaml
+concerns:
+  - public documentation
+dependencies:
+  - CFO-0033
+non_goals:
+  - Do not change runtime code.
+  - Do not tag or publish a Codex Relay release.
+  - Do not remove useful audit evidence.
+acceptance:
+  - Maintenance notes avoid unnecessary legacy publication-phase phrasing.
+  - Audit history still explains what was checked and why.
+  - Targeted public-risk scan has no unexpected personal email, local path, or collaborator phrasing.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+    - targeted public-risk string scan
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - Neutralized legacy maintenance wording while preserving the audit record.
+    - Targeted scan found no personal email or first-collaborator language in tracked public files.
+handoff:
+  expected:
+    - Summarize documentation cleanup, checks, and push status.
+  completed:
+    - Public-facing maintenance notes now use neutral release-readiness language.
+  next:
+    - Do not push without explicit maintainer approval in the current conversation.
+risks:
+  - Over-sanitizing maintenance notes could remove useful release history, so this packet only changes wording.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+    - targeted public-risk string scan
+  commit: pending
+  notes:
+    - Created during a final public-readiness pass across both repositories.

@@ -155,7 +155,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 - owner: lead
 - reviewer: lead
-- status: done
+- status: review
 - verification: `npm run check:work-packets`, `npm run typecheck`
 - commit: `da1946e`
 - notes: Table external scaffold work and reset the active build order to Codex Relay product hardening. AGENTS and orchestration docs now require Custody-First packets for non-trivial repo work.
@@ -268,7 +268,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - status: done
 - verification: targeted public-hygiene scan, git history hygiene scan, `npm run check`, `git diff --cached --check`
 - commit: `97cb4e1`
-- notes: Removed tracked internal notes and extraction-detail docs, sanitized local path/private-project/live-smoke identifiers from current public docs and tests, and kept only intentional public ownership metadata. Current tracked tree is clean for the targeted public-risk strings. The previous private repository history was discarded before the fresh public root commit.
+- notes: Removed tracked internal notes and extraction-detail docs, sanitized local path/non-public project/live-smoke identifiers from current public docs and tests, and kept only intentional public ownership metadata. Current tracked tree is clean for the targeted public-risk strings. The repository was rebuilt from a fresh public root commit before publication.
 
 ### CFO-0030: Fix Slack Follow-Up PR Intent Routing
 
@@ -286,7 +286,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - status: done
 - verification: `npm run check`
 - commit: `a252bec`
-- notes: Post-public sanity audit found stale top-level security and release-readiness wording from the pre-public `v0.1.0` preparation phase. Updated the public security policy, release readiness status, README current-scope wording, changelog, and release-readiness checker language.
+- notes: Post-public sanity audit found stale top-level security and release-readiness wording from the earlier `v0.1.0` preparation phase. Updated the public security policy, release readiness status, README current-scope wording, changelog, and release-readiness checker language.
 
 ### CFO-0032: Public Repository Publish Approval Policy
 
@@ -305,3 +305,12 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - verification: `npm run check:work-packets`; `npm run typecheck`
 - commit: `e05c279`
 - notes: Added public documentation linking Codex Relay's Custody-First Orchestration practice to the reusable standalone scaffold repository. This is a local checkpoint until maintainer approval to push.
+
+### CFO-0034: Public Documentation Polish Audit
+
+- owner: lead
+- reviewer: lead
+- status: done
+- verification: `npm run check:work-packets`; `npm run typecheck`; `git diff --check`; targeted public-risk string scan
+- commit: pending
+- notes: Neutralized legacy maintenance wording around non-public preparation while preserving the audit record. Targeted scans found no personal email or first-collaborator language in tracked public files.

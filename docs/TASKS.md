@@ -221,7 +221,7 @@ This file is the running implementation tracker for Codex Relay. Keep it current
   status: Done
   objective: Remove local paths, private project references, informal notes, and unnecessary live-smoke identifiers before public release.
   verification: targeted public-hygiene scan; git history hygiene scan; `npm run check`; `git diff --cached --check`
-  handoff: Current tracked tree is sanitized for targeted public-risk strings. The previous private repository history was discarded before the fresh public root commit.
+  handoff: Current tracked tree is sanitized for targeted public-risk strings. The repository was rebuilt from a fresh public root commit before publication.
 - owner: lead
   scope: Slack follow-up intent routing for diff-aware draft PR requests
   status: Done
