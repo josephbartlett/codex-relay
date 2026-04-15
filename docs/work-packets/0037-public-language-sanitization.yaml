@@ -1,6 +1,6 @@
 id: CFO-0037
 title: Public language sanitization follow-up
-status: active
+status: done
 owner: lead
 role: verifier
 priority: p1
@@ -31,8 +31,8 @@ non_goals:
   - Do not change product behavior.
   - Do not push, tag, or publish a release from this packet without maintainer approval.
 acceptance:
-  - Public-facing docs avoid avoidable live-session wording and private/public transition chatter.
-  - "`AGENTS.md` retains explicit current-conversation approval requirements for pushes, tags, releases, and repository-setting changes."
+  - Public-facing docs avoid avoidable session-specific wording and release-preparation chatter.
+  - "`AGENTS.md` retains explicit publication-approval requirements for pushes, tags, releases, and repository-setting changes."
   - Targeted public-risk scan returns only intentional `AGENTS.md` guardrail matches.
   - Work-packet validation and typecheck pass.
 verification:
@@ -41,16 +41,36 @@ verification:
     - npm run typecheck
     - git diff --check
     - targeted public-risk string scan
-  completed: []
-  evidence: []
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - Full Codex Relay check passed with setup validation, typecheck, build, 102 tests, work-packet validation, release readiness, high-severity npm audit, and secret scan.
+    - Targeted public-risk scan returned only the intentional `AGENTS.md` guardrail lines.
+    - "`AGENTS.md` push, tag, release, and repository-setting approval guardrails were preserved."
 handoff:
   expected:
     - Report changed documentation surfaces, guardrails preserved, scan output, verification, and publication status.
-  completed: []
-  next: []
+  completed:
+    - Public maintenance wording was sanitized outside the intentional `AGENTS.md` guardrail language.
+    - Named local mail tooling was generalized to a local IMAP/SMTP bridge in the email-control-plane roadmap.
+    - Historical external-scaffold packet wording was neutralized without removing audit facts.
+  next:
+    - Publication remains maintainer-gated.
 risks:
   - Over-sanitizing historical records could weaken the audit trail, so this packet keeps the facts and changes only unnecessary public wording.
 maintenance_audit:
   assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check
+    - npm run typecheck
+    - git diff --check
+    - targeted public-risk string scan
+  commit: d25ad04
   notes:
     - Created after public-language audit found avoidable process residue outside the intentional `AGENTS.md` guardrails.

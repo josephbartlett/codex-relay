@@ -261,6 +261,15 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 ## 2026-04-15
 
+### CFO-0037: Public Language Sanitization Follow-Up
+
+- owner: lead
+- reviewer: lead
+- status: done
+- verification: `npm run check`; `npm run typecheck`; `git diff --check`; targeted public-risk string scan
+- commit: `d25ad04`
+- notes: Sanitized public maintenance and release-history wording while preserving the intentional `AGENTS.md` publication-approval guardrails. The targeted public-risk scan returned only those intentional `AGENTS.md` guardrail matches.
+
 ### CFO-0029: Public Artifact Hygiene Audit
 
 - owner: lead

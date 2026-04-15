@@ -4,12 +4,7 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 ## Active
 
-- owner: lead
-  scope: `CHANGELOG.md`; `CONTRIBUTING.md`; `docs/DECISIONS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/RELEASE_PROCESS.md`; `docs/ROADMAP.md`; `docs/TASKS.md`; selected historical work packets
-  status: In progress
-  objective: Sanitize public maintenance wording while preserving the `AGENTS.md` approval guardrails.
-  verification: pending
-  handoff: pending
+- No active release chunk is assigned after this checkpoint.
 
 ## Next
 
@@ -19,6 +14,13 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 - Keep external Custody-First scaffold work tabled unless the user explicitly reopens it.
 
 ## Delegated Work Log
+
+- owner: lead
+  scope: `CHANGELOG.md`; `CONTRIBUTING.md`; `docs/DECISIONS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/RELEASE_PROCESS.md`; `docs/ROADMAP.md`; selected historical work packets
+  status: Done
+  objective: Sanitize public maintenance wording while preserving the `AGENTS.md` approval guardrails.
+  verification: `npm run check`; `npm run typecheck`; `git diff --check`; targeted public-risk string scan
+  handoff: Substantive cleanup commit `d25ad04`; packet closure recorded in the follow-up checkpoint. Publication remains maintainer-gated.
 
 - owner: lead
   scope: `README.md`; `docs/CUSTODY_FIRST_ORCHESTRATION.md`; `docs/work-packets/0033-custody-first-public-reference.yaml`
