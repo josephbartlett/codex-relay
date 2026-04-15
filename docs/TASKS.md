@@ -17,10 +17,10 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 - owner: lead
   scope: `README.md`; `docs/CUSTODY_FIRST_ORCHESTRATION.md`; `docs/work-packets/0033-custody-first-public-reference.yaml`
-  status: Review
+  status: Done
   objective: Link the reusable Custody-First Orchestration scaffold and identify Codex Relay as the proving ground.
   verification: `npm run check:work-packets`; `npm run typecheck`
-  handoff: Local commit only unless maintainer explicitly approves pushing this docs update.
+  handoff: Local commit `e05c279`; do not push without explicit maintainer approval in the current conversation.
 
 - owner: lead
   scope: `AGENTS.md`; `CONTRIBUTING.md`; `docs/RELEASE_PROCESS.md`; `docs/DECISIONS.md`; `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/work-packets/0032-public-publish-approval-policy.yaml`

@@ -301,7 +301,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 - owner: lead
 - reviewer: lead
-- status: review
+- status: done
 - verification: `npm run check:work-packets`; `npm run typecheck`
-- commit: pending
+- commit: `e05c279`
 - notes: Added public documentation linking Codex Relay's Custody-First Orchestration practice to the reusable standalone scaffold repository. This is a local checkpoint until maintainer approval to push.
