@@ -23,6 +23,13 @@ This file is the running implementation tracker for Codex Relay. Keep it current
   handoff: Local commit `e05c279`; do not push without explicit maintainer approval in the current conversation.
 
 - owner: lead
+  scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/work-packets/0035-link-official-codex-cli.yaml`; `docs/work-packets/0036-v0.1.3-release.yaml`
+  status: Review
+  objective: Prepare, verify, tag, push, and publish the `v0.1.3` documentation patch release after explicit maintainer approval.
+  verification: pending `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Release remains in progress until the tag and GitHub release are verified.
+
+- owner: lead
   scope: `AGENTS.md`; `CONTRIBUTING.md`; `docs/RELEASE_PROCESS.md`; `docs/DECISIONS.md`; `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/work-packets/0032-public-publish-approval-policy.yaml`
   status: Done
   objective: Document the explicit maintainer approval boundary for direct pushes, tags, GitHub releases, and repository-setting changes.

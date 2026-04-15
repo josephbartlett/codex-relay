@@ -1,0 +1,49 @@
+id: CFO-0036
+title: Publish v0.1.3 documentation patch
+status: review
+owner: lead
+role: release
+priority: p1
+objective: Prepare and publish the v0.1.3 GitHub release for the public documentation and Custody-First reference updates.
+paths:
+  - CHANGELOG.md
+  - package.json
+  - package-lock.json
+  - docs/RELEASE_READINESS.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0035-link-official-codex-cli.yaml
+  - docs/work-packets/0036-v0.1.3-release.yaml
+concerns:
+  - concern:release-v0.1.3
+dependencies:
+  - CFO-0035
+non_goals:
+  - Do not edit `.env`.
+  - Do not publish to npm.
+  - Do not change runtime behavior.
+acceptance:
+  - Package metadata is bumped to `0.1.3`.
+  - Changelog has a dated `0.1.3` entry describing the public documentation patch.
+  - Release readiness references release notes through `v0.1.3`.
+  - Maintenance audit and task tracker record the release packet.
+  - Full release gate passes before tag and GitHub release publication.
+verification:
+  required:
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  completed: []
+  evidence: []
+handoff:
+  expected:
+    - Report commit SHA, tag, GitHub release URL, verification, and remaining operator actions.
+  completed: []
+  next:
+    - Push `main`, push tag `v0.1.3`, and publish the GitHub release after the clean gate.
+risks:
+  - A docs-only patch can still create public confusion if release notes overstate project affiliation with OpenAI or the reusable scaffold.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  notes:
+    - Maintainer explicitly approved doing the release actions for both repositories in the current conversation.

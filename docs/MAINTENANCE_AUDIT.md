@@ -323,3 +323,12 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - verification: `npm run check:work-packets`; `npm run typecheck`; `git diff --check`
 - commit: `5f4c039`
 - notes: Added a minimal operator-facing link to OpenAI's official Codex CLI docs so users can find installation, authentication, and option details without implying official endorsement.
+
+### CFO-0036: Publish v0.1.3 Documentation Patch
+
+- owner: lead
+- reviewer: lead
+- status: review
+- verification: pending `npm run check`, `git diff --check`, and targeted public-risk string scan
+- commit: pending
+- notes: Preparing the patch release that publishes the public documentation polish, reusable Custody-First scaffold reference, and official Codex CLI documentation link. Maintainer explicitly approved release actions for both repositories in the current conversation.
