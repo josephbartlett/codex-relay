@@ -319,7 +319,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 - owner: lead
 - reviewer: lead
-- status: review
+- status: done
 - verification: `npm run check:work-packets`; `npm run typecheck`; `git diff --check`
-- commit: pending
+- commit: `5f4c039`
 - notes: Added a minimal operator-facing link to OpenAI's official Codex CLI docs so users can find installation, authentication, and option details without implying official endorsement.

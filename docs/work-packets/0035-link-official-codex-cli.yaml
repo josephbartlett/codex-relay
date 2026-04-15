@@ -1,6 +1,6 @@
 id: CFO-0035
 title: Link official Codex CLI upstream
-status: review
+status: done
 owner: lead
 role: lead
 priority: p2
@@ -51,6 +51,6 @@ maintenance_audit:
     - npm run check:work-packets
     - npm run typecheck
     - git diff --check
-  commit: pending
+  commit: 5f4c039
   notes:
     - Created after maintainership review identified that operators should have an obvious path to the official Codex CLI upstream.
