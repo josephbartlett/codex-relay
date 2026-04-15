@@ -1,6 +1,6 @@
 id: CFO-0031
 title: Public documentation posture follow-up
-status: review
+status: done
 owner: lead
 role: verifier
 priority: p1
@@ -48,5 +48,10 @@ risks:
   - Documentation may drift again after future releases if release-readiness prose is not updated during closeout.
 maintenance_audit:
   assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check
+  commit: a252bec
   notes:
     - Follow-up from post-public repo sanity audit.

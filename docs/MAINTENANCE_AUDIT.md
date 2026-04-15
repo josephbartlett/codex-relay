@@ -283,7 +283,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 - owner: lead
 - reviewer: lead
-- status: review
+- status: done
 - verification: `npm run check`
-- commit: pending
+- commit: `a252bec`
 - notes: Post-public sanity audit found stale top-level security and release-readiness wording from the pre-public `v0.1.0` preparation phase. Updated the public security policy, release readiness status, README current-scope wording, changelog, and release-readiness checker language.

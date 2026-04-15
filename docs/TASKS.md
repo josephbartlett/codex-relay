@@ -17,7 +17,7 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 - owner: lead
   scope: `README.md`; `SECURITY.md`; `CHANGELOG.md`; `docs/RELEASE_READINESS.md`; `docs/work-packets/0031-public-docs-posture.yaml`; `scripts/release-readiness.mjs`
-  status: Review
+  status: Done
   objective: Correct stale post-public release/security wording and release-readiness gate wording found during repo sanity audit.
   verification: `npm run check`
   handoff: Remaining repo posture recommendations are branch protection and optional GitHub security-setting review.
