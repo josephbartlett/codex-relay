@@ -1,4 +1,5 @@
 import { pathToFileURL } from "node:url";
+import type { EmailControlPlaneConfig } from "../../../packages/shared/src/config.js";
 import { loadConfig } from "../../../packages/shared/src/config.js";
 import { createLogger, type Logger } from "../../../packages/shared/src/logging.js";
 import type {
@@ -8,7 +9,8 @@ import type {
   QueueJob,
   RunnerAdapter,
   RunnerEventSink,
-  RunnerResult
+  RunnerResult,
+  Session
 } from "../../../packages/shared/src/types.js";
 import { DurableQueue, QueueLeaseExpiredError } from "../../orchestrator/src/queue.js";
 import type { InMemoryStore } from "../../orchestrator/src/persistence/inMemory.js";
@@ -19,6 +21,7 @@ import { nanoid } from "nanoid";
 import { runStartupChecks } from "./startupChecks.js";
 import { createExecutionApproval } from "../../orchestrator/src/approvals.js";
 import { enqueueSlackNotification, sanitizeNotificationText } from "../../orchestrator/src/slackNotifications.js";
+import { enqueueEmailNotification } from "../../orchestrator/src/emailNotifications.js";
 
 export interface RunnerDaemonOptions {
   store: InMemoryStore;
@@ -30,6 +33,7 @@ export interface RunnerDaemonOptions {
   now?: () => Date;
   sink?: RunnerEventSink;
   logger?: Logger;
+  emailConfig?: EmailControlPlaneConfig;
 }
 
 export interface RunnerDaemonOnceResult {
@@ -79,7 +83,7 @@ export async function runRunnerDaemonOnce(options: RunnerDaemonOptions): Promise
     const finalJob = settleRunnerResult({ ...options, queue, claim, runnerId, now, runnerResult });
     updateTaskRunAndSession(options.store, finalJob, runnerResult);
     recordFinalQueueAudit(options.store, finalJob, runnerId, claim.lease.id, runnerResult);
-    enqueueFinalRunnerNotification(options.store, finalJob, runnerResult);
+    enqueueFinalRunnerNotification(options.store, finalJob, runnerResult, options.emailConfig);
     return { claimed: true, claim, finalJob, runnerResult };
   }
 
@@ -109,7 +113,7 @@ export async function runRunnerDaemonOnce(options: RunnerDaemonOptions): Promise
   const finalJob = settleRunnerResult({ ...options, queue, claim, runnerId, now, runnerResult });
   updateTaskRunAndSession(options.store, finalJob, runnerResult);
   recordFinalQueueAudit(options.store, finalJob, runnerId, claim.lease.id, runnerResult);
-  enqueueFinalRunnerNotification(options.store, finalJob, runnerResult);
+  enqueueFinalRunnerNotification(options.store, finalJob, runnerResult, options.emailConfig);
 
   return { claimed: true, claim, finalJob, runnerResult };
 }
@@ -315,7 +319,7 @@ function createPlanApprovalIfMissing(store: InMemoryStore, job: QueueJob, summar
 function enqueueRunnerStartedNotification(store: InMemoryStore, job: QueueJob, runnerId: string): void {
   const session = store.sessions.get(job.sessionId);
 
-  if (!session) {
+  if (!session || session.controlPlane === "email") {
     return;
   }
 
@@ -342,12 +346,19 @@ function enqueueRunnerStartedNotification(store: InMemoryStore, job: QueueJob, r
   });
 }
 
-function enqueueFinalRunnerNotification(store: InMemoryStore, job: QueueJob, result: RunnerResult): void {
+function enqueueFinalRunnerNotification(
+  store: InMemoryStore,
+  job: QueueJob,
+  result: RunnerResult,
+  emailConfig?: EmailControlPlaneConfig
+): void {
   const session = store.sessions.get(job.sessionId);
 
   if (!session || job.status === "queued" || job.status === "leased") {
     return;
   }
+
+  const notifySlack = session.controlPlane !== "email";
 
   if (job.status === "completed" && job.payload.mode === "plan" && result.status === "completed") {
     const approval = job.taskRunId
@@ -358,68 +369,203 @@ function enqueueFinalRunnerNotification(store: InMemoryStore, job: QueueJob, res
       return;
     }
 
-    enqueueSlackNotification(store, {
-      kind: "plan.ready",
-      severity: "success",
-      slackThreadKey: session.slackThreadKey,
-      sessionId: session.id,
-      repoId: session.repoId,
-      taskRunId: job.taskRunId,
-      approvalId: approval.id,
-      queueJobId: job.id,
-      title: "Plan ready",
-      detail: approval.summary,
-      metadata: {
+    if (notifySlack) {
+      enqueueSlackNotification(store, {
+        kind: "plan.ready",
+        severity: "success",
+        slackThreadKey: session.slackThreadKey,
+        sessionId: session.id,
+        repoId: session.repoId,
+        taskRunId: job.taskRunId,
+        approvalId: approval.id,
         queueJobId: job.id,
-        approvalId: approval.id
-      }
-    });
+        title: "Plan ready",
+        detail: approval.summary,
+        metadata: {
+          queueJobId: job.id,
+          approvalId: approval.id
+        }
+      });
+    }
+    enqueuePlanReadyEmailNotification(store, job, session, approval.summary, emailConfig, approval.id);
     return;
   }
 
   if (job.status === "completed" && result.status === "completed") {
+    if (notifySlack) {
+      enqueueSlackNotification(store, {
+        kind: "runner.completed",
+        severity: "success",
+        slackThreadKey: session.slackThreadKey,
+        sessionId: session.id,
+        repoId: session.repoId,
+        taskRunId: job.taskRunId,
+        queueJobId: job.id,
+        title: "Queued task completed",
+        detail: [
+          `Mode: ${job.payload.mode}`,
+          `Repo: ${session.repoId}`,
+          `Branch: ${session.branchName}`,
+          `Summary: ${sanitizeNotificationText(result.finalMessage || "Completed.", 800)}`
+        ].join("\n"),
+        metadata: {
+          queueJobId: job.id,
+          runnerStatus: result.status
+        }
+      });
+    }
+    enqueueRunnerEmailNotification(store, job, session, result, emailConfig, "runner.completed");
+    return;
+  }
+
+  if (notifySlack) {
     enqueueSlackNotification(store, {
-      kind: "runner.completed",
-      severity: "success",
+      kind: "runner.failed",
+      severity: "failure",
       slackThreadKey: session.slackThreadKey,
       sessionId: session.id,
       repoId: session.repoId,
       taskRunId: job.taskRunId,
       queueJobId: job.id,
-      title: "Queued task completed",
+      title: "Queued task failed",
       detail: [
         `Mode: ${job.payload.mode}`,
         `Repo: ${session.repoId}`,
         `Branch: ${session.branchName}`,
-        `Summary: ${sanitizeNotificationText(result.finalMessage || "Completed.", 800)}`
+        `Error: ${sanitizeNotificationText(result.stderr || result.finalMessage || job.error || "Runner failed.", 800)}`
       ].join("\n"),
       metadata: {
         queueJobId: job.id,
-        runnerStatus: result.status
+        runnerStatus: result.status,
+        queueStatus: job.status
       }
     });
+  }
+  enqueueRunnerEmailNotification(store, job, session, result, emailConfig, "runner.failed");
+}
+
+function enqueuePlanReadyEmailNotification(
+  store: InMemoryStore,
+  job: QueueJob,
+  session: Session,
+  summary: string,
+  emailConfig: EmailControlPlaneConfig | undefined,
+  approvalId: string
+): void {
+  const recipients = emailRecipientsForSession(session, emailConfig);
+
+  if (!emailConfig?.smtp.enabled || recipients.length === 0) {
     return;
   }
 
-  enqueueSlackNotification(store, {
-    kind: "runner.failed",
-    severity: "failure",
-    slackThreadKey: session.slackThreadKey,
+  const notification = enqueueEmailNotification(store, {
+    kind: "plan.ready",
+    severity: "success",
+    to: recipients,
+    subject: `Codex Relay plan ready: ${session.repoId} [relay:${session.id}]`,
+    text: [
+      "Codex Relay plan ready.",
+      "",
+      `Repo: ${session.repoId}`,
+      `Branch: ${session.branchName}`,
+      `Reply reference: relay:${session.id}`,
+      "",
+      sanitizeNotificationText(summary, 2000),
+      "",
+      session.controlPlane === "email"
+        ? "Reply to this email with a follow-up question or next plan request. Email approvals are disabled."
+        : "Reply to this email with a follow-up question, or approve execution from the configured Slack thread."
+    ].join("\n"),
+    sessionId: session.id,
+    repoId: session.repoId,
+    taskRunId: job.taskRunId,
+    approvalId,
+    queueJobId: job.id,
+    metadata: {
+      source: "runner-daemon"
+    }
+  });
+  recordEmailEnqueuedAudit(store, notification.id, session.id, session.repoId);
+}
+
+function enqueueRunnerEmailNotification(
+  store: InMemoryStore,
+  job: QueueJob,
+  session: Session,
+  result: RunnerResult,
+  emailConfig: EmailControlPlaneConfig | undefined,
+  kind: "runner.completed" | "runner.failed"
+): void {
+  const recipients = emailRecipientsForSession(session, emailConfig);
+
+  if (!emailConfig?.smtp.enabled || recipients.length === 0) {
+    return;
+  }
+
+  const completed = kind === "runner.completed";
+  const notification = enqueueEmailNotification(store, {
+    kind,
+    severity: completed ? "success" : "failure",
+    to: recipients,
+    subject: completed
+      ? `Codex Relay completed: ${session.repoId} [relay:${session.id}]`
+      : `Codex Relay failed: ${session.repoId} [relay:${session.id}]`,
+    text: [
+      completed ? "Codex Relay task completed." : "Codex Relay task failed.",
+      "",
+      `Mode: ${job.payload.mode}`,
+      `Repo: ${session.repoId}`,
+      `Branch: ${session.branchName}`,
+      `Reply reference: relay:${session.id}`,
+      "",
+      completed ? "Summary:" : "Error:",
+      sanitizeNotificationText(result.finalMessage || result.stderr || job.error || "No summary provided.", 2000),
+      "",
+      session.controlPlane === "email"
+        ? "Reply to this email to continue the session. Use ask/query for read-only questions. Email replies cannot approve write execution."
+        : "Continue from the configured Slack thread, or reply with ask/query for a read-only follow-up."
+    ].join("\n"),
     sessionId: session.id,
     repoId: session.repoId,
     taskRunId: job.taskRunId,
     queueJobId: job.id,
-    title: "Queued task failed",
-    detail: [
-      `Mode: ${job.payload.mode}`,
-      `Repo: ${session.repoId}`,
-      `Branch: ${session.branchName}`,
-      `Error: ${sanitizeNotificationText(result.stderr || result.finalMessage || job.error || "Runner failed.", 800)}`
-    ].join("\n"),
     metadata: {
-      queueJobId: job.id,
+      source: "runner-daemon",
       runnerStatus: result.status,
       queueStatus: job.status
+    }
+  });
+  recordEmailEnqueuedAudit(store, notification.id, session.id, session.repoId);
+}
+
+function emailRecipientsForSession(session: Session, emailConfig: EmailControlPlaneConfig | undefined): string[] {
+  if (!emailConfig?.smtp.enabled) {
+    return [];
+  }
+
+  if (session.controlPlane === "email" && session.email?.sender) {
+    return [session.email.sender];
+  }
+
+  return emailConfig.smtp.recipients;
+}
+
+function recordEmailEnqueuedAudit(
+  store: InMemoryStore,
+  emailNotificationId: string,
+  sessionId: string,
+  repoId: string
+): void {
+  store.saveAuditEvent({
+    id: nanoid(12),
+    at: new Date().toISOString(),
+    type: "email.notification_enqueued",
+    outcome: "info",
+    summary: "Email notification enqueued.",
+    repoId,
+    sessionId,
+    metadata: {
+      emailNotificationId
     }
   });
 }
@@ -519,7 +665,7 @@ async function main(): Promise<void> {
     runnerId: defaultRunnerId,
     storeKind: config.codex.storeKind
   });
-  await runRunnerDaemonLoop({ store, runner, logger });
+  await runRunnerDaemonLoop({ store, runner, logger, emailConfig: config.email });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -9,6 +9,7 @@ export function getOrCreateSession(input: {
   repo: RepoBinding;
   workspacePath?: string;
   sourceRepoPath?: string;
+  workspaceKind?: Session["workspaceKind"];
 }): Session {
   const threadKey = slackThreadKey(input.slack.thread);
   const existing = input.store.getSessionByThread(threadKey);
@@ -21,11 +22,13 @@ export function getOrCreateSession(input: {
   const id = nanoid(12);
   const session: Session = {
     id,
+    controlPlane: "slack",
     slackThreadKey: threadKey,
     ownerSlackUserId: input.slack.requestingUserId,
     repoId: input.repo.id,
     sourceRepoPath: input.sourceRepoPath ?? input.repo.path,
     workspacePath: input.workspacePath ?? "",
+    workspaceKind: input.workspaceKind ?? "worktree",
     branchName: buildBranchName(input.slack.thread.threadTs, id),
     runnerKind: "exec",
     status: "idle",

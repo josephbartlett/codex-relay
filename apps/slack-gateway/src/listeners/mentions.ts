@@ -5,6 +5,8 @@ import {
   diffSummaryBlocks,
   failureBlocks,
   guidanceBlocks,
+  answerBlocks,
+  completionBlocks,
   kickoffBlocks,
   planBlocks,
   prLifecycleBlocks,
@@ -55,8 +57,10 @@ export function registerMentionListeners(app: App, orchestrator: Orchestrator, c
       });
       const startsPlan =
         intent === "new_task" || (Boolean(existingSession) && ["continue", "revise_plan", "run_tests"].includes(intent));
+      const startsAsk = intent === "ask";
+      const startsDirect = intent === "direct";
 
-      if (startsPlan) {
+      if (startsPlan || startsAsk || startsDirect) {
         const repo = existingSession
           ? resolveRepoBinding(config, existingSession.repoId)
           : resolveRepoBinding(config, extractRepoId(text));
@@ -67,8 +71,12 @@ export function registerMentionListeners(app: App, orchestrator: Orchestrator, c
           text: existingSession ? "Codex follow-up received." : "Codex task started.",
           blocks: kickoffBlocks({
             repoId: repo.id,
-            branchName: existingSession?.branchName ?? "creating worktree",
-            status: intent === "run_tests" ? "Planning test run" : "Inspecting repo"
+            branchName:
+              startsAsk || startsDirect
+                ? "source workspace"
+                : existingSession?.branchName ?? "creating worktree",
+            mode: startsAsk ? "ask" : startsDirect ? "direct" : intent === "run_tests" ? "test-plan" : "plan",
+            status: startsAsk ? "Answering read-only question" : startsDirect ? "Editing source workspace" : intent === "run_tests" ? "Planning test run" : "Inspecting repo"
           })
         });
       }
@@ -80,6 +88,30 @@ export function registerMentionListeners(app: App, orchestrator: Orchestrator, c
           }
         })
         .then(async (result) => {
+          if (result.kind === "ask") {
+            await client.chat.postMessage({
+              channel: event.channel,
+              thread_ts: threadTs,
+              text: "Codex answer ready.",
+              blocks: answerBlocks({ session: result.session, answer: result.runnerResult.finalMessage })
+            });
+            return;
+          }
+
+          if (result.kind === "direct") {
+            await client.chat.postMessage({
+              channel: event.channel,
+              thread_ts: threadTs,
+              text: "Codex direct workspace task completed.",
+              blocks: completionBlocks({
+                session: result.session,
+                summary: result.runnerResult.finalMessage,
+                diff: result.diff
+              })
+            });
+            return;
+          }
+
           if (result.kind === "plan") {
             await client.chat.postMessage({
               channel: event.channel,

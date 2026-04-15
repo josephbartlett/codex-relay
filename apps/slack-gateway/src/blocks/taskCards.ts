@@ -11,13 +11,13 @@ import type { DiffSummary } from "../../../orchestrator/src/artifacts.js";
 
 export type SlackBlock = KnownBlock | Block;
 
-export function kickoffBlocks(input: { repoId: string; branchName: string; status: string }): SlackBlock[] {
+export function kickoffBlocks(input: { repoId: string; branchName: string; status: string; mode?: string }): SlackBlock[] {
   return [
     section(
       [
         "*Codex task started*",
         `Repo: \`${escapeBackticks(input.repoId)}\``,
-        "Mode: `plan`",
+        `Mode: \`${escapeBackticks(input.mode ?? "plan")}\``,
         `Branch: \`${escapeBackticks(input.branchName)}\``,
         `Status: ${escapeSlackText(input.status)}`
       ].join("\n")
@@ -51,6 +51,19 @@ export function guidanceBlocks(input: { title: string; detail: string }): SlackB
   return [section(`*${escapeSlackText(input.title)}*\n${truncate(escapeSlackText(input.detail), 2500)}`)];
 }
 
+export function answerBlocks(input: { session: Session; answer: string }): SlackBlock[] {
+  return [
+    section(
+      [
+        "*Answer*",
+        `Repo: \`${escapeBackticks(input.session.repoId)}\``,
+        "",
+        truncate(escapeSlackText(input.answer), 2500)
+      ].join("\n")
+    )
+  ];
+}
+
 export function completionBlocks(input: {
   session: Session;
   summary: string;
@@ -58,6 +71,7 @@ export function completionBlocks(input: {
   mode?: "implement" | "test";
 }): SlackBlock[] {
   const mode = input.mode ?? "implement";
+  const sourceWorkspace = input.session.workspaceKind === "source";
   const files =
     input.diff.changedFiles.length > 0
       ? formatChangedFiles(input.diff.changedFiles)
@@ -75,7 +89,7 @@ export function completionBlocks(input: {
     ),
     section(files),
     input.diff.diffStat ? section(`*Diff stat*\n\`\`\`\n${truncate(escapeSlackText(input.diff.diffStat), 1800)}\n\`\`\``) : context("No diff stat."),
-    mode === "test"
+    mode === "test" || sourceWorkspace
       ? actions([button("Show diff summary", SlackActionIds.openDetails, input.session.id)])
       : actions([
           button("Show diff summary", SlackActionIds.openDetails, input.session.id),
@@ -123,7 +137,7 @@ export function sessionSummaryBlocks(input: { session: Session; title: string; d
   const detail = truncate(escapeSlackText(input.detail), 1800);
   const actionButtons: SlackBlock[] = [button("Show diff summary", SlackActionIds.openDetails, input.session.id)];
 
-  if (input.session.status === "done") {
+  if (input.session.status === "done" && input.session.workspaceKind !== "source") {
     actionButtons.push(
       input.session.draftPullRequest
         ? button("Update PR", SlackActionIds.createPr, input.session.id)

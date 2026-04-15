@@ -1,0 +1,93 @@
+id: CFO-0043
+title: v0.2.0 lightweight ask and direct workspace modes
+status: done
+owner: lead
+role: worker
+priority: p1
+objective: Add lightweight read-only ask/query mode and explicitly gated direct workspace quick mode across Slack and email control planes for the v0.2.0 feature line.
+paths:
+  - .env.example
+  - CHANGELOG.md
+  - README.md
+  - SECURITY.md
+  - apps/email-gateway/src
+  - apps/local-runner/src
+  - apps/orchestrator/src
+  - apps/slack-gateway/src
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/ROADMAP.md
+  - docs/RUNBOOK.md
+  - docs/SECURITY.md
+  - docs/TASKS.md
+  - docs/email
+  - docs/work-packets/0043-v0.2.0-control-plane-modes.yaml
+  - packages/shared/src
+  - scripts/validate-setup.mjs
+  - tests
+concerns:
+  - concern:control-plane-routing
+  - concern:email-reply-continuation
+  - concern:direct-workspace-safety
+  - concern:release-v0.2.0
+dependencies:
+  - CFO-0039
+  - CFO-0040
+  - CFO-0041
+non_goals:
+  - Do not edit `.env`.
+  - Do not push, tag, or publish a release.
+  - Do not close or overwrite the active Windows live-validation packet `CFO-0042`.
+  - Do not make direct workspace mode the default path.
+  - Do not add email-originated write behavior without explicit disabled-by-default gates and documentation.
+acceptance:
+  - Slack `ask`/`query` requests run read-only and return an answer without execution approval, diff cards, branch handoff, or PR controls.
+  - Email `ask`/`query` requests can enqueue read-only answer runs with compact outbound email status.
+  - Slack direct workspace `quick`/`direct` requests are disabled by default and require explicit repo allowlisting before editing the source working tree.
+  - Email direct workspace requests are additionally disabled by default and require explicit email-specific enablement before source working tree edits.
+  - Source workspace sessions are marked distinctly so PR creation and worktree cleanup do not treat them as isolated worktrees.
+  - Local mail-bridge topology is reviewed without reading local secret state, and Codex Relay docs capture the relevant Windows/WSL implication.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+  evidence:
+    - "`npm run check` passed with 127 tests, setup validation, work-packet validation, release readiness, npm audit, and secret scan."
+    - "`git diff --check` passed."
+    - "Targeted public-risk string scan found no new local email settings, addresses, Windows paths, or token-shaped values in changed files."
+handoff:
+  expected:
+    - Report files changed, behavior added, local bridge comparison, verification, risks, and release readiness status.
+  completed:
+    - Slack ask/query mode runs read-only from source for new threads and preserves existing worktree sessions for task-thread questions.
+    - Slack direct workspace mode is disabled by default, repo allowlisted, clean-tree gated by default, and hides PR controls for source sessions.
+    - Email ask/query intake, reply-to-email session routing, and direct workspace gates are implemented and documented.
+    - Local bridge topology was reviewed from public docs/source only; docs now recommend Windows-side testing or reachable local bridge endpoints when Bridge binds to Windows loopback.
+  next:
+    - Release packaging for v0.2.0 remains maintainer-gated.
+    - Live Proton Bridge validation remains tracked separately in CFO-0042.
+risks:
+  - Direct workspace mode can modify a user's active branch; it must stay opt-in, repo-scoped, and clearly labeled.
+  - Email sender identity is weaker than Slack identity; email direct mode needs an additional explicit gate and conservative docs.
+  - Ask sessions that run against the source repo must not accidentally approve or execute work in the source tree through the normal plan pipeline.
+maintenance_audit:
+  assigned_at: "2026-04-16"
+  completed_at: "2026-04-16"
+  reviewed_by: "lead"
+  checks:
+    - npm run check
+    - git diff --check
+  artifact: "local v0.2.0 feature checkpoint; commit SHA assigned after packet closure"
+  notes:
+    - Started after external user feedback showed the plan/approve/worktree/PR loop is too heavy for informational questions and some trusted solo edits.
+    - Review found and fixed a Slack ask-mode bug where existing worktree sessions could be converted to source workspace sessions.

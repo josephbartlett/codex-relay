@@ -1,4 +1,5 @@
 import type { HarnessConfig } from "./config.js";
+import { defaultEmailControlPlaneConfig, normalizeEmailAddress } from "./config.js";
 
 export type AuthorizationAction =
   | "start_task"
@@ -36,6 +37,30 @@ export class AuthorizationError extends Error {
   ) {
     super(message);
     this.name = "AuthorizationError";
+  }
+}
+
+export function authorizeEmailSender(config: HarnessConfig, sender: string): AuthorizationResult {
+  const email = config.email ?? defaultEmailControlPlaneConfig;
+
+  if (!email.enabled) {
+    return { ok: false, reason: "user_not_allowed" };
+  }
+
+  const normalized = normalizeEmailAddress(sender);
+
+  if (!hasEntries(email.allowedSenders) || !isAllowedByList(normalized, email.allowedSenders)) {
+    return { ok: false, reason: "user_not_allowed" };
+  }
+
+  return { ok: true };
+}
+
+export function assertAuthorizedEmailSender(config: HarnessConfig, sender: string): void {
+  const result = authorizeEmailSender(config, sender);
+
+  if (!result.ok) {
+    throw new AuthorizationError("You are not authorized to use Codex Relay from this email sender.", result);
   }
 }
 

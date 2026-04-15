@@ -2,6 +2,8 @@ import type { SlackTaskContext } from "../../../packages/shared/src/types.js";
 
 export type FollowUpIntent =
   | "new_task"
+  | "ask"
+  | "direct"
   | "continue"
   | "revise_plan"
   | "run_tests"
@@ -28,11 +30,27 @@ export function classifyFollowUpIntent(input: { text: string; hasExistingSession
   }
 
   if (!input.hasExistingSession && extractRepoId(input.text)) {
+    if (isDirectLike(normalized)) {
+      return "direct";
+    }
+
+    if (isAskLike(normalized)) {
+      return "ask";
+    }
+
     return "new_task";
   }
 
   if (/\b(cancel|stop|abort)\b/u.test(normalized)) {
     return "cancel";
+  }
+
+  if (isDirectLike(normalized)) {
+    return "direct";
+  }
+
+  if (isAskLike(normalized)) {
+    return "ask";
   }
 
   if (/\b(ready|publish|undraft|finali[sz]e)\b/u.test(normalized) && /\b(review|pr|pull request)\b/u.test(normalized)) {
@@ -119,4 +137,15 @@ function normalizeIntentText(text: string): string {
     .replace(/[^\p{L}\p{N}\s_-]/gu, " ")
     .replace(/\s+/gu, " ")
     .trim();
+}
+
+function isAskLike(normalized: string): boolean {
+  return (
+    /^(ask|query|question)\b/u.test(normalized) ||
+    /^(what|which|where|why|how|who|when)\b/u.test(normalized)
+  );
+}
+
+function isDirectLike(normalized: string): boolean {
+  return /^(quick|direct|direct workspace)\b/u.test(normalized);
 }

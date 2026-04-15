@@ -308,6 +308,7 @@ function sampleSession(overrides: Partial<Session> = {}): Session {
     repoId: "default",
     sourceRepoPath: "/tmp/repo",
     workspacePath: "/tmp/worktree",
+    workspaceKind: "worktree",
     branchName: "codex/slack/session-1",
     runnerKind: "exec",
     status: "done",

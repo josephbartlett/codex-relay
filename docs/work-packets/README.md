@@ -25,7 +25,9 @@ The checker enforces:
 - no duplicate packet IDs
 - no overlapping active/review/verify owned paths or named concerns
 - `objective`, `non_goals`, `verification.required`, and `handoff.expected` on active/review/verify packets
-- completed verification, verification evidence, handoff evidence, reviewer, checks, completion date, and commit SHA on done packets
+- completed verification, verification evidence, handoff evidence, reviewer, checks, completion date, and a commit SHA or artifact reference on done packets
+
+Prefer one coherent feature commit that includes implementation, tests, docs, packet status, and audit notes. When a packet is closed inside the same commit that implements the work, use `maintenance_audit.artifact` instead of creating a separate closure commit only to record the new SHA. Use a follow-up closure commit only when the packet was missed, release metadata must be recorded after a tag exists, or another real sequencing constraint exists.
 
 ## Required Shape
 
@@ -61,6 +63,7 @@ risks:
   - What could go wrong.
 maintenance_audit:
   assigned_at: "2026-04-13"
+  artifact: "included in feature checkpoint commit"
   notes:
     - Human-readable maintenance note.
 ```

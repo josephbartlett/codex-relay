@@ -245,7 +245,12 @@ function makeConfig(root: string, repoPath: string): HarnessConfig {
       rulesPath: join(root, "default.rules"),
       requireExecPolicyCheck: true,
       storeKind: "json",
-      databasePath: join(root, "state.db")
+      databasePath: join(root, "state.db"),
+      directWorkspace: {
+        enabled: false,
+        allowedRepoIds: [],
+        requireClean: true
+      }
     },
     repos: [{ id: "default", path: repoPath }],
     defaultRepoId: "default",

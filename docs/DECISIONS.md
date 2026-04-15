@@ -1,5 +1,22 @@
 # Decision Log
 
+## 2026-04-16: Lightweight Modes Are Explicit Paths
+
+Codex Relay now separates informational questions, default planned work, and trusted quick edits.
+
+- `ask`/`query` mode is read-only and returns an answer without approval, diff cards, or PR controls.
+- The default implementation path remains plan, approve, worktree, and PR handoff.
+- `quick`/`direct` mode is disabled by default and edits the configured source working tree only after repo allowlisting.
+- Email direct workspace commands require an additional email-specific gate.
+
+This keeps the safe default for shared or higher-risk repos while giving trusted solo operators a lower-ceremony path for small edits and read-only codebase questions.
+
+## 2026-04-16: Email Reply Markers Route Sessions But Do Not Approve Work
+
+Outbound email summaries include a `relay:<sessionId>` marker so replies can continue the same Relay session.
+
+That marker is a routing hint, not an authentication or approval token. Sender allowlists still apply, and plain email replies cannot approve an existing plan for execution. Replies with `ask` or `query` stay read-only; replies without those prefixes queue another read-only plan. Direct workspace email commands remain separate explicit commands behind both global and email-specific gates.
+
 ## 2026-04-15: Publishing Requires Explicit Maintainer Approval
 
 Local commits are acceptable agent checkpoints after verification. Publishing those commits is a separate approval boundary.
@@ -84,7 +101,7 @@ Diff summaries are treated as ephemeral local artifacts. The harness generates b
 
 Email belongs on the roadmap as another local-first control plane, not as a separate runner path. A future email adapter should translate allowlisted local mailbox events into the same sessions, task runs, approvals, queue jobs, and audit records that Slack uses today.
 
-The runner side should remain unchanged. Local IMAP/SMTP bridge workflows are future integration references, but email support is not a `v0.1.0` release blocker.
+The runner side should remain unchanged. Local IMAP/SMTP bridge workflows are future integration references, and email support must stay behind disabled-by-default adapter boundaries until the security model is complete.
 
 Any future email implementation must treat sender identity as insufficient on its own for mutating approvals. The design needs mailbox/folder scoping, nonce-bound or signed approval replies, expiry, duplicate-message handling, and explicit raw-message retention policy before write actions are enabled.
 

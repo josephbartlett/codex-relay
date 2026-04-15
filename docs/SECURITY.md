@@ -6,6 +6,8 @@ Codex Relay is a remote control plane for local or self-hosted code execution. S
 
 - `plan`, `review`, and `explain` run with `read-only`.
 - `implement` runs with `workspace-write` only after Slack approval or an explicit Relay local handoff command.
+- Direct workspace quick mode is disabled by default and requires explicit repo allowlisting before it can edit a source working tree.
+- Email direct workspace mode requires both the global direct workspace gate and the email-specific gate.
 - The harness does not use `danger-full-access` or `--yolo`.
 - Repositories must be explicitly configured in `CODEX_ALLOWED_REPOS`.
 - Writes happen in a git worktree under `CODEX_WORKTREE_ROOT`.
@@ -84,13 +86,20 @@ Primary threats:
 - PR handoff publishes from a detached, wrong, pre-staged, behind, or locally advanced branch.
 - Multiple workers claim the same queued task or continue work after a stale lease.
 - Multiple gateway processes deliver the same queued-run Slack notification.
+- SMTP credentials are exposed through docs, logs, screenshots, work packets, or committed config.
+- Local bridge SMTP TLS verification is disabled for a non-local or untrusted host.
+- Multiple email publisher processes deliver the same queued-run email notification.
+- IMAP credentials are exposed through docs, logs, screenshots, work packets, or committed config.
+- Local bridge IMAP TLS verification is disabled for a non-local or untrusted host.
+- Inbound email commands are spoofed, replayed, or parsed too broadly.
+- Inbound email ingestion stores raw message bodies, signatures, attachments, or secrets longer than needed.
+- Direct workspace mode edits the user's active source working tree when enabled for the wrong repo or dirty tree.
+- Email reply continuation is mistaken for authenticated write approval.
 - A local handoff command binds remote continuation to the wrong Slack thread, user, repo, or worktree.
 - An already-running terminal Codex process is attached without trustworthy session/workspace provenance.
 - A worktree cleanup or git command deletes user work.
 - Cleanup removes completed work before PR handoff, while a queue/approval is still active, or while a worktree is dirty.
 - Diff inspection persists patch bodies or raw command output beyond the Slack modal.
-- Future email control-plane commands are spoofed, replayed, or parsed too broadly.
-- Future email ingestion stores raw message bodies, signatures, attachments, or secrets longer than needed.
 - A runner is configured with overly broad sandbox or network permissions.
 - A runner child process inherits Slack, GitHub, OpenAI, cloud, or SSH-agent credentials by default.
 - A remote audit viewer exposes repo/session/actor metadata without authentication, TLS, or network controls.
@@ -106,6 +115,16 @@ Primary mitigations:
 - Validate stored PR URL, origin, branch, and open/draft state before marking a PR ready for review.
 - Use SQLite immediate transactions for multi-process queue claims, per-session/repo lease limits, heartbeats, stale-lease rejection, and abandoned-lease recovery.
 - Keep queued-run Slack notification payloads compact and sanitized; use SQLite immediate transactions for notification claims before thread delivery.
+- Keep queued-run email notification payloads compact and sanitized; use SQLite immediate transactions for notification claims before SMTP delivery.
+- Keep SMTP credentials out of runner child-process environment allowlists, docs, tests, screenshots, issues, PRs, and work packets.
+- Use `EMAIL_SMTP_TLS_REJECT_UNAUTHORIZED=false` only for trusted local bridge endpoints with self-signed certificates.
+- Keep IMAP credentials out of runner child-process environment allowlists, docs, tests, screenshots, issues, PRs, and work packets.
+- Use `EMAIL_IMAP_TLS_REJECT_UNAUTHORIZED=false` only for trusted local bridge endpoints with self-signed certificates.
+- Scope inbound email to explicit allowlisted senders and mailboxes, durably dedupe message ids, ignore attachments, and store compact message/task metadata instead of raw email source.
+- Keep email-originated plan and ask tasks read-only; sender allowlists alone are not sufficient for write approval.
+- Keep direct workspace mode disabled by default, repo-scoped, explicit in command text, and clean-tree gated by default.
+- Require `EMAIL_DIRECT_WORKSPACE_ENABLED=true` in addition to global direct workspace enablement before email commands can edit a source working tree.
+- Treat `relay:<sessionId>` email markers as routing hints, not authentication or approval tokens.
 - Support local handoff only when Relay owns the session, worktree, queue job, Slack thread binding, and audit trail before execution starts.
 - Defer arbitrary terminal-session attach until a future design can verify Codex session id, workspace path, repo binding, Slack owner, and continuation scope.
 - Filter runner child-process environments through an allowlist instead of inheriting `process.env`.
@@ -114,8 +133,7 @@ Primary mitigations:
 - Use `git worktree remove` without force for cleanup.
 - Skip cleanup for active runs, queued jobs, pending approvals, completed sessions without PR metadata, and dirty worktrees.
 - Treat diff details as bounded ephemeral artifacts; do not persist patch bodies in durable state.
-- Require a separate ADR and security review before enabling email-originated write approvals; sender allowlists alone are not sufficient.
-- Scope future email ingestion to explicit mailboxes/folders and store message identifiers/audit metadata instead of raw message bodies by default.
+- Require a separate ADR and security review before enabling email-originated write approvals.
 - Keep runtime state, logs, tokens, worktrees, and candidate assets out of git.
 - Add policy checks for users, channels, and repos before `v0.1.0`.
 
@@ -135,6 +153,10 @@ For any PR touching execution, persistence, Slack actions, GitHub, or repo paths
 - If cleanup changes, can active, queued, pending, dirty, and PR-incomplete sessions still avoid deletion?
 - If artifact handling changes, are patch bodies bounded and excluded from durable state by default?
 - If queued Slack notification delivery changes, can duplicate delivery, failed delivery retries, and sanitized error storage be explained?
+- If email notification delivery changes, can duplicate delivery, failed delivery retries, sanitized error storage, and credential handling be explained?
+- If inbound email intake changes, can sender allowlists, message dedupe, raw-body retention, attachment handling, and read-only enforcement be explained?
+- If email reply continuation changes, is `relay:<sessionId>` still only a routing hint and never a write-approval token?
+- If direct workspace mode changes, does it remain disabled by default, repo-scoped, explicit, and covered by dirty-tree tests?
 - If local handoff changes, does Relay still own the session/worktree/queue/audit boundary before remote continuation is allowed?
 - Are dangerous Codex flags or network permissions introduced?
 - Does the runner child-process environment inherit any new credential-bearing variable by default?

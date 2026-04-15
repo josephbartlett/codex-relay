@@ -94,7 +94,21 @@ test("orchestrator can enqueue a session task and daemon completes it", async ()
       runner,
       runnerId: "worker-1",
       heartbeatIntervalMs: 0,
-      now: () => baseNow
+      now: () => baseNow,
+      emailConfig: {
+        enabled: false,
+        allowedSenders: [],
+        mailboxId: "default",
+        smtp: {
+          enabled: true,
+          host: "smtp.example.test",
+          port: 587,
+          secure: false,
+          from: "relay@example.test",
+          recipients: ["operator@example.test"],
+          pollIntervalMs: 2000
+        }
+      }
     });
 
     assert.equal(result.claimed, true);
@@ -102,14 +116,20 @@ test("orchestrator can enqueue a session task and daemon completes it", async ()
     assert.equal(store.taskRuns.get(enqueued.taskRun.id)?.status, "completed");
     assert.equal(store.sessions.get("session-1")?.status, "done");
     assert.equal(store.sessions.get("session-1")?.codexSessionId, "codex-session-1");
-    assert.deepEqual(
-      new Set(store.listAuditEvents(3).map((event) => event.type)),
-      new Set(["queue.completed", "queue.claimed", "queue.enqueued"])
-    );
+    const auditTypes = new Set(store.listAuditEvents().map((event) => event.type));
+    assert.equal(auditTypes.has("queue.enqueued"), true);
+    assert.equal(auditTypes.has("queue.claimed"), true);
+    assert.equal(auditTypes.has("queue.completed"), true);
+    assert.equal(auditTypes.has("email.notification_enqueued"), true);
     assert.deepEqual(
       store.listSlackNotifications().map((notification) => notification.kind),
       ["runner.started", "runner.completed"]
     );
+    assert.deepEqual(
+      store.listEmailNotifications().map((notification) => notification.kind),
+      ["runner.completed"]
+    );
+    assert.equal(store.listEmailNotifications()[0]?.to[0], "operator@example.test");
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
@@ -246,6 +266,85 @@ test("daemon completed plan jobs create pending approvals", async () => {
   }
 });
 
+test("daemon sends email but no Slack notifications for email-originated sessions", async () => {
+  const store = new InMemoryStore();
+  const queue = new DurableQueue(store);
+  const runner = new FakeRunner([
+    {
+      runId: "placeholder",
+      status: "completed",
+      finalMessage: "email plan completed",
+      stdout: "",
+      stderr: "",
+      exitCode: 0
+    }
+  ]);
+  const session = sampleSession({
+    controlPlane: "email",
+    slackThreadKey: "email:default:thread-1",
+    ownerSlackUserId: "email:operator@example.test",
+    email: {
+      mailboxId: "default",
+      threadId: "thread-1",
+      sender: "operator@example.test",
+      firstMessageId: "message-1"
+    }
+  });
+  store.saveSession(session);
+  store.saveTaskRun({
+    id: "run-1",
+    sessionId: session.id,
+    mode: "implement",
+    prompt: "summarize",
+    status: "queued",
+    sandbox: "workspace-write",
+    approvalPolicy: "never"
+  });
+  queue.enqueueRunnerTask({
+    repoId: "default",
+    task: {
+      runId: "run-1",
+      sessionId: session.id,
+      mode: "implement",
+      prompt: "summarize",
+      workspacePath: session.workspacePath,
+      sandbox: "workspace-write",
+      approvalPolicy: "never"
+    },
+    now: baseNow
+  });
+
+  const result = await runRunnerDaemonOnce({
+    store,
+    queue,
+    runner,
+    runnerId: "worker-1",
+    heartbeatIntervalMs: 0,
+    now: () => baseNow,
+    emailConfig: {
+      enabled: true,
+      allowedSenders: ["operator@example.test"],
+      mailboxId: "default",
+      smtp: {
+        enabled: true,
+        host: "smtp.example.test",
+        port: 587,
+        secure: false,
+        from: "relay@example.test",
+        recipients: ["fallback@example.test"],
+        pollIntervalMs: 2000
+      }
+    }
+  });
+
+  assert.equal(result.finalJob?.status, "completed");
+  assert.deepEqual(store.listSlackNotifications(), []);
+  assert.deepEqual(
+    store.listEmailNotifications().map((notification) => [notification.kind, notification.to[0]]),
+    [["runner.completed", "operator@example.test"]]
+  );
+});
+
 test("daemon does not accept runner results after lease expiry", async () => {
   const store = new InMemoryStore();
   const queue = new DurableQueue(store, { leaseTtlMs: 1_000 });
@@ -306,7 +405,12 @@ function makeConfig(root: string): HarnessConfig {
       rulesPath: join(root, "default.rules"),
       requireExecPolicyCheck: true,
       storeKind: "json",
-      databasePath: join(root, "state.db")
+      databasePath: join(root, "state.db"),
+      directWorkspace: {
+        enabled: false,
+        allowedRepoIds: [],
+        requireClean: true
+      }
     },
     repos: [{ id: "default", path: root }],
     defaultRepoId: "default",
@@ -323,11 +427,13 @@ function makeConfig(root: string): HarnessConfig {
 function sampleSession(overrides: Partial<Session> = {}): Session {
   return {
     id: "session-1",
+    controlPlane: "slack",
     slackThreadKey: "T1:C1:1000.1",
     ownerSlackUserId: "U1",
     repoId: "default",
     sourceRepoPath: "/tmp/source",
     workspacePath: "/tmp/worktree",
+    workspaceKind: "worktree",
     branchName: "codex/slack/test",
     runnerKind: "exec",
     status: "idle",

@@ -24,6 +24,32 @@ export interface LocalHandoffPromptInput extends PlanPromptInput {
   previousSummary?: string;
 }
 
+export interface AskPromptInput extends PlanPromptInput {
+  previousSummary?: string;
+}
+
+export interface DirectWorkspacePromptInput extends PlanPromptInput {
+  previousSummary?: string;
+  source: "slack" | "email";
+}
+
+export interface EmailPlanPromptInput {
+  repoId: string;
+  requester: string;
+  mailboxId: string;
+  messageId: string;
+  subject?: string;
+  text: string;
+}
+
+export interface EmailAskPromptInput extends EmailPlanPromptInput {
+  previousSummary?: string;
+}
+
+export interface EmailDirectWorkspacePromptInput extends EmailPlanPromptInput {
+  previousSummary?: string;
+}
+
 export function buildPlanPrompt(input: PlanPromptInput): string {
   return [
     "You are running inside Codex Relay plan phase.",
@@ -182,6 +208,158 @@ export function buildLocalHandoffPrompt(input: LocalHandoffPromptInput): string 
     input.slack.selectedMessageText
       ? ["", "Selected Slack message context:", input.slack.selectedMessageText].join("\n")
       : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function buildAskPrompt(input: AskPromptInput): string {
+  return [
+    "You are running inside Codex Relay ask mode.",
+    "",
+    "Hard rules:",
+    "- Read only. Do not edit files.",
+    "- Do not run network commands.",
+    "- Answer the user's codebase question directly and concisely.",
+    "- Cite relevant files, functions, commands, or tests by path when useful.",
+    "- If the question asks for a change, explain that ask mode is read-only and summarize the likely next implementation step.",
+    "",
+    `Repo id: ${input.repoId}`,
+    `Slack requester: ${input.slack.requestingUserId}`,
+    input.previousSummary ? ["", "Previous run summary:", input.previousSummary].join("\n") : "",
+    "",
+    "Slack question:",
+    input.slack.text,
+    input.slack.selectedMessageText
+      ? ["", "Selected Slack message context:", input.slack.selectedMessageText].join("\n")
+      : "",
+    "",
+    "Return only the answer. Do not include an implementation plan unless the user explicitly asked for one."
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function buildDirectWorkspacePrompt(input: DirectWorkspacePromptInput): string {
+  return [
+    "You are running inside Codex Relay direct workspace mode.",
+    "",
+    "Context:",
+    "- The operator explicitly opted into editing the source working tree directly.",
+    "- This is not an isolated worktree. Keep the change small and bounded.",
+    "",
+    "Hard rules:",
+    "- Stay inside the configured repository.",
+    "- Make only the requested change.",
+    "- Do not use network commands unless the request explicitly requires it and local policy allows it.",
+    "- Run the smallest relevant verification.",
+    "- Summarize changed files and verification results at the end.",
+    "",
+    `Repo id: ${input.repoId}`,
+    input.source === "slack" ? `Slack requester: ${input.slack.requestingUserId}` : "Email-originated direct workspace request.",
+    input.previousSummary ? ["", "Previous run summary:", input.previousSummary].join("\n") : "",
+    "",
+    "Direct workspace request:",
+    input.slack.text,
+    input.slack.selectedMessageText
+      ? ["", "Selected Slack message context:", input.slack.selectedMessageText].join("\n")
+      : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function buildEmailPlanPrompt(input: EmailPlanPromptInput): string {
+  return [
+    "You are running inside Codex Relay email plan phase.",
+    "",
+    "Context:",
+    "- The request came from an allowlisted email sender through the configured local email control plane.",
+    "- Email-originated write approvals are disabled. Produce a read-only plan only.",
+    "",
+    "Hard rules:",
+    "- Read only. Do not edit files.",
+    "- Do not run network commands.",
+    "- Inspect just enough repository context to make a concrete implementation plan.",
+    "- Identify likely files, tests, risks, and any commands that would be needed during implementation.",
+    "- If the request is unsafe, ambiguous, or outside the configured repository, say so clearly.",
+    "",
+    `Repo id: ${input.repoId}`,
+    `Email requester: ${input.requester}`,
+    `Mailbox id: ${input.mailboxId}`,
+    `Message id: ${input.messageId}`,
+    input.subject ? `Subject: ${input.subject}` : "",
+    "",
+    "Email request:",
+    input.text,
+    "",
+    "Return a concise plan with these headings:",
+    "Summary",
+    "Proposed edits",
+    "Tests",
+    "Risks",
+    "Approval notes"
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function buildEmailAskPrompt(input: EmailAskPromptInput): string {
+  return [
+    "You are running inside Codex Relay email ask mode.",
+    "",
+    "Context:",
+    "- The request came from an allowlisted email sender through the configured local email control plane.",
+    "- Ask mode is read-only and must not create an execution approval.",
+    "",
+    "Hard rules:",
+    "- Read only. Do not edit files.",
+    "- Do not run network commands.",
+    "- Answer the codebase question directly and concisely.",
+    "- Cite relevant files, functions, commands, or tests by path when useful.",
+    "- If the question asks for a change, explain that ask mode is read-only and summarize the likely next implementation step.",
+    "",
+    `Repo id: ${input.repoId}`,
+    `Email requester: ${input.requester}`,
+    `Mailbox id: ${input.mailboxId}`,
+    `Message id: ${input.messageId}`,
+    input.subject ? `Subject: ${input.subject}` : "",
+    input.previousSummary ? ["", "Previous run summary:", input.previousSummary].join("\n") : "",
+    "",
+    "Email question:",
+    input.text,
+    "",
+    "Return only the answer. Do not include an implementation plan unless the user explicitly asked for one."
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export function buildEmailDirectWorkspacePrompt(input: EmailDirectWorkspacePromptInput): string {
+  return [
+    "You are running inside Codex Relay email direct workspace mode.",
+    "",
+    "Context:",
+    "- The request came from an allowlisted email sender through the configured local email control plane.",
+    "- Email direct workspace mode is separately gated and disabled by default.",
+    "- This is not an isolated worktree. Keep the change small and bounded.",
+    "",
+    "Hard rules:",
+    "- Stay inside the configured repository.",
+    "- Make only the requested change.",
+    "- Do not use network commands unless the request explicitly requires it and local policy allows it.",
+    "- Run the smallest relevant verification.",
+    "- Summarize changed files and verification results at the end.",
+    "",
+    `Repo id: ${input.repoId}`,
+    `Email requester: ${input.requester}`,
+    `Mailbox id: ${input.mailboxId}`,
+    `Message id: ${input.messageId}`,
+    input.subject ? `Subject: ${input.subject}` : "",
+    input.previousSummary ? ["", "Previous run summary:", input.previousSummary].join("\n") : "",
+    "",
+    "Email direct workspace request:",
+    input.text
   ]
     .filter(Boolean)
     .join("\n");

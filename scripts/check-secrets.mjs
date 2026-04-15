@@ -30,7 +30,10 @@ const checks = [
   { name: "OpenAI API key", pattern: /sk-[A-Za-z0-9_-]{32,}/g },
   { name: "GitHub token", pattern: /gh[pousr]_[A-Za-z0-9_]{30,}/g },
   { name: "Private key block", pattern: /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/g },
-  { name: "Committed env assignment", pattern: /^(?:SLACK_(?:BOT_TOKEN|APP_TOKEN|SIGNING_SECRET)|OPENAI_API_KEY|GITHUB_TOKEN|GH_TOKEN)=\S+/gm }
+  {
+    name: "Committed env assignment",
+    pattern: /^(?:SLACK_(?:BOT_TOKEN|APP_TOKEN|SIGNING_SECRET)|OPENAI_API_KEY|GITHUB_TOKEN|GH_TOKEN|EMAIL_SMTP_PASSWORD)=\S+/gm
+  }
 ];
 const findings = [];
 

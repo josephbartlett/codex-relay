@@ -10,6 +10,8 @@ import type { HarnessConfig } from "../../../packages/shared/src/config.js";
 import { resolveRepoBinding } from "../../../packages/shared/src/config.js";
 import {
   buildFollowUpPlanPrompt,
+  buildAskPrompt,
+  buildDirectWorkspacePrompt,
   buildImplementPrompt,
   buildLocalHandoffPrompt,
   buildPlanPrompt,
@@ -44,7 +46,7 @@ import {
   type MarkDraftPullRequestReadyInput,
   type DraftPullRequestStatusInput
 } from "../../local-runner/src/pullRequest.js";
-import { getChangedFilesSince } from "../../local-runner/src/git.js";
+import { getChangedFilesSince, getPorcelainStatus } from "../../local-runner/src/git.js";
 import { WorktreeManager } from "../../local-runner/src/worktreeManager.js";
 import { createExecutionApproval, isExpired } from "./approvals.js";
 import { collectDiffSummary, type DiffSummary } from "./artifacts.js";
@@ -70,7 +72,35 @@ export interface ExecuteTaskResult {
   diff: DiffSummary;
 }
 
+export interface AskTaskResult {
+  session: Session;
+  askRun: TaskRun;
+  runnerResult: RunnerResult;
+}
+
+export interface DirectWorkspaceTaskResult {
+  session: Session;
+  directRun: TaskRun;
+  runnerResult: RunnerResult;
+  diff: DiffSummary;
+}
+
 export type FollowUpResult =
+  | {
+      kind: "ask";
+      intent: "ask";
+      session: Session;
+      askRun: TaskRun;
+      runnerResult: RunnerResult;
+    }
+  | {
+      kind: "direct";
+      intent: "direct";
+      session: Session;
+      directRun: TaskRun;
+      runnerResult: RunnerResult;
+      diff: DiffSummary;
+    }
   | {
       kind: "plan";
       intent: Extract<FollowUpIntent, "new_task" | "continue" | "revise_plan" | "run_tests">;
@@ -106,7 +136,10 @@ export type FollowUpResult =
     }
   | {
       kind: "guidance";
-      intent: Exclude<FollowUpIntent, "new_task" | "continue" | "revise_plan" | "run_tests" | "summarize_diff" | "cancel">;
+      intent: Exclude<
+        FollowUpIntent,
+        "new_task" | "ask" | "direct" | "continue" | "revise_plan" | "run_tests" | "summarize_diff" | "cancel"
+      >;
       message: string;
       session?: Session;
     };
@@ -472,6 +505,10 @@ export class Orchestrator {
       throw new Error(`Session must be done before creating a PR. Current status: ${session.status}.`);
     }
 
+    if (session.workspaceKind === "source") {
+      throw new Error("Draft PR creation is not available for direct source workspace sessions.");
+    }
+
     const activeRun = [...this.store.taskRuns.values()].find(
       (run) => run.sessionId === session.id && this.store.activeRuns.has(run.id)
     );
@@ -623,6 +660,10 @@ export class Orchestrator {
       throw new Error(`Session must be done before marking a PR ready for review. Current status: ${session.status}.`);
     }
 
+    if (session.workspaceKind === "source") {
+      throw new Error("PR ready-for-review handoff is not available for direct source workspace sessions.");
+    }
+
     if (!session.draftPullRequest) {
       throw new Error("No draft PR exists for this session.");
     }
@@ -708,7 +749,7 @@ export class Orchestrator {
       });
     }
 
-    if (!session.workspacePath) {
+    if (!session.workspacePath || session.workspaceKind !== "worktree") {
       const worktree = await this.worktrees.createWorktree({
         sessionId: session.id,
         repo,
@@ -718,6 +759,7 @@ export class Orchestrator {
       session.workspacePath = worktree.workspacePath;
       session.sourceRepoPath = worktree.sourceRepoPath;
       session.branchName = worktree.branchName;
+      session.workspaceKind = "worktree";
     }
 
     touchSession(session, "planning");
@@ -828,11 +870,267 @@ export class Orchestrator {
     return { approval, planRun, runnerResult };
   }
 
+  async askFromSlack(slack: SlackTaskContext, sink?: RunnerEventSink): Promise<AskTaskResult> {
+    const existingSession = this.getSessionBySlackThread(slack.thread);
+    const requestedRepoId = extractRepoId(slack.text) ?? existingSession?.repoId;
+    const repo = resolveRepoBinding(this.config, requestedRepoId);
+
+    if (existingSession && existingSession.repoId !== repo.id) {
+      throw new Error(`This Slack thread is already bound to repo:${existingSession.repoId}. Start a new thread for repo:${repo.id}.`);
+    }
+
+    this.assertAuthorizedAndAudit({
+      action: "start_task",
+      slackUserId: slack.requestingUserId,
+      slackChannelId: slack.thread.channelId,
+      repoId: repo.id
+    });
+
+    const session =
+      existingSession ??
+      getOrCreateSession({
+        store: this.store,
+        slack,
+        repo,
+        workspacePath: repo.path,
+        sourceRepoPath: repo.path,
+        workspaceKind: "source"
+      });
+
+    if (this.hasActiveRun(session.id) || this.hasActiveQueuedJob(session.id)) {
+      throw new Error("A Codex run is already active or queued in this Slack thread.");
+    }
+
+    if (!existingSession) {
+      session.workspacePath = repo.path;
+      session.sourceRepoPath = repo.path;
+      session.workspaceKind = "source";
+    }
+    touchSession(session, "running");
+    this.store.saveSession(session);
+
+    const askRun = createTaskRun({
+      sessionId: session.id,
+      mode: "explain",
+      sandbox: "read-only",
+      approvalPolicy: "never",
+      prompt: buildAskPrompt({
+        slack: {
+          ...slack,
+          text: stripModePrefix(slack.text)
+        },
+        repoId: repo.id,
+        previousSummary: this.latestRunSummary(session.id)
+      })
+    });
+    askRun.status = "running";
+    askRun.startedAt = new Date().toISOString();
+    this.store.saveTaskRun(askRun);
+    this.recordAuditEvent({
+      type: "task.ask_started",
+      outcome: "info",
+      summary: "Read-only ask run started.",
+      actorSlackUserId: slack.requestingUserId,
+      slackThreadKey: session.slackThreadKey,
+      repoId: session.repoId,
+      sessionId: session.id,
+      taskRunId: askRun.id
+    });
+
+    const handle = this.runner.start(
+      {
+        runId: askRun.id,
+        sessionId: session.id,
+        mode: "explain",
+        prompt: askRun.prompt,
+        workspacePath: session.workspacePath,
+        sandbox: "read-only",
+        approvalPolicy: "never",
+        model: this.config.codex.model,
+        codexSessionId: session.codexSessionId
+      },
+      sink
+    );
+
+    this.store.activeRuns.set(askRun.id, handle);
+    const runnerResult = await handle.promise;
+    this.store.activeRuns.delete(askRun.id);
+
+    askRun.status = runnerResult.status;
+    askRun.completedAt = new Date().toISOString();
+    askRun.resultSummary = runnerResult.finalMessage;
+    askRun.error = runnerResult.status === "failed" ? runnerResult.stderr || runnerResult.finalMessage : undefined;
+    this.store.saveTaskRun(askRun);
+
+    if (runnerResult.codexSessionId) {
+      session.codexSessionId = runnerResult.codexSessionId;
+    }
+
+    touchSession(session, runnerResult.status === "completed" ? "done" : runnerResult.status);
+    this.store.saveSession(session);
+    this.recordAuditEvent({
+      type: runnerResult.status === "completed" ? "task.ask_completed" : "task.ask_failed",
+      outcome: runnerResult.status === "completed" ? "success" : "failure",
+      summary: runnerResult.status === "completed" ? "Read-only ask run completed." : "Read-only ask run failed.",
+      actorSlackUserId: slack.requestingUserId,
+      slackThreadKey: session.slackThreadKey,
+      repoId: session.repoId,
+      sessionId: session.id,
+      taskRunId: askRun.id
+    });
+
+    if (runnerResult.status !== "completed") {
+      throw new Error(runnerResult.status === "cancelled" ? "Codex ask run was cancelled." : runnerResult.finalMessage);
+    }
+
+    return { session, askRun, runnerResult };
+  }
+
+  async runDirectWorkspaceFromSlack(slack: SlackTaskContext, sink?: RunnerEventSink): Promise<DirectWorkspaceTaskResult> {
+    const existingSession = this.getSessionBySlackThread(slack.thread);
+    const requestedRepoId = extractRepoId(slack.text) ?? existingSession?.repoId;
+    const repo = resolveRepoBinding(this.config, requestedRepoId);
+
+    if (existingSession && existingSession.repoId !== repo.id) {
+      throw new Error(`This Slack thread is already bound to repo:${existingSession.repoId}. Start a new thread for repo:${repo.id}.`);
+    }
+
+    this.assertAuthorizedAndAudit({
+      action: "start_task",
+      slackUserId: slack.requestingUserId,
+      slackChannelId: slack.thread.channelId,
+      repoId: repo.id
+    });
+    await this.assertDirectWorkspaceAllowed(repo.id, repo.path, "slack");
+
+    const session = getOrCreateSession({
+      store: this.store,
+      slack,
+      repo,
+      workspacePath: repo.path,
+      sourceRepoPath: repo.path,
+      workspaceKind: "source"
+    });
+
+    if (session.workspaceKind === "worktree" && session.workspacePath && session.workspacePath !== repo.path) {
+      throw new Error("Direct workspace mode cannot run inside an isolated worktree session. Start a new Slack thread.");
+    }
+
+    if (this.hasActiveRun(session.id) || this.hasActiveQueuedJob(session.id)) {
+      throw new Error("A Codex run is already active or queued in this Slack thread.");
+    }
+
+    if (this.hasPendingApproval(session.id)) {
+      throw new Error("A plan is already awaiting approval in this thread. Approve it, revise it, or cancel before direct workspace work.");
+    }
+
+    session.workspacePath = repo.path;
+    session.sourceRepoPath = repo.path;
+    session.workspaceKind = "source";
+    touchSession(session, "running");
+    this.store.saveSession(session);
+
+    const directRun = createTaskRun({
+      sessionId: session.id,
+      mode: "implement",
+      sandbox: "workspace-write",
+      approvalPolicy: "never",
+      prompt: buildDirectWorkspacePrompt({
+        slack: {
+          ...slack,
+          text: stripModePrefix(slack.text)
+        },
+        repoId: repo.id,
+        source: "slack",
+        previousSummary: this.latestRunSummary(session.id)
+      })
+    });
+    directRun.status = "running";
+    directRun.startedAt = new Date().toISOString();
+    this.store.saveTaskRun(directRun);
+    this.recordAuditEvent({
+      type: "execution.started",
+      outcome: "info",
+      summary: "Direct workspace implementation run started.",
+      actorSlackUserId: slack.requestingUserId,
+      slackThreadKey: session.slackThreadKey,
+      repoId: session.repoId,
+      sessionId: session.id,
+      taskRunId: directRun.id,
+      metadata: {
+        workspaceKind: "source"
+      }
+    });
+
+    const handle = this.runner.start(
+      {
+        runId: directRun.id,
+        sessionId: session.id,
+        mode: "implement",
+        prompt: directRun.prompt,
+        workspacePath: session.workspacePath,
+        sandbox: "workspace-write",
+        approvalPolicy: "never",
+        model: this.config.codex.model,
+        codexSessionId: session.codexSessionId
+      },
+      sink
+    );
+
+    this.store.activeRuns.set(directRun.id, handle);
+    const runnerResult = await handle.promise;
+    this.store.activeRuns.delete(directRun.id);
+
+    directRun.status = runnerResult.status;
+    directRun.completedAt = new Date().toISOString();
+    directRun.resultSummary = runnerResult.finalMessage;
+    directRun.error = runnerResult.status === "failed" ? runnerResult.stderr || runnerResult.finalMessage : undefined;
+    this.store.saveTaskRun(directRun);
+
+    if (runnerResult.codexSessionId) {
+      session.codexSessionId = runnerResult.codexSessionId;
+    }
+
+    const diff = await collectDiffSummary(session.workspacePath);
+    touchSession(session, runnerResult.status === "completed" ? "done" : runnerResult.status);
+    this.store.saveSession(session);
+    this.recordAuditEvent({
+      type: runnerResult.status === "completed" ? "execution.completed" : "execution.failed",
+      outcome: runnerResult.status === "completed" ? "success" : "failure",
+      summary: runnerResult.status === "completed" ? "Direct workspace implementation completed." : "Direct workspace implementation failed.",
+      actorSlackUserId: slack.requestingUserId,
+      slackThreadKey: session.slackThreadKey,
+      repoId: session.repoId,
+      sessionId: session.id,
+      taskRunId: directRun.id,
+      metadata: {
+        workspaceKind: "source",
+        changedFiles: diff.changedFiles.length
+      }
+    });
+
+    if (runnerResult.status !== "completed") {
+      throw new Error(runnerResult.status === "cancelled" ? "Codex direct workspace run was cancelled." : runnerResult.finalMessage);
+    }
+
+    return { session, directRun, runnerResult, diff };
+  }
+
   async handleFollowUpFromSlack(slack: SlackTaskContext, sink?: RunnerEventSink): Promise<FollowUpResult> {
     const session = this.getSessionBySlackThread(slack.thread);
     const intent = classifyFollowUpIntent({ text: slack.text, hasExistingSession: Boolean(session) });
 
     if (!session) {
+      if (intent === "ask") {
+        const ask = await this.askFromSlack(slack, sink);
+        return { kind: "ask", intent, ...ask };
+      }
+
+      if (intent === "direct") {
+        const direct = await this.runDirectWorkspaceFromSlack(slack, sink);
+        return { kind: "direct", intent, ...direct };
+      }
+
       if (intent === "new_task") {
         const plan = await this.startPlanFromSlack(slack, sink);
         return { kind: "plan", intent, ...plan, supersededApprovalIds: [] };
@@ -890,6 +1188,16 @@ export class Orchestrator {
       return { kind: "cancel", intent, sessionId: session.id, ...result };
     }
 
+    if (intent === "ask") {
+      const ask = await this.askFromSlack(slack, sink);
+      return { kind: "ask", intent, ...ask };
+    }
+
+    if (intent === "direct") {
+      const direct = await this.runDirectWorkspaceFromSlack(slack, sink);
+      return { kind: "direct", intent, ...direct };
+    }
+
     if (intent === "summarize_diff") {
       const diff = await this.collectSessionDiffSummaryForSlackUser({
         sessionId: session.id,
@@ -941,7 +1249,7 @@ export class Orchestrator {
         kind: "guidance",
         intent,
         session,
-        message: "I could not map that follow-up to a supported Codex Relay action. Try: continue, revise plan, run tests, summarize diff, update PR, ready for review, or cancel."
+        message: "I could not map that follow-up to a supported Codex Relay action. Try: ask, continue, revise plan, run tests, summarize diff, update PR, ready for review, direct, or cancel."
       };
     }
 
@@ -1265,6 +1573,15 @@ export class Orchestrator {
         continue;
       }
 
+      if (session.workspaceKind === "source") {
+        result.skipped.push({
+          sessionId: session.id,
+          workspacePath: session.workspacePath,
+          reason: "source workspace sessions are not removable worktrees"
+        });
+        continue;
+      }
+
       if (this.hasActiveRun(session.id)) {
         result.skipped.push({
           sessionId: session.id,
@@ -1391,6 +1708,30 @@ export class Orchestrator {
       mode: input.mode,
       previousSummary: this.latestRunSummary(input.session.id)
     });
+  }
+
+  private async assertDirectWorkspaceAllowed(repoId: string, repoPath: string, source: "slack" | "email"): Promise<void> {
+    const direct = this.config.codex.directWorkspace;
+
+    if (!direct.enabled) {
+      throw new Error("Direct workspace mode is disabled. Set CODEX_DIRECT_WORKSPACE_ENABLED=true and allowlist the repo to use it.");
+    }
+
+    if (!direct.allowedRepoIds.includes(repoId)) {
+      throw new Error(`Direct workspace mode is not allowlisted for repo:${repoId}.`);
+    }
+
+    if (source === "email" && !this.config.email?.directWorkspaceEnabled) {
+      throw new Error("Email direct workspace mode is disabled. Set EMAIL_DIRECT_WORKSPACE_ENABLED=true only after reviewing the risk.");
+    }
+
+    if (direct.requireClean) {
+      const status = await getPorcelainStatus(repoPath);
+
+      if (status) {
+        throw new Error("Direct workspace mode requires a clean git working tree. Commit, stash, or disable the clean-tree gate explicitly.");
+      }
+    }
   }
 
   private pendingApprovalsForSession(sessionId: string): ApprovalRequest[] {
@@ -1536,6 +1877,13 @@ function extractOriginalSlackRequest(planPrompt: string): string {
   const afterMarker = planPrompt.slice(start + marker.length);
   const end = afterMarker.search(/\n\nReturn a concise/u);
   return (end === -1 ? afterMarker : afterMarker.slice(0, end)).trim();
+}
+
+function stripModePrefix(text: string): string {
+  return text
+    .replace(/\brepo:[a-zA-Z0-9._-]+\b/gu, "")
+    .replace(/^(ask|query|question|quick|direct(?:\s+workspace)?)\b[:\s-]*/iu, "")
+    .trim();
 }
 
 function inferPullRequestOperation(

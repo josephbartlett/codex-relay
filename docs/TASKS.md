@@ -4,16 +4,51 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 ## Active
 
-- No active release chunk is assigned after this checkpoint.
+- owner: lead
+  scope: Windows PowerShell live validation of Proton Bridge SMTP smoke, IMAP read-only intake, queued runner plan flow, and redacted outcome capture; packet `CFO-0042`
+  status: Active
+  objective: Validate the new email control plane live without exposing secrets or enabling email-originated write approvals.
+  verification: `git status --short --branch`; `git log --oneline -3`; `npm install`; `npm run typecheck`; `npm run build`; `npm run validate:live-config`; `npm run email:test`; `npm run email:poll`; `npm run check:work-packets`
+  handoff: Redacted live-test summary back in the main Codex session. No push, tag, or release.
+
+## Completed Checkpoints
+
+- owner: lead
+  scope: Slack/email lightweight `ask` mode, gated direct workspace quick mode, source-workspace safety markers, local bridge topology review, and v0.2.0 docs/tests; packet `CFO-0043`
+  status: Done
+  objective: Add lower-ceremony read-only questions and explicitly opt-in direct workspace edits without weakening the default safe worktree workflow.
+  verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Included in the local v0.2.0 feature checkpoint. No push, tag, or release was performed.
+
+- owner: lead
+  scope: `package.json`; `package-lock.json`; `.env.example`; `apps/email-gateway/src`; `apps/local-runner/src/daemon.ts`; `apps/orchestrator/src/emailNotifications.ts`; `apps/orchestrator/src/persistence`; `packages/shared/src/config.ts`; `packages/shared/src/prompts.ts`; `packages/shared/src/types.ts`; `scripts/validate-setup.mjs`; email tests; setup/store tests; email docs; roadmap/runbook/security docs; packet `CFO-0041`
+  status: Done
+  objective: Add disabled-by-default IMAP mailbox polling that converts allowlisted email commands into read-only queued plan tasks with durable dedupe and compact replies.
+  verification: `npm run check`; `npm run check:audit`; `npm run check:secrets`; `git diff --check`; targeted public-risk string scan
+  handoff: Included in the local email feature checkpoint. No push, tag, or release was performed.
+
+- owner: lead
+  scope: `package.json`; `package-lock.json`; `.env.example`; `apps/email-gateway/src`; `apps/local-runner/src/daemon.ts`; `apps/orchestrator/src/emailNotifications.ts`; `apps/orchestrator/src/persistence`; `packages/shared/src/config.ts`; `packages/shared/src/types.ts`; `scripts/check-secrets.mjs`; `scripts/validate-setup.mjs`; `tests/email-gateway.test.ts`; `tests/email-notifications.test.ts`; `tests/setup-validator.test.ts`; `tests/sqlite-store.test.ts`; `README.md`; `SECURITY.md`; `CHANGELOG.md`; `docs/DOCUMENTATION.md`; `docs/email`; `docs/ROADMAP.md`; `docs/RUNBOOK.md`; `docs/SECURITY.md`; `docs/work-packets/0040-email-smtp-notifications.yaml`
+  status: Done
+  objective: Add a generic SMTP outbound notification adapter and local SMTP smoke command without live credentials, provider lock-in, or inbound email control.
+  verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Included in the local email feature checkpoint. No push, tag, or release was performed.
 
 ## Next
 
 - Apply protected local `.env` strict-mode Slack user/channel/repo allowlists and run `npm run validate:live-config` before normal live use.
-- Keep email control-plane discovery post-`v0.1.0` unless shared adapter-boundary work becomes necessary.
+- Keep email control-plane work behind disabled-by-default adapter boundaries until the ADR and security review are complete.
 - Add approved tracked brand assets only after rendered screenshot review and explicit maintainer approval.
 - Keep external Custody-First scaffold work tabled unless the user explicitly reopens it.
 
 ## Delegated Work Log
+
+- owner: lead
+  scope: `.env.example`; `apps/email-gateway/src`; `packages/shared/src/config.ts`; `packages/shared/src/authorization.ts`; `tests/email-gateway.test.ts`; `docs/ROADMAP.md`; `docs/SECURITY.md`; `docs/DECISIONS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/work-packets/0039-email-control-plane-foundation.yaml`
+  status: Done
+  objective: Add the first generic email-control-plane foundation without live mailbox credentials, provider-specific setup, or write approvals.
+  verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Included in the local email feature checkpoint. No push, tag, or release was performed.
 
 - owner: lead
   scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/work-packets/0038-v0.1.4-release.yaml`

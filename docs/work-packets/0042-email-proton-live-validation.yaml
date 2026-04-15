@@ -1,0 +1,52 @@
+id: CFO-0042
+title: Windows Proton email control-plane live validation
+status: active
+owner: lead
+role: verifier
+priority: p1
+objective: Validate the new email control plane from Windows PowerShell against Proton Mail Bridge, covering outbound SMTP smoke, inbound IMAP read-only intake, and the queued runner plan flow without exposing secrets or enabling email-originated write approvals.
+paths:
+  - docs/work-packets/0042-email-proton-live-validation.yaml
+concerns:
+  - concern:email-control-plane
+  - concern:live-validation
+dependencies:
+  - CFO-0040
+  - CFO-0041
+non_goals:
+  - Do not edit `.env`.
+  - Do not print or record SMTP/IMAP credentials, tokens, mailbox names, email addresses, or local private paths.
+  - Do not push, tag, or release anything.
+  - Do not make code changes unless a clear bug is found and proposed first.
+acceptance:
+  - Repo state, install, typecheck, build, live-config validation, and SMTP smoke status are captured in redacted form.
+  - Inbound IMAP polling is exercised with a fresh allowlisted plain-text message.
+  - If polling queues work, the Windows runner flow is observed through plan completion and email notification delivery or a clear redacted failure.
+  - Email-originated write approvals remain blocked or are explicitly reported as not tested.
+verification:
+  required:
+    - git status --short --branch
+    - git log --oneline -3
+    - npm install
+    - npm run typecheck
+    - npm run build
+    - npm run validate:live-config
+    - npm run email:test
+    - npm run email:poll
+    - npm run check:work-packets
+  completed: []
+  evidence: []
+handoff:
+  expected:
+    - Report repo state, checks run, redacted SMTP and IMAP results, full-flow outcome, blocked behaviors, and any likely bugs or config issues.
+  completed: []
+  next: []
+risks:
+  - Live Bridge or mailbox failures may surface only as local connectivity or TLS errors and must be summarized without leaking values.
+  - SMTP or IMAP success can still leave the full runner flow blocked on local daemon state or store state.
+  - Live validation can leave queued notifications or sessions in the local store if the flow stalls mid-run.
+maintenance_audit:
+  assigned_at: "2026-04-16"
+  artifact: "pending live validation outcome"
+  notes:
+    - Started to validate the local Proton Bridge email control plane from Windows PowerShell with strict redaction.

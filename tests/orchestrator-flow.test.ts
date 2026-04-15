@@ -61,6 +61,8 @@ class FakeRunner implements RunnerAdapter {
       finalMessage:
         task.mode === "plan"
           ? "Summary: create codex-output.txt"
+          : task.mode === "explain"
+            ? "Answer: package.json defines the scripts."
           : task.mode === "test"
             ? "Summary: tests passed"
             : "Summary: wrote codex-output.txt",
@@ -156,6 +158,146 @@ test("plan approval execute flow writes in a worktree and reports untracked file
       text: "repo:default inspect the existing changes"
     });
     assert.equal(runner.tasks.at(-1)?.codexSessionId, `codex-${orchestrator.listSessions()[0]?.id}`);
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test("ask mode answers from the source repo without approval or PR controls", async () => {
+  const temp = mkdtempSync(join(tmpdir(), "codex-relay-ask-mode-"));
+
+  try {
+    const sourceRepo = join(temp, "source");
+    mkdirSync(sourceRepo);
+    await initRepo(sourceRepo);
+
+    const runner = new FakeRunner();
+    const store = new InMemoryStore();
+    const orchestrator = new Orchestrator(makeConfig(temp, sourceRepo), store, runner);
+
+    const result = await orchestrator.handleFollowUpFromSlack({
+      thread: { teamId: "T1", channelId: "C1", threadTs: "2000.1" },
+      requestingUserId: "U1",
+      text: "repo:default ask which file defines the npm scripts?"
+    });
+
+    assert.equal(result.kind, "ask");
+    if (result.kind !== "ask") {
+      throw new Error("Expected ask result.");
+    }
+
+    assert.equal(result.session.workspaceKind, "source");
+    assert.equal(result.session.workspacePath, sourceRepo);
+    assert.equal(result.askRun.mode, "explain");
+    assert.equal(result.askRun.status, "completed");
+    assert.equal(store.approvals.size, 0);
+    assert.equal(runner.tasks[0]?.sandbox, "read-only");
+    assert.match(runner.tasks[0]?.prompt ?? "", /ask mode/u);
+    assert.equal(
+      orchestrator.listAuditEventsForSlackUser("U1").some((event) => event.type === "task.ask_completed"),
+      true
+    );
+
+    await assert.rejects(
+      () => orchestrator.createDraftPullRequest({ sessionId: result.session.id, requestingUserId: "U1", slackChannelId: "C1" }),
+      /source workspace/u
+    );
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test("ask mode preserves an existing worktree session workspace", async () => {
+  const temp = mkdtempSync(join(tmpdir(), "codex-relay-ask-existing-"));
+
+  try {
+    const sourceRepo = join(temp, "source");
+    mkdirSync(sourceRepo);
+    await initRepo(sourceRepo);
+
+    const runner = new FakeRunner();
+    const store = new InMemoryStore();
+    const orchestrator = new Orchestrator(makeConfig(temp, sourceRepo), store, runner);
+
+    const plan = await orchestrator.startPlanFromSlack({
+      thread: { teamId: "T1", channelId: "C1", threadTs: "2000.15" },
+      requestingUserId: "U1",
+      text: "repo:default plan a small README update"
+    });
+    const originalWorkspacePath = orchestrator.listSessions()[0]?.workspacePath;
+    assert.ok(originalWorkspacePath);
+
+    const result = await orchestrator.handleFollowUpFromSlack({
+      thread: { teamId: "T1", channelId: "C1", threadTs: "2000.15" },
+      requestingUserId: "U1",
+      text: "ask which file would change?"
+    });
+
+    assert.equal(result.kind, "ask");
+    if (result.kind !== "ask") {
+      throw new Error("Expected ask result.");
+    }
+
+    assert.equal(result.session.workspaceKind, "worktree");
+    assert.equal(result.session.workspacePath, originalWorkspacePath);
+    assert.equal(result.askRun.mode, "explain");
+    assert.equal(store.approvals.size, 1);
+    assert.equal(runner.tasks.at(-1)?.workspacePath, originalWorkspacePath);
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test("direct workspace mode is opt-in and writes the source repo without PR handoff", async () => {
+  const temp = mkdtempSync(join(tmpdir(), "codex-relay-direct-mode-"));
+
+  try {
+    const sourceRepo = join(temp, "source");
+    mkdirSync(sourceRepo);
+    await initRepo(sourceRepo);
+
+    const runner = new FakeRunner();
+    const store = new InMemoryStore();
+    const disabled = new Orchestrator(makeConfig(temp, sourceRepo), store, runner);
+
+    await assert.rejects(
+      () =>
+        disabled.handleFollowUpFromSlack({
+          thread: { teamId: "T1", channelId: "C1", threadTs: "3000.1" },
+          requestingUserId: "U1",
+          text: "repo:default quick add a generated output file"
+        }),
+      /Direct workspace mode is disabled/u
+    );
+
+    const config = makeConfig(temp, sourceRepo);
+    config.codex.directWorkspace = {
+      enabled: true,
+      allowedRepoIds: ["default"],
+      requireClean: true
+    };
+    const enabled = new Orchestrator(config, new InMemoryStore(), runner);
+    const result = await enabled.handleFollowUpFromSlack({
+      thread: { teamId: "T1", channelId: "C1", threadTs: "3000.2" },
+      requestingUserId: "U1",
+      text: "repo:default quick add a generated output file"
+    });
+
+    assert.equal(result.kind, "direct");
+    if (result.kind !== "direct") {
+      throw new Error("Expected direct result.");
+    }
+
+    assert.equal(result.session.workspaceKind, "source");
+    assert.equal(result.session.workspacePath, sourceRepo);
+    assert.equal(result.directRun.mode, "implement");
+    assert.equal(result.directRun.sandbox, "workspace-write");
+    assert.deepEqual(result.diff.changedFiles, ["src/codex-output.txt"]);
+    assert.equal(existsSync(join(sourceRepo, "src", "codex-output.txt")), true);
+    await assert.rejects(
+      () => enabled.createDraftPullRequest({ sessionId: result.session.id, requestingUserId: "U1", slackChannelId: "C1" }),
+      /source workspace/u
+    );
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
@@ -949,7 +1091,7 @@ test("unsupported and unauthorized follow-ups do not start runner tasks", async 
     const unsupported = await orchestrator.handleFollowUpFromSlack({
       thread: { teamId: "T1", channelId: "C1", threadTs: "1001.6" },
       requestingUserId: "U1",
-      text: "what is the situation"
+      text: "hello there"
     });
 
     assert.equal(unsupported.kind, "guidance");
@@ -1328,6 +1470,7 @@ function sampleSession(overrides: Partial<Session> = {}): Session {
     repoId: "default",
     sourceRepoPath: "/tmp/source",
     workspacePath: "/tmp/worktree",
+    workspaceKind: "worktree",
     branchName: `codex/slack/${id}`,
     runnerKind: "exec",
     status: "done",
@@ -1363,7 +1506,12 @@ function makeConfig(
       rulesPath: join(temp, "default.rules"),
       requireExecPolicyCheck: true,
       storeKind: "json",
-      databasePath: join(temp, "state.db")
+      databasePath: join(temp, "state.db"),
+      directWorkspace: {
+        enabled: false,
+        allowedRepoIds: [],
+        requireClean: true
+      }
     },
     repos: [{ id: "default", path: sourceRepo }],
     defaultRepoId: "default",

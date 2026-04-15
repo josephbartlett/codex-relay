@@ -37,6 +37,7 @@ const PacketSchema = z.object({
     reviewed_by: z.string().optional(),
     checks: z.array(z.string().min(1)).default([]),
     commit: z.string().optional(),
+    artifact: z.string().optional(),
     notes: z.array(z.string().min(1)).default([])
   }).default({})
 });
@@ -101,8 +102,11 @@ for (const packet of packets) {
       failures.push(`${packet.file}: done packet must record maintenance_audit.reviewed_by`);
     }
 
-    if (!packet.maintenance_audit.commit || !/^[a-f0-9]{7,40}$/.test(packet.maintenance_audit.commit)) {
-      failures.push(`${packet.file}: done packet must record maintenance_audit.commit as a git SHA`);
+    const hasCommitSha = packet.maintenance_audit.commit && /^[a-f0-9]{7,40}$/.test(packet.maintenance_audit.commit);
+    const hasArtifact = packet.maintenance_audit.artifact && packet.maintenance_audit.artifact.trim().length > 0;
+
+    if (!hasCommitSha && !hasArtifact) {
+      failures.push(`${packet.file}: done packet must record maintenance_audit.commit as a git SHA or maintenance_audit.artifact`);
     }
   }
 }

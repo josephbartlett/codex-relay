@@ -261,6 +261,15 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 ## 2026-04-15
 
+### CFO-0039: Email Control Plane Foundation
+
+- owner: lead
+- reviewer: lead
+- status: done
+- verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+- artifact: included in email feature checkpoint commit
+- notes: Added disabled-by-default generic email control-plane config, fail-closed sender authorization, read-only plain-text command parsing, and regression tests. The foundation intentionally does not include live mailbox polling, SMTP replies, provider-specific setup, or email-originated write approvals.
+
 ### CFO-0038: Publish v0.1.4 Documentation Hygiene Patch
 
 - owner: lead
@@ -350,3 +359,32 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - verification: `npm run check`; `git diff --check`; targeted public-risk string scan
 - commit: `1a8ba87`
 - notes: Prepared the patch release that publishes the public documentation polish, reusable Custody-First scaffold reference, and official Codex CLI documentation link. Release actions completed after maintainer approval.
+
+### CFO-0040: Email SMTP Notification Adapter
+
+- owner: lead
+- reviewer: lead
+- status: done
+- verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+- artifact: included in feature checkpoint commit
+- notes: Added disabled-by-default SMTP lifecycle notifications for queued runner plan-ready, completed, and failed states. The work added a durable email notification outbox for JSON and SQLite stores, a generic SMTP publisher daemon, local smoke command, provider setup docs, and regression coverage while keeping inbound polling and email-originated approvals out of scope.
+
+### CFO-0041: Email IMAP Read-Only Intake
+
+- owner: lead
+- reviewer: lead
+- status: done
+- verification: `npm run check`; `npm run check:audit`; `npm run check:secrets`; `git diff --check`; targeted public-risk string scan
+- artifact: included in feature checkpoint commit
+- notes: Added disabled-by-default IMAP polling, durable inbound message dedupe, read-only email-originated session/task creation, compact email acknowledgements, and provider-neutral IMAP docs. A full check run reached release readiness with 120 tests passing; the first `npm audit` request hit transient registry DNS `EAI_AGAIN`, then `npm run check:audit` was rerun successfully with 0 vulnerabilities. Email-originated write approvals remain out of scope.
+
+## 2026-04-16
+
+### CFO-0043: v0.2.0 Lightweight Ask And Direct Workspace Modes
+
+- owner: lead
+- reviewer: lead
+- status: done
+- verification: `npm run check`; `git diff --check`; targeted public-risk string scan
+- artifact: local v0.2.0 feature checkpoint; no push, tag, or release
+- notes: Added Slack and email ask/query mode, reply-to-email continuation using `relay:<sessionId>` routing hints, and explicitly gated direct workspace quick mode. Review found and fixed a Slack ask-mode workspace custody bug before checkpoint: ask follow-ups now preserve existing worktree sessions instead of converting them to source workspace sessions. CFO-0042 remains active for live Proton Bridge validation only.

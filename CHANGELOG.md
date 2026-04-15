@@ -6,29 +6,43 @@ This project uses Semantic Versioning. Release entries are written when a versio
 
 ## [Unreleased]
 
-No unreleased changes.
+### Added
+
+- Added a disabled-by-default email control-plane foundation with generic config, fail-closed sender authorization, plain-text read-only command parsing, and tests.
+- Added disabled-by-default SMTP email notifications for plan-ready, completed, and failed queued runner events.
+- Added disabled-by-default IMAP intake that converts allowlisted plain-text email commands into queued plan and ask tasks with durable dedupe and compact replies.
+- Added reply-to-email continuation through `relay:<sessionId>` markers in queued lifecycle emails.
+- Added lightweight Slack/email ask mode for read-only questions that do not need approval, diff cards, or PR controls.
+- Added disabled-by-default direct workspace quick mode for explicitly allowlisted trusted solo repositories.
+- Added generic SMTP, generic IMAP, Proton Mail, and Gmail email setup guides.
+
+### Changed
+
+- Updated email roadmap/security wording to keep mutating email approvals behind a future nonce-bound or signed approval design.
+- Rebalanced the documentation guide so user-facing setup and security docs are easier to find before maintainer workflow material.
+- Documented local bridge topology guidance for Proton Mail Bridge when Relay runs from WSL and the bridge runs on Windows.
 
 ## [0.1.4] - 2026-04-15
 
-Patch release for public documentation hygiene after the reusable Custody-First Orchestration release review.
+Patch release for clearer public documentation.
 
 ### Changed
 
-- Sanitized public maintenance and release-history wording while preserving the `AGENTS.md` approval guardrails for future agent work.
+- Clarified maintainer workflow and release-history wording while preserving the `AGENTS.md` approval guardrails for future agent work.
 
 ## [0.1.3] - 2026-04-15
 
-Patch release for public documentation links and reusable Custody-First Orchestration references after `v0.1.2`.
+Patch release for public documentation links after `v0.1.2`.
 
 ### Changed
 
-- Linked Codex Relay documentation to the reusable Custody-First Orchestration scaffold repository.
+- Linked Codex Relay documentation to the reusable maintainer workflow scaffold repository.
 - Added operator-facing links to OpenAI's official Codex CLI documentation.
 - Polished public maintenance notes to remove stale pre-release wording while preserving the audit trail.
 
 ## [0.1.2] - 2026-04-15
 
-Patch release for public repository publication discipline after the initial public launch.
+Patch release for repository publication safeguards after the initial public launch.
 
 ### Changed
 

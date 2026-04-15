@@ -1,0 +1,101 @@
+id: CFO-0040
+title: Email SMTP notification adapter
+status: done
+owner: lead
+role: worker
+priority: p1
+objective: Add a generic SMTP outbound notification adapter for completed, failed, and plan-ready runner events without live credentials, provider lock-in, or inbound email control.
+paths:
+  - package.json
+  - package-lock.json
+  - .env.example
+  - apps/email-gateway/src
+  - apps/local-runner/src/daemon.ts
+  - apps/orchestrator/src/emailNotifications.ts
+  - apps/orchestrator/src/persistence
+  - packages/shared/src/config.ts
+  - packages/shared/src/types.ts
+  - scripts/check-secrets.mjs
+  - scripts/validate-setup.mjs
+  - tests/email-gateway.test.ts
+  - tests/email-notifications.test.ts
+  - tests/setup-validator.test.ts
+  - tests/sqlite-store.test.ts
+  - README.md
+  - SECURITY.md
+  - CHANGELOG.md
+  - docs/DOCUMENTATION.md
+  - docs/email
+  - docs/ROADMAP.md
+  - docs/RUNBOOK.md
+  - docs/SECURITY.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0040-email-smtp-notifications.yaml
+concerns:
+  - concern:email-control-plane
+  - concern:notification-delivery
+dependencies:
+  - CFO-0039
+non_goals:
+  - Do not edit `.env`.
+  - Do not commit local machine paths, mailbox names, email addresses, hostnames, screenshots, or credentials.
+  - Do not add inbound IMAP polling in this packet.
+  - Do not add email-originated write approvals.
+  - Do not make any provider mandatory.
+acceptance:
+  - SMTP notification config is disabled by default and validates required fields only when enabled.
+  - SMTP TLS certificate verification stays enabled by default and can be explicitly disabled only for trusted local bridge endpoints.
+  - Runner completion, failure, and plan-ready lifecycle events can enqueue durable email notifications.
+  - Email notification delivery is claim/retry/idempotent across JSON and SQLite stores.
+  - SMTP delivery is abstracted behind a testable sender interface and does not print secrets.
+  - A local SMTP smoke command can validate credentials without storing task data or local paths.
+  - Public docs explain generic SMTP setup plus provider recipes without project-local or personal details.
+verification:
+  required:
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check:work-packets
+    - npm run check:secrets
+    - git diff --check
+  completed:
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - "npm run check passed: setup validation, typecheck, build, 115 tests, work-packet validation, release readiness, audit, and secret scan."
+    - "git diff --check passed."
+    - "Targeted public-risk scan found no private/local strings or non-empty EMAIL_SMTP_PASSWORD examples."
+handoff:
+  expected:
+    - Report supported outbound behavior, disabled capabilities, config shape, docs added, tests run, and live local testing instructions that keep secrets out of git.
+  completed:
+    - Added disabled-by-default SMTP notification config and Nodemailer sender adapter.
+    - Added explicit SMTP TLS verification config for local bridge self-signed certificates.
+    - Added durable email notification outbox support across JSON and SQLite stores.
+    - Wired queued runner plan-ready, completion, and failure summaries into email notification enqueueing.
+    - Added an email publisher daemon, local SMTP smoke command, secret scanner coverage, setup validation, and regression tests.
+    - Verified live Proton Bridge SMTP delivery through the compiled Windows-side smoke test and a durable publisher smoke path.
+    - Added generic SMTP, Proton Mail, and Gmail setup docs without local provider values or credentials.
+    - Folded public documentation cleanup into user-facing docs while keeping maintainer workflow guardrails intact.
+  next:
+    - Run `npm run email:test` only after local SMTP credentials are configured in an untracked `.env`.
+    - Add inbound IMAP polling only after an ADR and security review.
+    - Keep email-originated write approvals disabled until nonce-bound or signed approval design exists.
+risks:
+  - SMTP credentials are highly sensitive; config and diagnostics must avoid printing them.
+  - Email delivery can duplicate under retries; durable leases and idempotent notification records must limit duplicates.
+  - Provider setup docs can drift; link to official docs and keep recipes conservative.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  artifact: included in feature checkpoint commit
+  notes:
+    - Started as the outbound SMTP adapter chunk after the read-only email command parser foundation.
+    - Closed with outbound SMTP lifecycle notifications implemented and inbound polling, email replies, and email-originated write approvals intentionally out of scope.

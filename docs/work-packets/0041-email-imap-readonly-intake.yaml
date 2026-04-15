@@ -1,0 +1,105 @@
+id: CFO-0041
+title: Email IMAP read-only intake
+status: done
+owner: lead
+role: worker
+priority: p1
+objective: Add disabled-by-default IMAP mailbox polling that converts allowlisted email commands into read-only queued plan tasks with durable dedupe, compact replies, and no email-originated write approvals.
+paths:
+  - package.json
+  - package-lock.json
+  - .env.example
+  - apps/email-gateway/src
+  - apps/local-runner/src/daemon.ts
+  - apps/orchestrator/src/persistence
+  - packages/shared/src/config.ts
+  - packages/shared/src/prompts.ts
+  - packages/shared/src/types.ts
+  - scripts/validate-setup.mjs
+  - tests/email-gateway.test.ts
+  - tests/email-notifications.test.ts
+  - tests/setup-validator.test.ts
+  - tests/sqlite-store.test.ts
+  - README.md
+  - CHANGELOG.md
+  - docs/email
+  - docs/ROADMAP.md
+  - docs/RUNBOOK.md
+  - docs/SECURITY.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0041-email-imap-readonly-intake.yaml
+concerns:
+  - concern:email-control-plane
+  - concern:inbound-intake
+  - concern:persistence
+dependencies:
+  - CFO-0040
+non_goals:
+  - Do not edit `.env`.
+  - Do not commit local machine paths, mailbox names, email addresses, hostnames, screenshots, or credentials.
+  - Do not add email-originated write approvals.
+  - Do not store full raw email bodies.
+  - Do not make Proton, Gmail, or any provider mandatory.
+  - Do not change Slack task behavior except to avoid Slack delivery for email-originated sessions.
+acceptance:
+  - IMAP polling config is disabled by default and validates required fields only when enabled.
+  - IMAP TLS certificate verification stays enabled by default and can be explicitly disabled only for trusted local bridge endpoints.
+  - Allowlisted inbound email commands can enqueue read-only plan tasks through the existing durable queue.
+  - Inbound message ids are durably deduped across JSON and SQLite stores.
+  - Email-originated write approvals remain rejected with a compact email reply.
+  - Email sessions do not cause Slack notifications to invalid synthetic Slack channels.
+  - Public docs explain IMAP setup and provider recipes without project-local or personal details.
+verification:
+  required:
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check:work-packets
+    - npm run check:secrets
+    - git diff --check
+  completed:
+    - npm run check
+    - npm run check:audit
+    - npm run check:secrets
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - "npm run check reached release readiness with 120 tests passing; the first audit attempt hit transient registry DNS EAI_AGAIN."
+    - "npm run check:audit was rerun and found 0 vulnerabilities."
+    - "npm run check:secrets passed with no obvious secrets found."
+    - "git diff --check passed."
+    - "Targeted public-risk scan found no private/local strings or non-empty EMAIL_SMTP_PASSWORD/EMAIL_IMAP_PASSWORD examples."
+handoff:
+  expected:
+    - Report supported inbound behavior, disabled capabilities, config shape, docs added, tests run, and live local testing instructions that keep secrets out of git.
+  completed:
+    - Added disabled-by-default IMAP config, setup validation, and `email:poll` one-shot smoke command.
+    - Added IMAP polling through a generic mailbox-client boundary backed by ImapFlow and mailparser.
+    - Added durable inbound email message records across JSON and SQLite stores for message-id dedupe.
+    - Added read-only email task intake that creates email-originated sessions, isolated worktrees, queued plan runs, compact acknowledgements, and audit events.
+    - Suppressed Slack notification delivery for email-originated sessions while preserving email notifications to the originating sender.
+    - Kept non-allowlisted sender handling silent to avoid confirming the monitored mailbox.
+    - Added generic IMAP docs, provider updates, an email-control-plane ADR, roadmap updates, security docs, and regression tests.
+  next:
+    - Keep email-originated write approvals disabled until nonce-bound or signed approval design exists.
+    - Consider additional control-plane adapters, including Discord, only through the same authorization, queue, audit, and runner boundaries.
+risks:
+  - Email sender identity can be spoofed or forwarded; inbound email must stay read-only until stronger approval authentication exists.
+  - Raw email bodies can contain secrets or signatures; storage must keep compact command/audit metadata rather than raw message dumps.
+  - IMAP polling can duplicate work under retries; durable inbound records must make processing idempotent.
+  - Local bridge TLS verification bypass is only acceptable for trusted local bridge endpoints.
+maintenance_audit:
+  assigned_at: "2026-04-16"
+  completed_at: "2026-04-16"
+  reviewed_by: lead
+  checks:
+    - npm run check
+    - npm run check:audit
+    - npm run check:secrets
+    - git diff --check
+    - targeted public-risk string scan
+  artifact: included in feature checkpoint commit
+  notes:
+    - Started after outbound SMTP notifications and live Proton Bridge SMTP validation.
+    - Closed with read-only IMAP intake implemented and email-originated write approvals intentionally out of scope.

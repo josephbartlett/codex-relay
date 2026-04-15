@@ -4,6 +4,9 @@ import Database from "better-sqlite3";
 import type {
   ApprovalRequest,
   AuditEvent,
+  EmailInboundMessageRecord,
+  EmailNotification,
+  EmailNotificationClaim,
   QueueClaim,
   QueueJob,
   Session,
@@ -13,14 +16,18 @@ import type {
 } from "../../../../packages/shared/src/types.js";
 import {
   createQueueLease,
+  createEmailNotificationLease,
   createSlackNotificationLease,
   InMemoryStore,
+  type EmailNotificationClaimInput,
   type QueueClaimInput,
   type SlackNotificationClaimInput
 } from "./inMemory.js";
 import {
   normalizeAuditEvent,
   normalizeApproval,
+  normalizeEmailInboundMessage,
+  normalizeEmailNotification,
   normalizeQueueJob,
   normalizeSession,
   normalizeSlackNotification,
@@ -86,6 +93,16 @@ export class SqliteStore extends InMemoryStore {
     this.upsert("slack_notifications", notification.id, notification);
   }
 
+  override saveEmailNotification(notification: EmailNotification): void {
+    super.saveEmailNotification(notification);
+    this.upsert("email_notifications", notification.id, notification);
+  }
+
+  override saveEmailInboundMessage(record: EmailInboundMessageRecord): void {
+    super.saveEmailInboundMessage(record);
+    this.upsert("email_inbound_messages", record.id, record);
+  }
+
   override getQueueJob(id: string): QueueJob | undefined {
     const row = this.db.prepare("SELECT data FROM queue_jobs WHERE id = ?").get(id) as RecordRow | undefined;
 
@@ -135,6 +152,58 @@ export class SqliteStore extends InMemoryStore {
     }
 
     return notifications;
+  }
+
+  override getEmailNotification(id: string): EmailNotification | undefined {
+    const row = this.db.prepare("SELECT data FROM email_notifications WHERE id = ?").get(id) as RecordRow | undefined;
+
+    if (!row) {
+      return undefined;
+    }
+
+    const notification = normalizeEmailNotification(JSON.parse(row.data) as EmailNotification);
+    this.emailNotifications.set(notification.id, notification);
+    return notification;
+  }
+
+  override listEmailNotifications(): EmailNotification[] {
+    const notifications = (
+      this.db.prepare("SELECT data FROM email_notifications ORDER BY updated_at ASC").all() as RecordRow[]
+    ).map((row) => normalizeEmailNotification(JSON.parse(row.data) as EmailNotification));
+
+    this.emailNotifications.clear();
+
+    for (const notification of notifications) {
+      this.emailNotifications.set(notification.id, notification);
+    }
+
+    return notifications;
+  }
+
+  override getEmailInboundMessage(id: string): EmailInboundMessageRecord | undefined {
+    const row = this.db.prepare("SELECT data FROM email_inbound_messages WHERE id = ?").get(id) as RecordRow | undefined;
+
+    if (!row) {
+      return undefined;
+    }
+
+    const record = normalizeEmailInboundMessage(JSON.parse(row.data) as EmailInboundMessageRecord);
+    this.emailInboundMessages.set(record.id, record);
+    return record;
+  }
+
+  override listEmailInboundMessages(): EmailInboundMessageRecord[] {
+    const records = (
+      this.db.prepare("SELECT data FROM email_inbound_messages ORDER BY updated_at ASC").all() as RecordRow[]
+    ).map((row) => normalizeEmailInboundMessage(JSON.parse(row.data) as EmailInboundMessageRecord));
+
+    this.emailInboundMessages.clear();
+
+    for (const record of records) {
+      this.emailInboundMessages.set(record.id, record);
+    }
+
+    return records;
   }
 
   override claimNextQueueJob(input: QueueClaimInput): QueueClaim | undefined {
@@ -235,6 +304,88 @@ export class SqliteStore extends InMemoryStore {
     }
   }
 
+  override claimNextEmailNotification(input: EmailNotificationClaimInput): EmailNotificationClaim | undefined {
+    this.db.exec("BEGIN IMMEDIATE");
+
+    try {
+      const rows = this.db
+        .prepare(
+          "SELECT data FROM email_notifications WHERE status IN ('pending', 'leased') ORDER BY available_at ASC, updated_at ASC"
+        )
+        .all() as RecordRow[];
+
+      for (const row of rows) {
+        const notification = normalizeEmailNotification(JSON.parse(row.data) as EmailNotification);
+        const expiredLease =
+          notification.status === "leased" &&
+          notification.lease &&
+          Date.parse(notification.lease.expiresAt) <= input.now.getTime();
+        const pending =
+          notification.status === "pending" && Date.parse(notification.availableAt) <= input.now.getTime();
+
+        if (!pending && !expiredLease) {
+          continue;
+        }
+
+        if (expiredLease && notification.attempts >= notification.maxAttempts) {
+          notification.status = "failed";
+          notification.failedAt = input.now.toISOString();
+          notification.updatedAt = input.now.toISOString();
+          notification.error =
+            notification.error ?? "Email notification delivery lease expired after maximum attempts.";
+          notification.lease = undefined;
+          this.upsert("email_notifications", notification.id, notification);
+          this.emailNotifications.set(notification.id, notification);
+          continue;
+        }
+
+        const lease = createEmailNotificationLease({
+          workerId: input.workerId,
+          now: input.now,
+          leaseTtlMs: input.leaseTtlMs
+        });
+        notification.status = "leased";
+        notification.lease = lease;
+        notification.attempts += 1;
+        notification.updatedAt = input.now.toISOString();
+        this.upsert("email_notifications", notification.id, notification);
+        this.emailNotifications.set(notification.id, notification);
+        this.db.exec("COMMIT");
+        return { notification, lease };
+      }
+
+      this.db.exec("COMMIT");
+      return undefined;
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  override markEmailNotificationSent(input: {
+    notificationId: string;
+    leaseId: string;
+    workerId: string;
+    now: Date;
+  }): EmailNotification {
+    const notification = super.markEmailNotificationSent(input);
+    this.upsert("email_notifications", notification.id, notification);
+    return notification;
+  }
+
+  override markEmailNotificationFailed(input: {
+    notificationId: string;
+    leaseId: string;
+    workerId: string;
+    now: Date;
+    error: string;
+    retryAfterMs: number;
+  }): EmailNotification {
+    const notification = super.markEmailNotificationFailed(input);
+    this.upsert("email_notifications", notification.id, notification);
+    return notification;
+  }
+
   flush(): void {
     this.db.exec("BEGIN IMMEDIATE");
 
@@ -245,6 +396,8 @@ export class SqliteStore extends InMemoryStore {
       this.db.prepare("DELETE FROM audit_events").run();
       this.db.prepare("DELETE FROM queue_jobs").run();
       this.db.prepare("DELETE FROM slack_notifications").run();
+      this.db.prepare("DELETE FROM email_notifications").run();
+      this.db.prepare("DELETE FROM email_inbound_messages").run();
 
       const sessionInsert = this.db.prepare(
         "INSERT INTO sessions (id, slack_thread_key, owner_slack_user_id, status, updated_at, data) VALUES (?, ?, ?, ?, ?, ?)"
@@ -263,6 +416,12 @@ export class SqliteStore extends InMemoryStore {
       );
       const slackNotificationInsert = this.db.prepare(
         "INSERT INTO slack_notifications (id, kind, status, slack_thread_key, session_id, repo_id, task_run_id, queue_job_id, available_at, updated_at, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      );
+      const emailNotificationInsert = this.db.prepare(
+        "INSERT INTO email_notifications (id, kind, status, session_id, repo_id, task_run_id, queue_job_id, available_at, updated_at, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      );
+      const emailInboundMessageInsert = this.db.prepare(
+        "INSERT INTO email_inbound_messages (id, mailbox_id, message_id, status, session_id, task_run_id, queue_job_id, created_at, updated_at, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
       );
 
       for (const session of this.sessions.values()) {
@@ -332,6 +491,36 @@ export class SqliteStore extends InMemoryStore {
           notification.availableAt,
           notification.updatedAt,
           JSON.stringify(notification)
+        );
+      }
+
+      for (const notification of this.emailNotifications.values()) {
+        emailNotificationInsert.run(
+          notification.id,
+          notification.kind,
+          notification.status,
+          notification.sessionId ?? null,
+          notification.repoId ?? null,
+          notification.taskRunId ?? null,
+          notification.queueJobId ?? null,
+          notification.availableAt,
+          notification.updatedAt,
+          JSON.stringify(notification)
+        );
+      }
+
+      for (const record of this.emailInboundMessages.values()) {
+        emailInboundMessageInsert.run(
+          record.id,
+          record.mailboxId,
+          record.messageId,
+          record.status,
+          record.sessionId ?? null,
+          record.taskRunId ?? null,
+          record.queueJobId ?? null,
+          record.createdAt,
+          record.updatedAt,
+          JSON.stringify(record)
         );
       }
 
@@ -420,6 +609,32 @@ export class SqliteStore extends InMemoryStore {
         data TEXT NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS email_notifications (
+        id TEXT PRIMARY KEY,
+        kind TEXT NOT NULL,
+        status TEXT NOT NULL,
+        session_id TEXT,
+        repo_id TEXT,
+        task_run_id TEXT,
+        queue_job_id TEXT,
+        available_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        data TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS email_inbound_messages (
+        id TEXT PRIMARY KEY,
+        mailbox_id TEXT NOT NULL,
+        message_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        session_id TEXT,
+        task_run_id TEXT,
+        queue_job_id TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        data TEXT NOT NULL
+      );
+
       CREATE INDEX IF NOT EXISTS idx_task_runs_session_id ON task_runs (session_id);
       CREATE INDEX IF NOT EXISTS idx_approvals_session_id ON approvals (session_id);
       CREATE INDEX IF NOT EXISTS idx_approvals_status_expiry ON approvals (status, expires_at);
@@ -432,9 +647,13 @@ export class SqliteStore extends InMemoryStore {
       CREATE INDEX IF NOT EXISTS idx_slack_notifications_claim ON slack_notifications (status, available_at, updated_at);
       CREATE INDEX IF NOT EXISTS idx_slack_notifications_thread ON slack_notifications (slack_thread_key);
       CREATE INDEX IF NOT EXISTS idx_slack_notifications_session ON slack_notifications (session_id);
+      CREATE INDEX IF NOT EXISTS idx_email_notifications_claim ON email_notifications (status, available_at, updated_at);
+      CREATE INDEX IF NOT EXISTS idx_email_notifications_session ON email_notifications (session_id);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_email_inbound_mailbox_message ON email_inbound_messages (mailbox_id, message_id);
+      CREATE INDEX IF NOT EXISTS idx_email_inbound_status ON email_inbound_messages (status, updated_at);
     `);
     this.db
-      .prepare("INSERT OR REPLACE INTO metadata (key, value) VALUES ('schema_version', '3')")
+      .prepare("INSERT OR REPLACE INTO metadata (key, value) VALUES ('schema_version', '5')")
       .run();
   }
 
@@ -499,6 +718,26 @@ export class SqliteStore extends InMemoryStore {
         this.upsert("slack_notifications", notification.id, notification);
       }
     }
+
+    for (const row of this.db.prepare("SELECT data FROM email_notifications").all() as RecordRow[]) {
+      const raw = JSON.parse(row.data) as EmailNotification;
+      const notification = normalizeEmailNotification(raw);
+      this.emailNotifications.set(notification.id, notification);
+
+      if (JSON.stringify(notification) !== JSON.stringify(raw)) {
+        this.upsert("email_notifications", notification.id, notification);
+      }
+    }
+
+    for (const row of this.db.prepare("SELECT data FROM email_inbound_messages").all() as RecordRow[]) {
+      const raw = JSON.parse(row.data) as EmailInboundMessageRecord;
+      const record = normalizeEmailInboundMessage(raw);
+      this.emailInboundMessages.set(record.id, record);
+
+      if (JSON.stringify(record) !== JSON.stringify(raw)) {
+        this.upsert("email_inbound_messages", record.id, record);
+      }
+    }
   }
 
   private loadFromJson(jsonPath: string): void {
@@ -534,6 +773,16 @@ export class SqliteStore extends InMemoryStore {
       const normalized = normalizeSlackNotification(notification);
       this.slackNotifications.set(normalized.id, normalized);
     }
+
+    for (const notification of parsed.emailNotifications ?? []) {
+      const normalized = normalizeEmailNotification(notification);
+      this.emailNotifications.set(normalized.id, normalized);
+    }
+
+    for (const record of parsed.emailInboundMessages ?? []) {
+      const normalized = normalizeEmailInboundMessage(record);
+      this.emailInboundMessages.set(normalized.id, normalized);
+    }
   }
 
   private isEmpty(): boolean {
@@ -543,7 +792,9 @@ export class SqliteStore extends InMemoryStore {
       this.approvals.size === 0 &&
       this.auditEvents.size === 0 &&
       this.queueJobs.size === 0 &&
-      this.slackNotifications.size === 0
+      this.slackNotifications.size === 0 &&
+      this.emailNotifications.size === 0 &&
+      this.emailInboundMessages.size === 0
     );
   }
 
@@ -563,7 +814,15 @@ export class SqliteStore extends InMemoryStore {
   }
 
   private upsert(
-    table: "sessions" | "task_runs" | "approvals" | "audit_events" | "queue_jobs" | "slack_notifications",
+    table:
+      | "sessions"
+      | "task_runs"
+      | "approvals"
+      | "audit_events"
+      | "queue_jobs"
+      | "slack_notifications"
+      | "email_notifications"
+      | "email_inbound_messages",
     id: string,
     value: unknown
   ): void {
@@ -643,6 +902,48 @@ export class SqliteStore extends InMemoryStore {
           notification.availableAt,
           notification.updatedAt,
           JSON.stringify(notification)
+        );
+      return;
+    }
+
+    if (table === "email_notifications") {
+      const notification = value as EmailNotification;
+      this.db
+        .prepare(
+          "INSERT OR REPLACE INTO email_notifications (id, kind, status, session_id, repo_id, task_run_id, queue_job_id, available_at, updated_at, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .run(
+          notification.id,
+          notification.kind,
+          notification.status,
+          notification.sessionId ?? null,
+          notification.repoId ?? null,
+          notification.taskRunId ?? null,
+          notification.queueJobId ?? null,
+          notification.availableAt,
+          notification.updatedAt,
+          JSON.stringify(notification)
+        );
+      return;
+    }
+
+    if (table === "email_inbound_messages") {
+      const record = value as EmailInboundMessageRecord;
+      this.db
+        .prepare(
+          "INSERT OR REPLACE INTO email_inbound_messages (id, mailbox_id, message_id, status, session_id, task_run_id, queue_job_id, created_at, updated_at, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        )
+        .run(
+          record.id,
+          record.mailboxId,
+          record.messageId,
+          record.status,
+          record.sessionId ?? null,
+          record.taskRunId ?? null,
+          record.queueJobId ?? null,
+          record.createdAt,
+          record.updatedAt,
+          JSON.stringify(record)
         );
       return;
     }

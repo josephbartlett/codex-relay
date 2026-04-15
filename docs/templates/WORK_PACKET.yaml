@@ -27,5 +27,6 @@ risks:
   - Main implementation or maintenance risk.
 maintenance_audit:
   assigned_at: "YYYY-MM-DD"
+  artifact: "included in feature checkpoint commit"
   notes:
     - Initial audit note.

@@ -170,6 +170,8 @@ Before each meaningful checkpoint commit:
 - Run `npm run check:work-packets`.
 - Run the relevant verification gate.
 
+Prefer one coherent checkpoint commit that includes implementation, tests, docs, packet status, and audit notes. Use a separate closure commit only when the packet was missed, release metadata must be recorded after the fact, or another real sequencing constraint exists.
+
 Before a release:
 
 - Confirm every release-blocking roadmap item is `Done` or explicitly `Deferred`.

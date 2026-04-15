@@ -2,7 +2,7 @@
 
 Slack is the control plane. Codex is the execution plane. Codex Relay lets a user start, approve, monitor, and hand off local or self-hosted Codex work from Slack without turning Slack into a terminal.
 
-`v0.1.x` is the first local-first release line. It is intended for trusted operators who are comfortable running a local Slack Socket Mode app, a local Codex CLI, and one or more explicitly bound repositories.
+Codex Relay is intended for trusted operators who are comfortable running a local Slack Socket Mode app, a local Codex CLI, and one or more explicitly bound repositories.
 
 ## How It Works With Codex
 
@@ -10,11 +10,12 @@ Codex Relay does not replace Codex. It wraps local Codex execution with a safer 
 
 1. Slack receives a mention, shortcut, slash command, approval click, or local handoff thread.
 2. Codex Relay maps that Slack thread to a session, checks user/channel/repo authorization, and binds the task to a configured local repo.
-3. Read-only planning runs through `codex exec --json`.
+3. Read-only planning or ask/query mode runs through `codex exec --json`.
 4. Approved or explicitly local-started write work runs in an isolated git worktree, not in your active branch.
 5. Relay stores compact session, queue, approval, audit, and PR metadata locally.
-6. Slack gets concise plan, approval, progress, completion, diff, and PR cards.
+6. Slack gets concise answer, plan, approval, progress, completion, diff, and PR cards.
 7. Follow-up mentions in the same thread continue the saved Codex session when Codex reports a resumable session id.
+8. Optional email notifications include a reply reference so follow-up emails can continue the same Relay session.
 
 ## Requirements
 
@@ -41,7 +42,12 @@ Codex Relay does not replace Codex. It wraps local Codex execution with a safer 
 12. Durable queue jobs, runner leases, and a local worker daemon API for the team-mode bridge.
 13. Relay-started local session handoff for Slack completion summaries and remote continuation.
 14. Runner hardening checks for shipped Codex profiles, execpolicy rules, and child-process environment filtering.
-15. Secret scanning and release hygiene checks.
+15. Disabled-by-default SMTP email notifications for queued runner lifecycle summaries.
+16. Disabled-by-default IMAP command intake for allowlisted email commands.
+17. Lightweight `ask`/`query` mode for read-only codebase questions without approval or PR handoff.
+18. Disabled-by-default direct workspace quick mode for trusted solo repos that explicitly opt in to source-working-tree edits.
+19. Reply-to-email continuation for queued summaries, including read-only follow-up questions.
+20. Secret scanning and release hygiene checks.
 
 ## Quick Start
 
@@ -89,6 +95,18 @@ In Slack:
 @codexbot repo:default inspect the repo and propose a safe first change
 ```
 
+For a read-only answer without the plan/approval loop:
+
+```text
+@codexbot ask repo:default which file produces Table 3?
+```
+
+Direct source-working-tree edits are disabled by default. For trusted solo repos, enable `CODEX_DIRECT_WORKSPACE_ENABLED=true`, add the repo id to `CODEX_DIRECT_WORKSPACE_ALLOWED_REPOS`, and use an explicit `quick` or `direct` request:
+
+```text
+@codexbot quick repo:default update RELEASE_SMOKE.md with one passing sentence
+```
+
 For a compiled run:
 
 ```bash
@@ -115,6 +133,15 @@ npm run local:session -- --thread-key T123:C123:1776000000.000000 --user U123 --
 ```
 
 Keep `npm run dev:runner` and `npm run dev:slack` running against the same SQLite store so the queued run executes and the Slack thread receives start/completion notifications. Follow-up mentions in that thread continue the saved Codex session when a session id is available.
+
+Optional email summaries and read-only email intake can be enabled after Slack/local operation is working. See `docs/email/README.md` and keep provider credentials only in local `.env`:
+
+```bash
+npm run dev:email
+npm run email:poll
+```
+
+Email notifications include a `relay:<sessionId>` reply reference. Reply to those emails with `ask ...` for a read-only follow-up, or with another plan request to queue a new read-only plan in the same session. Email write approvals remain disabled; email direct workspace mode requires the separate `EMAIL_DIRECT_WORKSPACE_ENABLED=true` gate.
 
 To validate a fresh install without Slack tokens or a live Slack task:
 
@@ -174,6 +201,8 @@ The bot posts a kickoff card, runs a read-only plan, then posts an approval card
 
 In an existing Codex Relay thread, mention the bot with follow-up intents such as `continue`, `revise plan`, `run tests`, `summarize diff`, `update PR`, or `cancel`. Test runs are approval-gated because they execute repository code. After a draft PR exists, `update PR` commits any new session worktree changes to the same branch and updates the existing draft PR instead of creating a duplicate.
 
+Use `ask` or `query` in a thread when the request is informational. It runs read-only and returns an answer without creating an approval or PR controls.
+
 ## Current Scope
 
 This is an early local-first product. Runners are local, and the implemented runner is `ExecAdapter`. Follow-up tasks in the same Slack thread reuse the saved Codex exec session when available. The interfaces are already shaped so a later `SdkAdapter` or `AppServerAdapter` can replace subprocess orchestration without rewriting Slack listeners.
@@ -182,11 +211,11 @@ Team-mode queue primitives are present but still incremental: the gateway can ke
 
 Local session handoff is implemented for Relay-started sessions. Arbitrary attachment to an already-running terminal Codex process remains a follow-on because Relay needs a trustworthy Slack thread, worktree, and Codex session id to continue safely.
 
-## Maintenance Pattern
+Direct workspace quick mode is intentionally separate from the default worktree flow. It edits the configured source repo path, skips PR controls, requires explicit repo allowlisting, and can require a clean working tree before starting.
 
-Codex Relay uses Custody-First Orchestration for agent and subagent maintenance. This repository was the proving ground for the pattern: work is split into bounded packets, active scopes are checked for overlap, verification is recorded before closure, and maintenance history stays human-readable.
+## Maintainer Workflow
 
-The standalone reusable scaffold lives at https://github.com/josephbartlett/custody-first-orchestration.
+Contributors and coding agents should follow `CONTRIBUTING.md` and `AGENTS.md`. Non-trivial changes use bounded work packets so scope, ownership, and verification stay reviewable. The reusable workflow scaffold lives at https://github.com/josephbartlett/custody-first-orchestration.
 
 ## Useful Files
 
@@ -199,20 +228,20 @@ The standalone reusable scaffold lives at https://github.com/josephbartlett/cust
 - `https://developers.openai.com/codex/cli` is the official Codex CLI documentation.
 - `apps/local-runner/src/daemon.ts` claims queued runner work and maintains leases.
 - `apps/local-runner/src/localSession.ts` creates Slack-bound local handoff sessions.
+- `apps/email-gateway/src/daemon.ts` publishes optional SMTP email notifications and can poll IMAP for read-only email commands.
 - `apps/local-runner/src/startupChecks.ts` validates startup dependencies and runner policy posture.
 - `apps/local-runner/src/worktreeManager.ts` creates git worktrees.
 - `infra/slack/app-manifest.yaml` contains the Slack app manifest.
 - `infra/codex/default.rules` is the starter exec policy ruleset.
 - `docs/ROADMAP.md` tracks the path from the current local-first release line to the fully built product.
-- `docs/CUSTODY_FIRST_ORCHESTRATION.md` defines the multi-agent maintenance pattern used by this repo.
-- `https://github.com/josephbartlett/custody-first-orchestration` contains the reusable Custody-First scaffold extracted from this work.
-- `docs/work-packets/` contains machine-readable custody packets.
+- `docs/email/README.md` covers optional email notification and command intake setup.
 - `SECURITY.md` explains vulnerability reporting and security posture.
 
 ## Safety Defaults
 
 - Plan/review/explain tasks use `read-only`.
 - Approved implementation and explicit local handoff implementation use `workspace-write`.
+- Direct workspace quick mode is disabled by default and must be explicitly enabled per repo.
 - The harness never uses `danger-full-access` or `--yolo`.
 - Network remains governed by the local Codex configuration and should stay disabled unless a repo profile explicitly permits it.
 - Codex child processes receive only the configured `CODEX_RUNNER_ENV_ALLOWLIST` plus `NO_COLOR=1`; Slack, GitHub, OpenAI, and cloud provider tokens are not inherited by default.

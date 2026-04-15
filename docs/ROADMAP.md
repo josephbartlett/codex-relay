@@ -75,6 +75,7 @@ Exit criteria:
 
 - A user can manage an entire task lifecycle from Slack mobile without needing terminal output.
 - A user can start work locally through Relay, leave, receive a Slack completion summary, and continue in the same Slack thread.
+- A user can ask read-only codebase questions without entering the implementation pipeline.
 
 ## Phase 4: GitHub Lifecycle
 
@@ -153,6 +154,8 @@ Exit criteria:
 
 Goal: support email as an optional local-first control plane alongside Slack for environments where a developer wants remote task dispatch without exposing a public HTTP endpoint.
 
+Status: outbound SMTP notifications, inbound IMAP plan/ask intake, reply-to-email continuation, and gated direct workspace commands are implemented and disabled by default where appropriate. Email-originated approvals remain future work.
+
 Why it belongs:
 
 - Email can provide a mobile-friendly command surface without requiring a public inbound webhook to the developer machine.
@@ -167,7 +170,7 @@ Candidate shape:
 - Keep the runner side unchanged: Codex execution still happens through the orchestrator, queue, workspace manager, and runner adapters.
 - Use strict sender allowlists, mailbox/folder scoping, signed or nonce-based approval replies, and conservative parsing before any mutating action.
 - Prefer plain-text summaries, compact status replies, and linked local/audit artifacts over terminal-style output.
-- Investigate reusable local mail-bridge patterns after Slack `v0.1.0` release scope is stable.
+- Investigate reusable local mail-bridge patterns as a dedicated adapter track.
 
 Possible local architecture:
 
@@ -183,18 +186,23 @@ Email client / mobile mailbox
 Exploration phases:
 
 1. Discovery: review local mail-bridge patterns and identify reusable polling, parsing, reply, and state-management pieces.
-2. ADR: define the email adapter boundary, authentication model, allowed mailbox/folder scopes, reply approval format, and raw-message retention policy.
-3. Prototype: convert an allowlisted plain-text email into a read-only plan task and send a compact reply without Slack credentials.
-4. Approval loop: add nonce-bound or signed approval replies for execute-plan only, with expiry and audit records.
-5. Adapter hardening: add duplicate-message handling, attachment policy, retry behavior, redaction, and operator diagnostics.
+2. Foundation: parse allowlisted plain-text commands into read-only plan and ask/query requests without write approvals. Status: implemented.
+3. Outbound notifications: send compact SMTP summaries for plan-ready, completed, and failed runner events. Status: implemented behind disabled-by-default config.
+4. ADR: define the live adapter boundary, authentication model, allowed mailbox/folder scopes, reply approval format, and raw-message retention policy. Status: read-only boundary accepted; write approval format remains future work.
+5. Prototype: convert an allowlisted plain-text email into a read-only plan or ask task and send a compact reply without Slack credentials. Status: implemented behind disabled-by-default config.
+6. Reply continuation: route replies containing `relay:<sessionId>` back to the existing Relay session. Status: implemented as a routing hint, not an approval token.
+7. Direct workspace opt-in: support explicit `quick`/`direct` email commands only when both global and email-specific gates are enabled. Status: implemented for trusted solo repos.
+8. Approval loop: add nonce-bound or signed approval replies for execute-plan only, with expiry and audit records.
+9. Adapter hardening: add duplicate-message handling, attachment policy, retry behavior, redaction, and operator diagnostics.
 
 Non-goals for initial exploration:
 
 - Do not make Codex Relay an email server.
 - Do not ingest arbitrary inboxes by default.
 - Do not accept write approvals from unauthenticated or weakly matched email replies.
+- Do not treat `relay:<sessionId>` as authentication or approval.
 - Do not store full raw email bodies unless explicitly enabled by deployment policy.
-- Do not make the email path a `v0.1.0` release blocker.
+- Do not let the email path weaken the existing Slack security model.
 
 Exit criteria for a future packet:
 
@@ -203,11 +211,34 @@ Exit criteria for a future packet:
 - Human-readable audit records show the source mailbox/folder/message id without storing sensitive raw mail content.
 - Slack and email adapters produce the same core task/audit records so downstream runner behavior remains transport-agnostic.
 
+## Future Path: Additional Control Planes
+
+Goal: support additional operator surfaces without weakening the runner boundary.
+
+Discord is a candidate adapter because community and small-team engineering work often already happens there, and the same mention/thread/approval/status model can map to Discord channels or threads. It should not become a separate execution path.
+
+Adapter rules:
+
+- reuse the orchestrator, queue, persistence, audit, authorization, and runner adapters;
+- keep provider identity and permission checks explicit and fail-closed;
+- keep write approvals button- or nonce-bound, never inferred from plain text alone;
+- keep progress summaries compact and avoid terminal-style streaming;
+- keep each provider adapter optional and disabled by default.
+
+Exit criteria for any new control-plane adapter:
+
+- a design ADR defines the transport boundary and identity model;
+- adapter-originated sessions produce the same task, queue, notification, and audit records as Slack/email where practical;
+- security docs explain spoofing, replay, retention, and approval risks for the adapter;
+- provider-specific credentials and local endpoint values stay out of tracked docs and work packets.
+
 ## Current Build Order
 
-1. Tag and publish `v0.1.0` from the verified release candidate.
-2. Before normal live use, update protected local `.env` strict-mode Slack allowlists and run `npm run validate:live-config`.
-3. Promote tracked brand assets only after rendered screenshot review and explicit maintainer approval.
-4. Keep arbitrary attach to pre-existing terminal Codex sessions deferred until Codex session/workspace provenance can be captured safely.
-5. Keep the email control-plane path as post-`v0.1.0` discovery unless release readiness uncovers a shared adapter boundary that should be addressed earlier.
-6. Keep external Custody-First scaffold work tabled unless explicitly reopened.
+1. Keep the public Slack/local-session path stable while adding new adapters behind disabled-by-default configuration.
+2. Keep lightweight ask/query mode available for informational questions without approval or PR handoff.
+3. Keep direct workspace quick mode opt-in, repo-scoped, and clearly separated from the default worktree pipeline.
+4. Before normal live use, update protected local `.env` strict-mode Slack allowlists and run `npm run validate:live-config`.
+5. Promote tracked brand assets only after rendered screenshot review and explicit maintainer approval.
+6. Keep arbitrary attach to pre-existing terminal Codex sessions deferred until Codex session/workspace provenance can be captured safely.
+7. Keep email-originated write approval behind a future nonce-bound or signed approval design.
+8. Keep external Custody-First scaffold work tabled unless explicitly reopened.

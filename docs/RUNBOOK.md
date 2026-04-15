@@ -38,6 +38,31 @@ Tasks can override the default repo with `repo:<id>`.
 
 Follow-up mentions in an existing task thread reuse the saved Codex exec session when available and continue in the same session worktree.
 
+Use lightweight ask mode for read-only questions that do not need the plan/approval/worktree/PR loop:
+
+```text
+@codexbot ask repo:api which file produces Table 3?
+@codexbot query repo:api what matching covariates are used in 004?
+```
+
+Ask mode returns an answer in the thread and does not create an approval, diff card, or PR controls.
+
+Direct workspace quick mode is available only when explicitly enabled for trusted solo repos:
+
+```text
+CODEX_DIRECT_WORKSPACE_ENABLED=true
+CODEX_DIRECT_WORKSPACE_ALLOWED_REPOS=api
+CODEX_DIRECT_WORKSPACE_REQUIRE_CLEAN=true
+```
+
+Then use an explicit quick/direct request:
+
+```text
+@codexbot quick repo:api update RELEASE_SMOKE.md with one passing sentence
+```
+
+This edits the configured source repo path instead of an isolated worktree. It is useful for small trusted edits, but it bypasses the default PR handoff flow and should stay repo-scoped.
+
 ## Slack Authorization Policy
 
 Strict policy is the default:
@@ -215,6 +240,81 @@ Notification delivery is intentionally coarse:
 The delivery records store Slack thread IDs, session/run/approval/job IDs, title, compact detail text, status, attempts, lease metadata, and sanitized delivery errors. They do not store raw prompts, raw command output, full diffs, Slack tokens, or runner logs.
 
 Use SQLite mode whenever the gateway and runner daemon are separate processes. SQLite notification claims use an immediate transaction so competing gateway processes do not deliver the same pending notification. JSON mode persists notifications for solo compatibility only.
+
+## Email Gateway
+
+Email support is optional and disabled by default. It is useful when a queued runner finishes while the operator is away from Slack, or when email is the preferred local-first command surface for self-hosted operation.
+
+Start with the generic guides:
+
+```text
+docs/email/SMTP.md
+docs/email/IMAP.md
+```
+
+Provider notes live under `docs/email/`. Keep provider-specific hosts, usernames, sender addresses, recipients, token labels, and generated secrets in local `.env` only.
+
+After configuring SMTP values locally, validate outbound delivery:
+
+```bash
+npm run email:test
+```
+
+For read-only inbound email commands, configure `EMAIL_CONTROL_PLANE_ENABLED=true`, `EMAIL_ALLOWED_SENDERS`, and `EMAIL_IMAP_*` values in `.env`. Send plain-text commands such as:
+
+```text
+repo:api inspect the failing parser tests and propose a plan
+```
+
+Run the email gateway and runner against the same state backend:
+
+```bash
+npm run dev:email
+npm run dev:runner
+```
+
+For a one-shot inbound smoke test after sending an allowlisted plain-text command email:
+
+```bash
+npm run email:poll
+```
+
+For compiled operation:
+
+```bash
+npm run build
+npm run start:email
+npm run start:runner
+```
+
+The email gateway claims durable email notification records, sends compact text summaries, polls IMAP when enabled, converts allowlisted plain-text commands into queued tasks, and records success/failure in the local audit log.
+
+It does not send raw command output, include full diffs, ingest attachments, store raw email source, or accept approvals by email.
+
+Email command examples:
+
+```text
+repo:api inspect the failing parser tests and propose a plan
+ask repo:api which file produces Table 3?
+query repo:api what changed in the latest run?
+```
+
+Outbound plan-ready and completion emails include a `relay:<sessionId>` reference. Reply to that email with a follow-up such as:
+
+```text
+ask which files did you inspect?
+continue by checking the current diff and proposing the next step
+```
+
+Replies with `ask` or `query` queue read-only answer runs. Replies without those prefixes queue a read-only plan in the same Relay session. Plain-text email replies cannot approve write execution.
+
+Email direct workspace mode has a separate gate on top of `CODEX_DIRECT_WORKSPACE_ENABLED`:
+
+```text
+EMAIL_DIRECT_WORKSPACE_ENABLED=true
+```
+
+When both direct workspace gates are enabled, new email commands with `quick` or `direct` can edit the source working tree for allowlisted repos. Direct email commands cannot continue an isolated worktree session; use a new email with `repo:<id> direct ...` for that path.
 
 ## Setup Validator
 

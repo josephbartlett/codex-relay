@@ -111,4 +111,6 @@ Run:
 npm run check:work-packets
 ```
 
-This validates the packet schema, detects overlapping active path or concern ownership, requires objective/non-goals/verification/handoff criteria for active work, and requires completed verification, evidence, reviewer, commit, and maintenance audit closure for done packets.
+This validates the packet schema, detects overlapping active path or concern ownership, requires objective/non-goals/verification/handoff criteria for active work, and requires completed verification, evidence, reviewer, checks, completion date, and a commit SHA or artifact reference for done packets.
+
+The preferred public-history shape is one coherent feature commit that includes implementation, tests, docs, packet status, and audit notes. Do not create a follow-up closure commit only to write down the feature commit SHA. Use `maintenance_audit.artifact` for same-commit closure, and reserve separate closure commits for missed packet updates, post-tag release metadata, or other real sequencing constraints.

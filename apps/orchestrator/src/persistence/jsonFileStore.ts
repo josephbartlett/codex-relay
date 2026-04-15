@@ -3,6 +3,8 @@ import { dirname } from "node:path";
 import type {
   ApprovalRequest,
   AuditEvent,
+  EmailInboundMessageRecord,
+  EmailNotification,
   QueueJob,
   Session,
   SlackNotification,
@@ -12,6 +14,8 @@ import { InMemoryStore } from "./inMemory.js";
 import {
   normalizeAuditEvent,
   normalizeApproval,
+  normalizeEmailInboundMessage,
+  normalizeEmailNotification,
   normalizeQueueJob,
   normalizeSession,
   normalizeSlackNotification,
@@ -61,6 +65,15 @@ export class JsonFileStore extends InMemoryStore {
       store.slackNotifications.set(notification.id, normalizeSlackNotification(notification));
     }
 
+    for (const notification of parsed.emailNotifications ?? []) {
+      store.emailNotifications.set(notification.id, normalizeEmailNotification(notification));
+    }
+
+    for (const record of parsed.emailInboundMessages ?? []) {
+      const normalized = normalizeEmailInboundMessage(record);
+      store.emailInboundMessages.set(normalized.id, normalized);
+    }
+
     store.flush();
     return store;
   }
@@ -95,17 +108,29 @@ export class JsonFileStore extends InMemoryStore {
     this.flush();
   }
 
+  override saveEmailNotification(notification: EmailNotification): void {
+    super.saveEmailNotification(notification);
+    this.flush();
+  }
+
+  override saveEmailInboundMessage(record: EmailInboundMessageRecord): void {
+    super.saveEmailInboundMessage(record);
+    this.flush();
+  }
+
   flush(): void {
     mkdirSync(dirname(this.statePath), { recursive: true });
 
     const state: PersistedState = {
-      version: 3,
+      version: 5,
       sessions: [...this.sessions.values()],
       taskRuns: [...this.taskRuns.values()],
       approvals: [...this.approvals.values()],
       auditEvents: [...this.auditEvents.values()].sort((a, b) => a.at.localeCompare(b.at)),
       queueJobs: [...this.queueJobs.values()],
-      slackNotifications: [...this.slackNotifications.values()]
+      slackNotifications: [...this.slackNotifications.values()],
+      emailNotifications: [...this.emailNotifications.values()],
+      emailInboundMessages: [...this.emailInboundMessages.values()]
     };
 
     const tmpPath = `${this.statePath}.tmp`;

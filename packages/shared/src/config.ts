@@ -22,12 +22,42 @@ const EnvSchema = z.object({
   CODEX_REQUIRE_EXECPOLICY_CHECK: z.enum(["true", "false"]).default("true"),
   CODEX_STORE_KIND: z.enum(["json", "sqlite"]).default("json"),
   CODEX_DATABASE_PATH: z.string().default(".codex-slack/state.db"),
+  CODEX_DIRECT_WORKSPACE_ENABLED: z.enum(["true", "false"]).default("false"),
+  CODEX_DIRECT_WORKSPACE_ALLOWED_REPOS: z.string().default(""),
+  CODEX_DIRECT_WORKSPACE_REQUIRE_CLEAN: z.enum(["true", "false"]).default("true"),
   CODEX_POLICY_MODE: z.enum(["strict", "local-dev"]).default("strict"),
   CODEX_ALLOWED_SLACK_USERS: z.string().default(""),
   CODEX_MAINTAINER_SLACK_USERS: z.string().default(""),
   CODEX_ALLOWED_SLACK_CHANNELS: z.string().default(""),
   CODEX_REPO_ALLOWED_SLACK_USERS: z.string().default(""),
-  CODEX_REPO_ALLOWED_SLACK_CHANNELS: z.string().default("")
+  CODEX_REPO_ALLOWED_SLACK_CHANNELS: z.string().default(""),
+  EMAIL_CONTROL_PLANE_ENABLED: z.enum(["true", "false"]).default("false"),
+  EMAIL_ALLOWED_SENDERS: z.string().default(""),
+  EMAIL_MAILBOX_ID: z.string().default("default"),
+  EMAIL_DEFAULT_REPO_ID: z.string().optional().default(""),
+  EMAIL_DIRECT_WORKSPACE_ENABLED: z.enum(["true", "false"]).default("false"),
+  EMAIL_IMAP_ENABLED: z.enum(["true", "false"]).default("false"),
+  EMAIL_IMAP_HOST: z.string().optional().default(""),
+  EMAIL_IMAP_PORT: z.string().optional().default("993"),
+  EMAIL_IMAP_SECURE: z.enum(["true", "false"]).default("true"),
+  EMAIL_IMAP_TLS_REJECT_UNAUTHORIZED: z.enum(["true", "false"]).default("true"),
+  EMAIL_IMAP_USER: z.string().optional().default(""),
+  EMAIL_IMAP_PASSWORD: z.string().optional().default(""),
+  EMAIL_IMAP_MAILBOX: z.string().optional().default("INBOX"),
+  EMAIL_IMAP_POLL_MS: z.string().optional().default("10000"),
+  EMAIL_IMAP_MAX_MESSAGES: z.string().optional().default("10"),
+  EMAIL_IMAP_MAX_BYTES: z.string().optional().default("200000"),
+  EMAIL_IMAP_MARK_SEEN: z.enum(["true", "false"]).default("false"),
+  EMAIL_SMTP_ENABLED: z.enum(["true", "false"]).default("false"),
+  EMAIL_SMTP_HOST: z.string().optional().default(""),
+  EMAIL_SMTP_PORT: z.string().optional().default("587"),
+  EMAIL_SMTP_SECURE: z.enum(["true", "false"]).default("false"),
+  EMAIL_SMTP_TLS_REJECT_UNAUTHORIZED: z.enum(["true", "false"]).default("true"),
+  EMAIL_SMTP_USER: z.string().optional().default(""),
+  EMAIL_SMTP_PASSWORD: z.string().optional().default(""),
+  EMAIL_FROM: z.string().optional().default(""),
+  EMAIL_TO: z.string().optional().default(""),
+  EMAIL_PUBLISHER_POLL_MS: z.string().optional().default("2000")
 });
 
 export interface LoadConfigOptions {
@@ -51,10 +81,12 @@ export interface HarnessConfig {
     requireExecPolicyCheck: boolean;
     storeKind: "json" | "sqlite";
     databasePath: string;
+    directWorkspace: DirectWorkspaceConfig;
   };
   repos: RepoBinding[];
   defaultRepoId: string;
   policy: HarnessPolicyConfig;
+  email?: EmailControlPlaneConfig;
 }
 
 export interface HarnessPolicyConfig {
@@ -68,6 +100,84 @@ export interface HarnessPolicyConfig {
 export interface RepoPolicyConfig {
   allowedSlackUserIds: string[];
   allowedSlackChannelIds: string[];
+}
+
+export interface EmailControlPlaneConfig {
+  enabled: boolean;
+  allowedSenders: string[];
+  mailboxId: string;
+  defaultRepoId?: string;
+  directWorkspaceEnabled: boolean;
+  imap: EmailImapConfig;
+  smtp: EmailSmtpConfig;
+}
+
+export interface DirectWorkspaceConfig {
+  enabled: boolean;
+  allowedRepoIds: string[];
+  requireClean: boolean;
+}
+
+export const defaultEmailControlPlaneConfig: EmailControlPlaneConfig = {
+  enabled: false,
+  allowedSenders: [],
+  mailboxId: "default",
+  defaultRepoId: undefined,
+  directWorkspaceEnabled: false,
+  imap: {
+    enabled: false,
+    host: "",
+    port: 993,
+    secure: true,
+    tlsRejectUnauthorized: true,
+    username: undefined,
+    password: undefined,
+    mailbox: "INBOX",
+    pollIntervalMs: 10_000,
+    maxMessages: 10,
+    maxBytes: 200_000,
+    markSeen: false
+  },
+  smtp: {
+    enabled: false,
+    host: "",
+    port: 587,
+    secure: false,
+    tlsRejectUnauthorized: true,
+    username: undefined,
+    password: undefined,
+    from: "",
+    recipients: [],
+    pollIntervalMs: 2000
+  }
+};
+
+export interface EmailImapConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  secure: boolean;
+  tlsRejectUnauthorized: boolean;
+  username?: string;
+  password?: string;
+  mailbox: string;
+  pollIntervalMs: number;
+  maxMessages: number;
+  maxBytes: number;
+  markSeen: boolean;
+}
+
+export interface EmailSmtpConfig {
+  enabled: boolean;
+  host: string;
+  port: number;
+  secure: boolean;
+  tlsRejectUnauthorized: boolean;
+  username?: string;
+  password?: string;
+  from: string;
+  recipients: string[];
+  pollIntervalMs: number;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env, options: LoadConfigOptions = {}): HarnessConfig {
@@ -95,6 +205,29 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, options: LoadCo
 
   assertRepoPoliciesReferenceConfiguredRepos(repos, repoPolicies);
 
+  const emailAllowedSenders = parseDelimitedList(parsed.EMAIL_ALLOWED_SENDERS).map(normalizeEmailAddress);
+  const emailImap = parseEmailImapConfig(parsed);
+  const emailSmtp = parseEmailSmtpConfig(parsed);
+  const directWorkspace: DirectWorkspaceConfig = {
+    enabled: parsed.CODEX_DIRECT_WORKSPACE_ENABLED === "true",
+    allowedRepoIds: parseDelimitedList(parsed.CODEX_DIRECT_WORKSPACE_ALLOWED_REPOS),
+    requireClean: parsed.CODEX_DIRECT_WORKSPACE_REQUIRE_CLEAN === "true"
+  };
+
+  if (emailImap.enabled && emailAllowedSenders.length === 0) {
+    throw new Error("EMAIL_ALLOWED_SENDERS must include at least one sender when EMAIL_IMAP_ENABLED=true.");
+  }
+
+  if (directWorkspace.enabled && directWorkspace.allowedRepoIds.length === 0) {
+    throw new Error("CODEX_DIRECT_WORKSPACE_ALLOWED_REPOS must include at least one repo when CODEX_DIRECT_WORKSPACE_ENABLED=true.");
+  }
+
+  assertRepoIdsConfigured(repos, directWorkspace.allowedRepoIds, "CODEX_DIRECT_WORKSPACE_ALLOWED_REPOS");
+
+  if (parsed.EMAIL_DIRECT_WORKSPACE_ENABLED === "true" && !directWorkspace.enabled) {
+    throw new Error("CODEX_DIRECT_WORKSPACE_ENABLED=true is required when EMAIL_DIRECT_WORKSPACE_ENABLED=true.");
+  }
+
   return {
     slack: {
       botToken: parsed.SLACK_BOT_TOKEN,
@@ -111,7 +244,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, options: LoadCo
       rulesPath: resolve(parsed.CODEX_RULES_PATH),
       requireExecPolicyCheck: parsed.CODEX_REQUIRE_EXECPOLICY_CHECK === "true",
       storeKind: parsed.CODEX_STORE_KIND,
-      databasePath: resolve(parsed.CODEX_DATABASE_PATH)
+      databasePath: resolve(parsed.CODEX_DATABASE_PATH),
+      directWorkspace
     },
     repos,
     defaultRepoId,
@@ -121,8 +255,23 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env, options: LoadCo
       maintainerSlackUserIds: parseList(parsed.CODEX_MAINTAINER_SLACK_USERS),
       allowedSlackChannelIds: parseList(parsed.CODEX_ALLOWED_SLACK_CHANNELS),
       repoPolicies
+    },
+    email: {
+      enabled: parsed.EMAIL_CONTROL_PLANE_ENABLED === "true",
+      allowedSenders: emailAllowedSenders,
+      mailboxId: parsed.EMAIL_MAILBOX_ID,
+      defaultRepoId: parsed.EMAIL_DEFAULT_REPO_ID || undefined,
+      directWorkspaceEnabled: parsed.EMAIL_DIRECT_WORKSPACE_ENABLED === "true",
+      imap: emailImap,
+      smtp: emailSmtp
     }
   };
+}
+
+export function normalizeEmailAddress(value: string): string {
+  const trimmed = value.trim().toLowerCase();
+  const angleMatch = trimmed.match(/<([^<>]+)>/u);
+  return angleMatch?.[1]?.trim().toLowerCase() ?? trimmed;
 }
 
 export function parseRepoBindings(raw: string): RepoBinding[] {
@@ -164,6 +313,122 @@ function parseList(raw: string): string[] {
     .split(/[,\n;\s]+/)
     .map((entry) => entry.trim())
     .filter(Boolean);
+}
+
+function parseDelimitedList(raw: string): string[] {
+  return raw
+    .split(/[,\n;]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function parseEmailImapConfig(parsed: z.infer<typeof EnvSchema>): EmailImapConfig {
+  const port = parseInteger(parsed.EMAIL_IMAP_PORT, "EMAIL_IMAP_PORT", { min: 1, max: 65_535 });
+  const pollIntervalMs = parseInteger(parsed.EMAIL_IMAP_POLL_MS, "EMAIL_IMAP_POLL_MS", {
+    min: 1_000,
+    max: 300_000
+  });
+  const maxMessages = parseInteger(parsed.EMAIL_IMAP_MAX_MESSAGES, "EMAIL_IMAP_MAX_MESSAGES", {
+    min: 1,
+    max: 100
+  });
+  const maxBytes = parseInteger(parsed.EMAIL_IMAP_MAX_BYTES, "EMAIL_IMAP_MAX_BYTES", {
+    min: 1_000,
+    max: 5_000_000
+  });
+  const enabled = parsed.EMAIL_IMAP_ENABLED === "true";
+  const host = parsed.EMAIL_IMAP_HOST.trim();
+  const username = parsed.EMAIL_IMAP_USER.trim() || undefined;
+  const password = parsed.EMAIL_IMAP_PASSWORD || undefined;
+  const mailbox = parsed.EMAIL_IMAP_MAILBOX.trim() || "INBOX";
+
+  if (enabled) {
+    if (parsed.EMAIL_CONTROL_PLANE_ENABLED !== "true") {
+      throw new Error("EMAIL_CONTROL_PLANE_ENABLED=true is required when EMAIL_IMAP_ENABLED=true.");
+    }
+
+    if (!host) {
+      throw new Error("EMAIL_IMAP_HOST is required when EMAIL_IMAP_ENABLED=true.");
+    }
+
+    if (Boolean(username) !== Boolean(password)) {
+      throw new Error("EMAIL_IMAP_USER and EMAIL_IMAP_PASSWORD must be configured together.");
+    }
+
+    if (!username || !password) {
+      throw new Error("EMAIL_IMAP_USER and EMAIL_IMAP_PASSWORD are required when EMAIL_IMAP_ENABLED=true.");
+    }
+  }
+
+  return {
+    enabled,
+    host,
+    port,
+    secure: parsed.EMAIL_IMAP_SECURE === "true",
+    tlsRejectUnauthorized: parsed.EMAIL_IMAP_TLS_REJECT_UNAUTHORIZED === "true",
+    username,
+    password,
+    mailbox,
+    pollIntervalMs,
+    maxMessages,
+    maxBytes,
+    markSeen: parsed.EMAIL_IMAP_MARK_SEEN === "true"
+  };
+}
+
+function parseEmailSmtpConfig(parsed: z.infer<typeof EnvSchema>): EmailSmtpConfig {
+  const port = parseInteger(parsed.EMAIL_SMTP_PORT, "EMAIL_SMTP_PORT", { min: 1, max: 65_535 });
+  const pollIntervalMs = parseInteger(parsed.EMAIL_PUBLISHER_POLL_MS, "EMAIL_PUBLISHER_POLL_MS", {
+    min: 500,
+    max: 300_000
+  });
+  const recipients = parseDelimitedList(parsed.EMAIL_TO).map(normalizeEmailAddress);
+  const enabled = parsed.EMAIL_SMTP_ENABLED === "true";
+  const host = parsed.EMAIL_SMTP_HOST.trim();
+  const from = parsed.EMAIL_FROM.trim();
+  const username = parsed.EMAIL_SMTP_USER.trim() || undefined;
+  const password = parsed.EMAIL_SMTP_PASSWORD || undefined;
+
+  if (enabled) {
+    if (!host) {
+      throw new Error("EMAIL_SMTP_HOST is required when EMAIL_SMTP_ENABLED=true.");
+    }
+
+    if (!from) {
+      throw new Error("EMAIL_FROM is required when EMAIL_SMTP_ENABLED=true.");
+    }
+
+    if (recipients.length === 0) {
+      throw new Error("EMAIL_TO must include at least one recipient when EMAIL_SMTP_ENABLED=true.");
+    }
+
+    if (Boolean(username) !== Boolean(password)) {
+      throw new Error("EMAIL_SMTP_USER and EMAIL_SMTP_PASSWORD must be configured together.");
+    }
+  }
+
+  return {
+    enabled,
+    host,
+    port,
+    secure: parsed.EMAIL_SMTP_SECURE === "true",
+    tlsRejectUnauthorized: parsed.EMAIL_SMTP_TLS_REJECT_UNAUTHORIZED === "true",
+    username,
+    password,
+    from,
+    recipients,
+    pollIntervalMs
+  };
+}
+
+function parseInteger(raw: string, name: string, bounds: { min: number; max: number }): number {
+  const value = Number.parseInt(raw, 10);
+
+  if (!Number.isInteger(value) || value < bounds.min || value > bounds.max) {
+    throw new Error(`${name} must be an integer between ${bounds.min} and ${bounds.max}.`);
+  }
+
+  return value;
 }
 
 function parseRepoPolicyMap(raw: string, kind: "users" | "channels"): Record<string, RepoPolicyConfig> {
@@ -217,10 +482,14 @@ function assertRepoPoliciesReferenceConfiguredRepos(
   repos: RepoBinding[],
   repoPolicies: Record<string, RepoPolicyConfig>
 ): void {
-  const repoIds = new Set(repos.map((repo) => repo.id));
-  const unknownRepoIds = Object.keys(repoPolicies).filter((repoId) => !repoIds.has(repoId));
+  assertRepoIdsConfigured(repos, Object.keys(repoPolicies), "Repo policy");
+}
+
+function assertRepoIdsConfigured(repos: RepoBinding[], repoIds: string[], label: string): void {
+  const configuredRepoIds = new Set(repos.map((repo) => repo.id));
+  const unknownRepoIds = repoIds.filter((repoId) => !configuredRepoIds.has(repoId));
 
   if (unknownRepoIds.length > 0) {
-    throw new Error(`Repo policy references unknown repo id(s): ${unknownRepoIds.join(", ")}.`);
+    throw new Error(`${label} references unknown repo id(s): ${unknownRepoIds.join(", ")}.`);
   }
 }

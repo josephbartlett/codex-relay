@@ -23,11 +23,30 @@ export type QueueJobStatus = "queued" | "leased" | "completed" | "failed" | "can
 
 export type QueueJobKind = "runner_task";
 
+export type ControlPlaneKind = "slack" | "email";
+
+export type WorkspaceKind = "worktree" | "source";
+
 export type SlackNotificationStatus = "pending" | "leased" | "sent" | "failed";
 
 export type SlackNotificationKind = "runner.started" | "plan.ready" | "runner.completed" | "runner.failed";
 
 export type SlackNotificationSeverity = "info" | "success" | "failure";
+
+export type EmailNotificationStatus = "pending" | "leased" | "sent" | "failed";
+
+export type EmailNotificationKind =
+  | "plan.ready"
+  | "runner.completed"
+  | "runner.failed"
+  | "email.test"
+  | "email.command_accepted"
+  | "email.command_rejected"
+  | "email.command_failed";
+
+export type EmailNotificationSeverity = "info" | "success" | "failure";
+
+export type EmailInboundStatus = "processing" | "queued" | "rejected" | "ignored" | "failed";
 
 export type ApprovalType = "execute_plan" | "run_tests" | "sandbox_escalation" | "rules_prompt";
 
@@ -42,6 +61,17 @@ export type AuditOutcome = "success" | "failure" | "denied" | "info";
 export type AuditEventType =
   | "authorization.allowed"
   | "authorization.denied"
+  | "email.command_received"
+  | "email.command_queued"
+  | "email.command_rejected"
+  | "email.command_ignored"
+  | "email.command_failed"
+  | "email.notification_enqueued"
+  | "email.notification_sent"
+  | "email.notification_failed"
+  | "task.ask_started"
+  | "task.ask_completed"
+  | "task.ask_failed"
   | "task.plan_started"
   | "task.plan_completed"
   | "task.plan_failed"
@@ -77,19 +107,29 @@ export interface RepoBinding {
 
 export interface Session {
   id: string;
+  controlPlane: ControlPlaneKind;
   slackThreadKey: SlackThreadKey;
   ownerSlackUserId: string;
   repoId: string;
   sourceRepoPath: string;
   workspacePath: string;
+  workspaceKind: WorkspaceKind;
   branchName: string;
   runnerKind: RunnerKind;
   codexSessionId?: string;
   status: SessionStatus;
   draftPullRequest?: SessionDraftPullRequest;
   cleanedAt?: string;
+  email?: EmailSessionRef;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EmailSessionRef {
+  mailboxId: string;
+  threadId: string;
+  sender: string;
+  firstMessageId: string;
 }
 
 export interface TaskRun {
@@ -222,6 +262,64 @@ export interface SlackNotification {
 export interface SlackNotificationClaim {
   notification: SlackNotification;
   lease: SlackNotificationLease;
+}
+
+export interface EmailNotificationLease {
+  id: string;
+  workerId: string;
+  claimedAt: string;
+  expiresAt: string;
+}
+
+export interface EmailNotification {
+  id: string;
+  kind: EmailNotificationKind;
+  status: EmailNotificationStatus;
+  severity: EmailNotificationSeverity;
+  to: string[];
+  subject: string;
+  text: string;
+  sessionId?: string;
+  repoId?: string;
+  taskRunId?: string;
+  approvalId?: string;
+  queueJobId?: string;
+  attempts: number;
+  maxAttempts: number;
+  createdAt: string;
+  updatedAt: string;
+  availableAt: string;
+  deliveredAt?: string;
+  failedAt?: string;
+  error?: string;
+  lease?: EmailNotificationLease;
+  metadata?: Record<string, string | number | boolean | null>;
+}
+
+export interface EmailNotificationClaim {
+  notification: EmailNotification;
+  lease: EmailNotificationLease;
+}
+
+export interface EmailInboundMessageRecord {
+  id: string;
+  mailboxId: string;
+  messageId: string;
+  threadId: string;
+  from: string;
+  subject?: string;
+  status: EmailInboundStatus;
+  commandKind?: string;
+  reason?: string;
+  sessionId?: string;
+  taskRunId?: string;
+  queueJobId?: string;
+  receivedAt?: string;
+  processedAt?: string;
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
+  metadata?: Record<string, string | number | boolean | null>;
 }
 
 export interface RunnerEvent {

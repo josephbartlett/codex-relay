@@ -1,0 +1,75 @@
+id: CFO-0039
+title: Email control plane foundation
+status: done
+owner: lead
+role: worker
+priority: p1
+objective: Add the first generic email-control-plane foundation without live mailbox credentials, provider-specific setup, or write approvals.
+paths:
+  - .env.example
+  - apps/email-gateway/src
+  - packages/shared/src/config.ts
+  - packages/shared/src/authorization.ts
+  - tests/email-gateway.test.ts
+  - docs/ROADMAP.md
+  - docs/SECURITY.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0039-email-control-plane-foundation.yaml
+concerns:
+  - concern:email-control-plane
+dependencies:
+  - CFO-0020
+non_goals:
+  - Do not edit `.env`.
+  - Do not add live IMAP polling or SMTP sending.
+  - Do not add provider-specific setup instructions.
+  - Do not enable email-originated write approvals.
+  - Do not change Slack behavior.
+acceptance:
+  - Config supports disabled-by-default generic email-control-plane settings.
+  - Email sender authorization is explicit and fail-closed.
+  - Plain-text email command parsing supports read-only task requests with `repo:<id>`.
+  - Approval or write-like email replies are rejected until a future authenticated approval design exists.
+  - Tests cover allowed senders, denied senders, task parsing, unsupported input, and write-approval rejection.
+verification:
+  required:
+    - npm run typecheck
+    - npm test
+    - npm run check:work-packets
+    - git diff --check
+  completed:
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - "npm run check passed: setup validation, typecheck, build, 108 tests, work-packet validation, release readiness, audit, and secret scan."
+    - "git diff --check passed."
+    - "Targeted scan found no provider-specific names, private paths, personal email addresses, or private scheduling wording in the changed public surface."
+handoff:
+  expected:
+    - Report files changed, supported email foundation behavior, disabled capabilities, verification, and follow-up implementation steps.
+  completed:
+    - Added disabled-by-default email config and fail-closed sender authorization.
+    - Added plain-text read-only command parsing for allowlisted senders and configured repos.
+    - Rejected approval/write-like email replies until an authenticated approval design exists.
+    - Updated roadmap, security, decisions, task tracker, maintenance audit, and changelog without provider-specific setup language.
+  next:
+    - Add an ADR before live mailbox polling or outbound replies.
+    - Define nonce-bound or signed approval replies before any email-originated write workflow.
+    - Wire parsed read-only commands into the orchestrator queue only after the live adapter boundary is reviewed.
+risks:
+  - Email sender identity can be spoofed or forwarded; this packet must not enable mutating approvals.
+  - Raw email bodies can contain secrets or signatures; parser tests should avoid storing raw message dumps.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  artifact: included in email feature checkpoint commit
+  notes:
+    - Started as the first implementation chunk for the generic email control plane.
+    - Closed with live mailbox polling, SMTP replies, provider-specific setup, and email-originated write approvals intentionally out of scope.

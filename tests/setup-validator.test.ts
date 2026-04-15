@@ -10,7 +10,8 @@ test("setup validator runs without live Slack credentials and does not print sec
       SLACK_BOT_TOKEN: "xoxb-test-secret",
       SLACK_APP_TOKEN: "xapp-test-secret",
       OPENAI_API_KEY: "sk-test-secret",
-      GITHUB_TOKEN: "ghp_test_secret"
+      GITHUB_TOKEN: "ghp_test_secret",
+      EMAIL_SMTP_PASSWORD: "smtp-test-secret"
     }
   });
 
@@ -19,5 +20,6 @@ test("setup validator runs without live Slack credentials and does not print sec
   assert.doesNotMatch(output, /xapp-test-secret/u);
   assert.doesNotMatch(output, /sk-test-secret/u);
   assert.doesNotMatch(output, /ghp_test_secret/u);
+  assert.doesNotMatch(output, /smtp-test-secret/u);
   assert.match(output, /summary:/u);
 });
