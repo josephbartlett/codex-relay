@@ -1,0 +1,31 @@
+id: CFO-0000
+title: Short task title
+status: ready
+owner: unassigned
+role: worker
+priority: p1
+objective: Concrete outcome for this packet.
+paths:
+  - path/or/directory
+concerns: []
+dependencies: []
+non_goals:
+  - Do not change unrelated behavior.
+acceptance:
+  - Observable behavior, documentation, or release outcome is complete.
+verification:
+  required:
+    - npm test
+  completed: []
+  evidence: []
+handoff:
+  expected:
+    - Owner reports files changed, summary, verification, risks, and next action.
+  completed: []
+  next: []
+risks:
+  - Main implementation or maintenance risk.
+maintenance_audit:
+  assigned_at: "YYYY-MM-DD"
+  notes:
+    - Initial audit note.

@@ -1,0 +1,81 @@
+id: CFO-0022
+title: Live v0.1.0 Slack smoke test
+status: done
+owner: lead
+role: verifier
+priority: p0
+objective: Run the final live Slack smoke test against the configured test repository before v0.1.0 release tagging.
+paths:
+  - package-lock.json
+  - docs/RELEASE_READINESS.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0022-live-release-smoke.yaml
+concerns:
+  - concern:live-slack-smoke
+dependencies:
+  - CFO-0021
+non_goals:
+  - Do not tag v0.1.0 in this packet.
+  - Do not edit `.env` or print secrets.
+  - Do not use a production repository for the smoke test.
+  - Do not promote unapproved brand assets.
+acceptance:
+  - Current gateway build is running in Socket Mode with local secrets kept out of logs and commits.
+  - A Slack task against the configured test repo completes read-only planning.
+  - Approved execution writes only inside the session worktree.
+  - Draft PR creation or update succeeds against the test repo, or any failure is documented with concrete remediation.
+  - Smoke results are recorded in release-readiness notes and maintenance audit.
+verification:
+  required:
+    - npm run build
+    - live Slack plan/approve/execute/PR smoke
+    - npm run check:work-packets
+    - npm run typecheck
+  completed:
+    - npm run build
+    - live Slack plan/approve/execute smoke
+    - local orchestrator PR handoff for completed smoke session
+    - GitHub PR metadata check against the smoke PR
+    - npm run check
+    - npm audit fix
+  evidence:
+    - Slack mention created a session for repo `default`.
+    - Plan completed and Slack approval started the implementation run.
+    - Implementation completed with session status `done`.
+    - Worktree branch changed only `RELEASE_SMOKE.md`; `.codex` remained an ignored internal marker.
+    - "Draft PR created against the disposable test repository."
+    - GitHub PR state verified as open draft.
+    - npm audit initially reported a moderate `follow-redirects` advisory; `npm audit fix` updated the lockfile to `follow-redirects@1.16.0` and cleared audit findings.
+handoff:
+  expected:
+    - Owner reports gateway restart status, Slack task result, PR result, verification, and release/tag recommendation.
+  completed:
+    - Gateway was rebuilt, restarted, and then stopped after the smoke test.
+    - The first retry exposed strict-mode missing repo policy; smoke proceeded with process-level `CODEX_POLICY_MODE=local-dev` without editing `.env`.
+    - Slack plan and approval worked against the test repo.
+    - PR handoff succeeded through the orchestrator PR lifecycle after the Slack Create PR action did not arrive during monitoring.
+    - Moderate npm audit advisory was fixed before closure.
+  next:
+    - Configure strict-mode live Slack allowlists in `.env` before normal use.
+    - Finalize `CHANGELOG.md` `v0.1.0` entry after maintainer approval.
+    - Tag `v0.1.0` only after maintainer approval.
+risks:
+  - Live Slack events can mutate the test repo or create GitHub PRs.
+  - Slack/Codex/GitHub tokens must not be printed, committed, or copied into docs.
+  - A failed smoke test may require a targeted bug-fix packet before release.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead
+  checks:
+    - npm run build
+    - GitHub PR metadata check against the smoke PR
+    - npm audit fix
+    - npm run check
+  commit: fb93072
+  notes:
+    - Started after automated release-readiness gate passed.
+    - Blocked by CFO-0023 after the first live mention was classified as a no-session follow-up because the request included "then stop."
+    - Unblocked after CFO-0023 fixed repo-qualified no-session mention classification.
+    - Smoke passed with draft PR #2 in the test repo; local-dev gateway process was stopped afterward.

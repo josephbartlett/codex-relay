@@ -1,0 +1,15 @@
+# <type>: <short summary>
+#
+# Examples:
+# feat: add SQLite-backed persistence
+# fix: prevent duplicate draft PR creation
+# security: enforce repo authorization before planning
+# docs: document release checklist
+#
+# Body:
+# - Explain why the change exists.
+# - Mention security impact for auth, sandboxing, secrets, logging, persistence, or runner behavior.
+# - Mention tests run.
+#
+# Footer:
+# Closes #123

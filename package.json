@@ -1,0 +1,56 @@
+{
+  "name": "codex-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:slack": "tsx apps/slack-gateway/src/app.ts",
+    "dev:runner": "tsx apps/local-runner/src/daemon.ts",
+    "dev:audit": "tsx apps/audit-viewer/src/app.ts",
+    "local:session": "tsx apps/local-runner/src/localSession.ts",
+    "start:slack": "node dist/apps/slack-gateway/src/app.js",
+    "start:runner": "node dist/apps/local-runner/src/daemon.js",
+    "start:audit": "node dist/apps/audit-viewer/src/app.js",
+    "start:local-session": "node dist/apps/local-runner/src/localSession.js",
+    "validate:setup": "node scripts/validate-setup.mjs",
+    "validate:live-config": "node scripts/validate-live-config.mjs",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/**/*.test.ts",
+    "check": "npm run validate:setup && npm run typecheck && npm run build && npm test && npm run check:work-packets && npm run check:release && npm run check:audit && npm run check:secrets",
+    "check:work-packets": "node scripts/check-work-packets.mjs",
+    "check:release": "node scripts/release-readiness.mjs",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "verify": "npm run check",
+    "check:audit": "npm audit --audit-level=high"
+  },
+  "dependencies": {
+    "@slack/bolt": "^4.2.1",
+    "@slack/types": "^2.14.0",
+    "better-sqlite3": "^12.9.0",
+    "dotenv": "^16.4.7",
+    "nanoid": "^5.0.9",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "yaml": "^2.8.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "description": "Slack control plane for local and self-hosted Codex execution",
+  "license": "MIT",
+  "author": "Joey Bartlett",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/josephbartlett/codex-relay.git"
+  },
+  "bugs": {
+    "url": "https://github.com/josephbartlett/codex-relay/issues"
+  },
+  "homepage": "https://github.com/josephbartlett/codex-relay#readme"
+}

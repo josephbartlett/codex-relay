@@ -1,0 +1,41 @@
+name: Feature request
+description: Propose product, Slack UX, runner, or operations work.
+title: "feat: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or operator problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should Codex Relay do?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Slack UX
+        - Orchestrator
+        - Runner
+        - Persistence
+        - GitHub lifecycle
+        - Security
+        - Documentation
+        - Release/operations
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security considerations
+      description: Mention authorization, sandboxing, secrets, logging, repo binding, or persistence impact.
+    validations:
+      required: true

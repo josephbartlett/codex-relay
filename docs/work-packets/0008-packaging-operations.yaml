@@ -1,0 +1,67 @@
+id: CFO-0008
+title: Add packaging and operations validator
+status: done
+owner: lead
+role: lead
+priority: p1
+objective: Add packaging and operations validation so a fresh install can be checked without running a live Slack task.
+paths:
+  - scripts
+  - infra/docker
+  - tests/setup-validator.test.ts
+  - .env.example
+  - docs/RUNBOOK.md
+  - docs/RELEASE_PROCESS.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - CHANGELOG.md
+  - README.md
+  - package.json
+dependencies:
+  - CFO-0003
+non_goals:
+  - Do not require real Slack tokens, GitHub credentials, or a public network tunnel for the validator.
+  - Do not containerize the full team-runner architecture in this packet.
+  - Do not print machine-specific secrets or excessive local path detail.
+acceptance:
+  - Fresh install can be validated without a live Slack task.
+  - Docker/local service examples are documented.
+  - Backup and restore notes exist for SQLite state.
+verification:
+  required:
+    - npm run check
+  completed:
+    - npm run validate:setup
+    - node --import tsx --test tests/setup-validator.test.ts
+    - npm run check:work-packets
+    - npm run check
+  evidence:
+    - "Setup validator added as `npm run validate:setup`; it does not read `.env` and treats missing live Slack/GitHub credentials as warnings."
+    - "Docker runner and compose examples documented as starter examples, not complete team-runner isolation."
+    - "SQLite backup/restore runbook notes added with stop-process guidance and encrypted-storage warning."
+    - "Read-only diagnostics-safety reviewer reported no blockers."
+    - "Full gate passed: setup validation, typecheck, build, 59 node:test tests, work packet check, npm audit, and secret scan."
+handoff:
+  expected:
+    - Worker records setup validation commands, WSL notes, and backup/restore documentation touched.
+    - Reviewer checks that setup diagnostics are safe to share.
+  completed:
+    - "`npm run validate:setup` validates a fresh install without reading `.env` or requiring a live Slack task."
+    - "Docker runner and compose examples are present and documented as starter examples."
+    - "SQLite backup and restore notes are documented in `docs/RUNBOOK.md`."
+    - "Feature checkpoint landed in commit 87b9a1d."
+  next:
+    - Use the validator as part of v0.1.0 release readiness.
+risks:
+  - Setup validator must avoid printing secrets or real local paths unnecessarily.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only diagnostics-safety reviewer
+  checks:
+    - npm run validate:setup
+    - node --import tsx --test tests/setup-validator.test.ts
+    - npm run check
+  commit: "87b9a1d"
+  notes:
+    - Keep setup commands copy-pasteable and WSL-aware.

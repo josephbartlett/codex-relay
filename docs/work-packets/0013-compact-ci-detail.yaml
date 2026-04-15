@@ -1,0 +1,78 @@
+id: CFO-0013
+title: Add compact PR check detail
+status: done
+owner: lead
+role: lead
+priority: p1
+objective: Show bounded per-check PR status detail in Slack without ingesting CI logs or raw GitHub payloads.
+paths:
+  - packages/shared/src/types.ts
+  - apps/local-runner/src/pullRequest.ts
+  - apps/slack-gateway/src/blocks/taskCards.ts
+  - tests/pull-request.test.ts
+  - tests/orchestrator-flow.test.ts
+  - docs/RUNBOOK.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0013-compact-ci-detail.yaml
+  - CHANGELOG.md
+concerns:
+  - concern:pr-ci-detail
+dependencies:
+  - CFO-0005
+  - CFO-0012
+non_goals:
+  - Do not ingest full CI logs, annotations, artifacts, or raw GitHub check payloads.
+  - Do not build a GitHub checks dashboard in this packet.
+  - Do not change ready-for-review authorization or merge behavior.
+acceptance:
+  - PR status parsing normalizes common GitHub check/status rollup shapes into compact check items.
+  - Slack PR status and ready cards show a capped useful check list plus a hidden-count note when needed.
+  - Product audit metadata remains count-only and does not store per-check rows or raw payloads.
+  - Missing or empty status check rollups still produce the existing no-checks summary.
+verification:
+  required:
+    - npm run typecheck
+    - node --import tsx --test tests/pull-request.test.ts tests/orchestrator-flow.test.ts
+    - npm run check
+  completed:
+    - npm run typecheck
+    - node --import tsx --test tests/pull-request.test.ts tests/orchestrator-flow.test.ts
+    - npm run check
+  evidence:
+    - "Local runner normalizes flat, nested, and mixed GitHub status/check rollup shapes into compact check details."
+    - "Nested rollup containers with their own status/conclusion are not double-counted when they contain leaf check runs."
+    - "Slack PR status and ready cards render at most 8 check rows and report hidden checks."
+    - "Check URLs must be https and cannot contain Slack link control characters."
+    - "Product audit events for PR status and ready-for-review remain count-only and do not store per-check rows."
+    - "Full gate passed: setup validation, typecheck, build, 76 node:test tests, work packet check, npm audit, and secret scan."
+handoff:
+  expected:
+    - Worker reports parser shapes handled, Slack cap behavior, and audit data boundaries.
+    - Reviewer checks privacy boundaries, Slack noise limits, parser compatibility, and regression coverage.
+  completed:
+    - "Added compact `DraftPullRequestCheckDetail` shared type and retained at most 20 normalized check details per status lookup."
+    - "Added capped Slack check-detail rendering for PR status and ready-for-review cards."
+    - "Added parser tests for flat checks, nested rollup variants, container double-count prevention, URL sanitization, empty rollups, and retained-detail caps."
+    - "Added orchestrator tests proving audit metadata remains count-only when check detail exists."
+    - "Updated README, runbook, roadmap, security review checklist, ADR, changelog, task tracker, and maintenance audit."
+    - "Feature checkpoint landed in commit 14e4113."
+  next:
+    - Deeper CI log ingestion remains deferred unless a later packet defines redaction, retention, and authorization rules.
+risks:
+  - GitHub status rollup shapes vary, so parsing must be tolerant and treat unknown completed checks conservatively.
+  - Long check lists can make Slack threads noisy if not capped.
+  - CI metadata may contain sensitive branch or job names, so audit storage must remain compact.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only compact-check-detail reviewer
+  checks:
+    - npm run typecheck
+    - node --import tsx --test tests/pull-request.test.ts tests/orchestrator-flow.test.ts
+    - npm run check
+  commit: "14e4113"
+  notes:
+    - This packet improves visibility while preserving the existing no-log-ingestion boundary.
+    - "Reviewer findings were fixed before feature checkpoint: nested rollup container double-counting and Slack control-character URLs."

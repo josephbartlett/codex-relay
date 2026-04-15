@@ -1,0 +1,70 @@
+id: CFO-0005
+title: Complete GitHub draft PR lifecycle
+status: done
+owner: lead
+role: lead
+priority: p0
+objective: Complete the draft PR lifecycle so follow-up runs update session PRs and expose useful status from Slack.
+paths:
+  - apps/local-runner/src/pullRequest.ts
+  - apps/orchestrator/src/tasks.ts
+  - apps/slack-gateway/src/listeners/actions.ts
+  - apps/slack-gateway/src/listeners/mentions.ts
+  - apps/slack-gateway/src/blocks/taskCards.ts
+  - packages/shared/src/types.ts
+  - packages/shared/src/events.ts
+  - tests/pull-request.test.ts
+  - tests/orchestrator-flow.test.ts
+  - docs/work-packets/0005-github-lifecycle.yaml
+  - docs/TASKS.md
+  - docs/ROADMAP.md
+  - docs/MAINTENANCE_AUDIT.md
+  - CHANGELOG.md
+dependencies:
+  - CFO-0004
+non_goals:
+  - Do not require live GitHub credentials in unit tests.
+  - Do not implement full CI log ingestion in this packet.
+  - Do not change Slack authorization policy unless required by an identified bug.
+acceptance:
+  - Completed follow-up runs can update an existing draft PR instead of creating duplicate PRs.
+  - Slack can request CI/status summary for the session PR.
+  - PR metadata remains idempotent across restarts.
+verification:
+  required:
+    - npm test
+    - npm run typecheck
+  completed:
+    - npm run typecheck
+    - npm test -- --test-reporter=spec tests/pull-request.test.ts tests/orchestrator-flow.test.ts
+    - npm run check
+  evidence:
+    - "Read-only PR-runner explorer recommended create/update/no-op lifecycle semantics and no-live-GitHub test coverage."
+    - "Read-only Slack/orchestrator explorer recommended channel-aware orchestrator authorization, PR status action, and PR lifecycle cards."
+    - "Read-only reviewer found two high-severity PR lifecycle risks before checkpoint: pushed-update retry recovery and PR URL/origin mismatch validation. Both were fixed and covered by regression tests."
+    - "Full gate passed: typecheck, build, 39 node:test tests, work packet check, npm audit, and secret scan."
+handoff:
+  expected:
+    - Worker reports PR idempotency behavior, persisted metadata, and test coverage.
+    - Reviewer checks duplicate-PR and missing-auth paths.
+  completed:
+    - Existing draft PR metadata is now passed into the local runner; dirty worktrees update the existing PR, clean worktrees return unchanged metadata, and invalid/mismatched PR metadata fails before commit/push.
+    - Slack completion cards expose Update PR, PR status, and Open PR for sessions that already have draft PRs.
+    - Thread follow-up text like "update PR" runs the GitHub lifecycle without starting a new Codex runner task.
+    - PR status checks use `gh pr view` summary fields and store only compact audit metadata.
+    - Feature checkpoint landed in commit dcfe2bc.
+  next:
+    - Use this lifecycle as the handoff point for optional ready-for-review and deeper CI detail work.
+risks:
+  - GitHub CLI behavior differs across auth states; tests should avoid requiring live credentials.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only subagent reviewer
+  checks:
+    - npm run check
+  commit: "dcfe2bc"
+  notes:
+    - Keep live GitHub smoke testing separate from deterministic unit tests.
+    - Feature checkpoint closed by commit dcfe2bc; this follow-up audit update records the checkpoint SHA.
+    - "Reviewer findings were addressed before feature checkpoint: clean retry after `gh pr edit` failure and PR URL validation against `origin`."

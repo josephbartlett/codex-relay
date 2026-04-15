@@ -1,0 +1,70 @@
+id: CFO-0003
+title: Formalize Custody-First Orchestration as a shareable pattern
+status: done
+owner: lead
+role: lead
+priority: p0
+objective: Formalize Custody-First Orchestration as a public, machine-checkable maintenance pattern and use this repository as its first case study.
+paths:
+  - docs/CUSTODY_FIRST_ORCHESTRATION.md
+  - docs/case-studies
+  - docs/templates
+  - docs/work-packets
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/AGENT_ORCHESTRATION.md
+  - docs/TASK_MANAGEMENT.md
+  - docs/TASKS.md
+  - docs/DECISIONS.md
+  - docs/DOCUMENTATION.md
+  - docs/ROADMAP.md
+  - README.md
+  - CHANGELOG.md
+  - scripts/check-work-packets.mjs
+  - package.json
+  - package-lock.json
+dependencies:
+  - CFO-0002
+non_goals:
+  - Do not extract a separate generic scaffold repository until the pattern has been validated on at least one later implementation packet.
+  - Do not commit unapproved brand-candidate assets.
+  - Do not change runtime Slack behavior in this documentation and checker packet.
+acceptance:
+  - Pattern spec defines Custody-First Orchestration, invariants, roles, state machine, examples, and anti-patterns.
+  - Case study explains how Codex Relay uses the pattern to build itself.
+  - Work packets are machine-readable YAML and represent current and upcoming release work.
+  - Work packet checker detects active ownership conflicts and missing verification/audit evidence.
+  - Maintenance audit records packet assignment, completion, review, checks, and commits.
+  - Role-specific packet templates exist for implementation, exploration, security review, verification, and release work.
+  - Pattern extraction is explicitly deferred until the repo has validated the system.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run check
+  completed:
+    - npm run check:work-packets
+    - npm run check
+  evidence:
+    - "Full gate passed: typecheck, build, 19 node:test tests, work packet check, npm audit, and secret scan."
+    - "Read-only reviewer found checker/schema gaps before commit; objective, non_goals, handoff, evidence, reviewer, and concern-overlap checks were added."
+handoff:
+  expected:
+    - Lead records full verification output before the feature checkpoint.
+    - Lead records the checkpoint commit SHA in this packet and maintenance audit in a follow-up audit commit.
+    - Remaining implementation work resumes from the ready packets after this packet is closed.
+  completed:
+    - Pattern spec, case study, maintenance audit, YAML packets, role templates, generic YAML seed, and checker landed in checkpoint 65e3d08.
+    - External scaffold extraction remains deferred as CFO-0010 until the pattern is validated through at least one more implementation packet.
+  next:
+    - Start CFO-0004 after this packet is marked done.
+risks:
+  - Pattern docs can overclaim unless examples stay tied to actual repo practice.
+  - Work-packet schema is intentionally lightweight and may need richer dependency validation later.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only subagent reviewer
+  checks:
+    - npm run check
+  commit: "65e3d08"
+  notes:
+    - Feature checkpoint closed by commit 65e3d08; this follow-up audit update records the checkpoint SHA.

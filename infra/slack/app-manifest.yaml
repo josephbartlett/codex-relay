@@ -1,0 +1,43 @@
+display_information:
+  name: Codex Relay
+  description: Dispatch local Codex tasks from Slack threads.
+  background_color: "#1d1c1d"
+features:
+  app_home:
+    home_tab_enabled: true
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: true
+  bot_user:
+    display_name: Codex Relay
+    always_online: false
+  shortcuts:
+    - name: Run with Codex
+      type: message
+      callback_id: run_with_codex
+      description: Turn this message into a Codex task.
+  slash_commands:
+    - command: /codex
+      description: Start or inspect Codex Relay tasks.
+      usage_hint: status
+      should_escape: false
+oauth_config:
+  scopes:
+    bot:
+      - app_mentions:read
+      - channels:history
+      - chat:write
+      - commands
+      - groups:history
+      - im:history
+      - im:write
+      - mpim:history
+settings:
+  event_subscriptions:
+    bot_events:
+      - app_home_opened
+      - app_mention
+  interactivity:
+    is_enabled: true
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false

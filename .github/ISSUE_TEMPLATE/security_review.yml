@@ -1,0 +1,34 @@
+name: Security review
+description: Track a security hardening task or review.
+title: "security: "
+labels: ["security", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not use this template to disclose an active vulnerability with exploit details. Use private reporting instead.
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What area needs review or hardening?
+    validations:
+      required: true
+  - type: checkboxes
+    id: areas
+    attributes:
+      label: Areas
+      options:
+        - label: Slack authorization
+        - label: Repo binding/path handling
+        - label: Worktree isolation
+        - label: Runner sandbox/approval policy
+        - label: Secrets/logging
+        - label: Persistence/migration
+        - label: GitHub PR lifecycle
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true

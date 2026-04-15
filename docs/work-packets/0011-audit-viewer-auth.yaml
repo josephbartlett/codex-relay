@@ -1,0 +1,75 @@
+id: CFO-0011
+title: Add authenticated audit viewer mode
+status: done
+owner: lead
+role: lead
+priority: p1
+objective: Add a fail-closed authenticated mode for exposing the read-only audit dashboard beyond localhost without weakening the default local viewer.
+paths:
+  - apps/audit-viewer/src
+  - tests
+  - .env.example
+  - README.md
+  - docs/RUNBOOK.md
+  - docs/SECURITY.md
+  - docs/DECISIONS.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0011-audit-viewer-auth.yaml
+  - CHANGELOG.md
+  - scripts/validate-setup.mjs
+concerns:
+  - concern:audit-viewer-auth
+dependencies:
+  - CFO-0008
+non_goals:
+  - Do not add a multi-user admin system or session database.
+  - Do not expose raw prompts, command output, diffs, or Slack thread text in the audit viewer.
+  - Do not require authentication for the default localhost-only viewer unless credentials are configured.
+acceptance:
+  - Localhost audit viewer still works without credentials by default.
+  - Non-loopback audit viewer binding fails closed unless authentication credentials are configured.
+  - Authenticated mode protects the HTML dashboard and event JSON without printing configured credentials.
+  - Docs explain safe remote exposure, reverse proxy/TLS expectations, and secret-handling limits.
+verification:
+  required:
+    - npm run typecheck
+    - node --import tsx --test tests/audit-viewer.test.ts
+    - npm run check
+  completed:
+    - npm run typecheck
+    - node --import tsx --test tests/audit-viewer.test.ts
+    - npm run check
+  evidence:
+    - "Localhost audit viewer remains unauthenticated by default and serves dashboard/events without Slack credentials."
+    - "Remote non-loopback bind requires `AUDIT_VIEWER_ALLOW_REMOTE=true` and `AUDIT_VIEWER_PASSWORD`."
+    - "Dashboard and `/events.json` are protected by Basic Auth when auth is enabled; `/healthz` remains public and returns only `ok`."
+    - "Dashboard renders only store kind, not backend filesystem paths; all audit viewer 500 responses are generic."
+    - "Read-only security reviewer found path disclosure and remote-test gaps; fixes landed before checkpoint and final re-review reported no blockers."
+    - "Full gate passed: setup validation, typecheck, build, 68 node:test tests, work packet check, npm audit, and secret scan."
+handoff:
+  expected:
+    - Worker reports auth config, remote-bind safety behavior, changed files, verification, and residual risks.
+    - Security reviewer checks auth bypass, secret logging, and localhost compatibility.
+  completed:
+    - "Added Basic Auth and fail-closed non-loopback binding controls for the audit viewer."
+    - "Added audit viewer regression tests for local defaults, remote opt-in, auth failures, public health checks, path redaction, and generic errors."
+    - "Updated setup validation, `.env.example`, README, runbook, security docs, decisions, roadmap, and changelog."
+    - "Feature checkpoint landed in commit 2e269a8."
+  next:
+    - Keep authenticated viewer as an operator tool; full team dashboard remains a later product surface.
+risks:
+  - A remote audit viewer can leak repo/session metadata if deployed without TLS, auth, or network controls.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only audit-viewer security reviewer
+  checks:
+    - npm run typecheck
+    - node --import tsx --test tests/audit-viewer.test.ts
+    - npm run check
+  commit: "2e269a8"
+  notes:
+    - Treat this as security-sensitive because it changes an operator-facing audit surface.
+    - Remote deployments still require TLS, network controls, and credential hygiene beyond Basic Auth.

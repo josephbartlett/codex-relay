@@ -1,0 +1,59 @@
+id: CFO-0016
+title: Refocus Codex Relay maintenance
+status: done
+owner: lead
+role: release
+priority: p0
+objective: Table external scaffold work, make Custody-First packet usage explicit for this repo, and reset the active build order back to Codex Relay.
+paths:
+  - AGENTS.md
+  - docs/AGENT_ORCHESTRATION.md
+  - docs/DECISIONS.md
+  - docs/TASKS.md
+  - docs/ROADMAP.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0016-refocus-codex-relay-maintenance.yaml
+  - docs/work-packets/0009-brand-approval.yaml
+dependencies:
+  - CFO-0015
+non_goals:
+  - Do not edit the external scaffold repository.
+  - Do not generate or promote visual assets.
+  - Do not change runtime behavior in this packet.
+acceptance:
+  - "`AGENTS.md` explicitly requires Custody-First packets for non-trivial repo work."
+  - External Custody-First scaffold work is marked tabled unless the user reopens it.
+  - Roadmap and task tracker return to Codex Relay `v0.1.0` product hardening.
+  - Visual asset approval rules require rendered screenshot review and explicit maintainer approval.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+  evidence:
+    - "`AGENTS.md` now requires Custody-First packets for non-trivial repository work."
+    - "External scaffold work is tabled unless the user explicitly reopens it."
+    - "Roadmap and task tracker now point back to Codex Relay `v0.1.0` product hardening."
+    - "Brand asset approval requires rendered screenshot review and explicit maintainer approval."
+handoff:
+  expected:
+    - Owner reports the updated operating rules, the new Codex Relay build order, and any remaining manual gates.
+  completed:
+    - "Updated `AGENTS.md`, orchestration docs, decision log, task tracker, roadmap, maintenance audit, and brand approval packet."
+    - "Recorded Codex Relay as the active product focus."
+  next:
+    - Continue Codex Relay product hardening with a new focused work packet.
+risks:
+  - Process docs can drift unless future work keeps packet state current.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+  commit: "da1946e"
+  notes:
+    - This is a docs/process reset after tabling the external scaffold.

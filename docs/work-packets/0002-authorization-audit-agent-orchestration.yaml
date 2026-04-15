@@ -1,0 +1,58 @@
+id: CFO-0002
+title: Add authorization, product audit, and agent orchestration foundation
+status: done
+owner: lead
+role: lead
+priority: p0
+objective: Add fail-closed Slack authorization, human-readable product audit, and the first repo-specific agent orchestration system.
+paths:
+  - packages/shared/src/authorization.ts
+  - packages/shared/src/config.ts
+  - packages/shared/src/types.ts
+  - apps/orchestrator/src
+  - apps/slack-gateway/src
+  - apps/audit-viewer/src
+  - docs/AGENT_ORCHESTRATION.md
+  - docs/templates
+  - tests
+dependencies:
+  - CFO-0001
+non_goals:
+  - Do not expose the local audit viewer outside localhost.
+  - Do not promote unapproved brand candidates into tracked assets.
+  - Do not change release tagging policy beyond documenting the initial process.
+acceptance:
+  - Strict Slack authorization policy exists for users, channels, repos, and maintainers.
+  - Product audit events persist in JSON and SQLite state.
+  - Slack and local audit viewer expose human-readable audit events.
+  - Agent orchestration guide and initial templates exist.
+verification:
+  required:
+    - npm run check
+    - Browser screenshot review for audit viewer and untracked architecture diagrams
+  completed:
+    - npm run check
+    - Browser screenshot review for audit viewer and untracked architecture diagrams
+  evidence:
+    - "19 node:test tests passed."
+    - "npm audit found 0 vulnerabilities."
+    - "Secret scanner found no obvious secrets."
+    - "Screenshots written under brand-candidates/browser-renders/ for human review."
+handoff:
+  expected: []
+  completed:
+    - Authorization, audit events, local audit viewer, orchestration docs, and visual candidate workflow landed in the second checkpoint.
+    - Read-only subagent review found repo-policy precedence ambiguity, which was fixed before commit.
+  next:
+    - Convert the orchestration practice into a machine-checkable public pattern before delegating larger packets.
+risks:
+  - Local audit viewer is intentionally localhost-only and needs authentication before remote exposure.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only subagent reviewer
+  checks:
+    - npm run check
+  commit: "09d1060"
+  notes:
+    - Subagent review found repo-policy precedence ambiguity; fixed before commit.

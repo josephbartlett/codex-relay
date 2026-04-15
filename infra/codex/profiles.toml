@@ -1,0 +1,22 @@
+# Starter Codex profiles for Codex Relay runner operations.
+# Copy into a managed Codex config location if you want named profiles in addition to
+# the harness-level sandbox arguments passed by ExecAdapter.
+
+[profiles.codex_relay_readonly]
+sandbox_mode = "read-only"
+approval_policy = "never"
+
+[profiles.codex_relay_write]
+sandbox_mode = "workspace-write"
+approval_policy = "never"
+
+[profiles.codex_relay_pr]
+sandbox_mode = "workspace-write"
+approval_policy = "never"
+
+[profiles.codex_relay_cleanup]
+sandbox_mode = "read-only"
+approval_policy = "never"
+
+[sandbox_workspace_write]
+network_access = false

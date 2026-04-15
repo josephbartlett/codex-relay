@@ -1,0 +1,73 @@
+id: CFO-0004
+title: Add follow-up thread intent handling
+status: done
+owner: lead
+role: lead
+priority: p0
+objective: Make Slack thread follow-ups route to explicit continuation intents without weakening approval gates.
+paths:
+  - apps/slack-gateway/src/listeners
+  - apps/slack-gateway/src/blocks/taskCards.ts
+  - apps/orchestrator/src/tasks.ts
+  - apps/orchestrator/src/context.ts
+  - apps/orchestrator/src/approvals.ts
+  - packages/shared/src/prompts.ts
+  - packages/shared/src/types.ts
+  - tests/orchestrator-flow.test.ts
+  - docs/work-packets/0004-follow-up-intents.yaml
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/TASKS.md
+  - docs/DECISIONS.md
+  - docs/ROADMAP.md
+  - README.md
+  - CHANGELOG.md
+concerns:
+  - concern:slack-thread-follow-up-intents
+dependencies:
+  - CFO-0003
+non_goals:
+  - Do not add a durable multi-runner queue in this packet.
+  - Do not bypass approval for write operations.
+  - Do not depend on live Slack credentials for deterministic tests.
+acceptance:
+  - Thread replies can continue, revise plan, run tests, summarize diff, update PR, or cancel with clear intent handling.
+  - Unsupported follow-up intents produce useful Slack guidance without starting unsafe work.
+  - Follow-up write operations still require approval and run in the session worktree.
+verification:
+  required:
+    - npm test
+    - npm run typecheck
+    - npm run check
+  completed:
+    - npm run typecheck
+    - npm test
+    - npm run check
+  evidence:
+    - "28 node:test tests passed, including continue, stale approval, revise, run-tests, summarize diff, cancel, unsupported, unauthorized follow-up, failed replacement-plan preservation, and Slack block safety cases."
+    - "Read-only Slack-surface and orchestrator explorers identified stale approval and command-like follow-up risks before implementation."
+    - "Read-only reviewer found non-owner mutation, early approval rejection, premature Slack approval copy, test-run PR exposure, and large diff-summary risks; fixes and regression tests were added before checkpoint."
+handoff:
+  expected:
+    - Worker summarizes new intent routes, tests, and any prompts or Slack copy changed.
+    - Reviewer checks that write follow-ups still require approval.
+  completed:
+    - Follow-up mentions now classify continue, revise plan, run tests, summarize diff, update PR, cancel, and unsupported intents.
+    - Revised and test plans reject stale pending approvals before creating replacement approvals.
+    - Run-tests follow-ups create approval-gated test runs instead of treating tests as harmless read-only operations.
+    - Non-owner follow-ups cannot mutate session state, and failed replacement planning preserves the prior pending approval.
+    - Test-run completion cards do not expose PR creation, and large Slack diff summaries are capped.
+    - Update PR is recognized but remains guidance only until CFO-0005 implements the PR update lifecycle.
+    - Feature checkpoint landed in commit 68400e0.
+  next:
+    - Use the finished intent model as the dependency for GitHub lifecycle work.
+risks:
+  - Intent parsing can become brittle if it tries to infer too much from short Slack text.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only subagent reviewer
+  checks:
+    - npm run check
+  commit: "68400e0"
+  notes:
+    - Feature checkpoint closed by commit 68400e0; this follow-up audit update records the checkpoint SHA.

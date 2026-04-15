@@ -1,0 +1,81 @@
+id: CFO-0021
+title: Release readiness review
+status: done
+owner: lead
+role: release
+priority: p0
+objective: Review and tighten v0.1.0 release readiness across setup, security, runbook, changelog, CI, smoke checks, and release documentation.
+paths:
+  - package.json
+  - scripts/release-readiness.mjs
+  - tests/release-readiness.test.ts
+  - README.md
+  - CHANGELOG.md
+  - docs/RELEASE_PROCESS.md
+  - docs/RELEASE_READINESS.md
+  - docs/RUNBOOK.md
+  - docs/SECURITY.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0021-release-readiness-review.yaml
+concerns:
+  - concern:v0.1.0-release-readiness
+dependencies:
+  - CFO-0019
+  - CFO-0020
+non_goals:
+  - Do not tag or publish v0.1.0 in this packet.
+  - Do not promote unapproved brand assets.
+  - Do not implement the future email control plane.
+acceptance:
+  - Release-readiness checks cover required public docs, changelog/version expectations, CI workflow posture, ignored local/runtime paths, and markdown fence integrity.
+  - Runbook and release docs are consistent with the current product shape and do not contain rendering defects.
+  - Changelog and roadmap clearly identify what remains before a v0.1.0 tag.
+  - Verification includes the full local gate and the new release-readiness check.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check:release
+    - npm run check
+  completed:
+    - npm run check:release
+    - node --import tsx --test --test-reporter=spec tests/release-readiness.test.ts tests/setup-validator.test.ts
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run check
+    - git diff --check
+  evidence:
+    - Full repository gate passed, including setup validation, typecheck, build, 90 tests, work-packet validation, release-readiness validation, high-severity npm audit, and local secret scan.
+    - Release-readiness gate validates required public files, package metadata, changelog/release docs, CI workflow posture, ignored runtime paths, tracked runtime-state hygiene, and Markdown fence balance.
+    - Runbook rendering defect from an extra fenced-code terminator was fixed.
+handoff:
+  expected:
+    - Owner reports release-readiness findings, fixes made, verification, and whether v0.1.0 is ready to tag.
+  completed:
+    - Added `npm run check:release` and included it in the full `npm run check` gate.
+    - Added `docs/RELEASE_READINESS.md` to separate automated readiness from manual live smoke and maintainer tag approval.
+    - Updated README, release process, roadmap, changelog, and setup validation for the new gate.
+    - Determined that automated release readiness is passing, but `v0.1.0` should not be tagged until a live Slack smoke test and final maintainer release decision are complete.
+  next:
+    - Run final live Slack smoke test against the configured test repository.
+    - Convert the pending `CHANGELOG.md` release entry to a dated `v0.1.0` entry after smoke test and maintainer approval.
+    - Tag `v0.1.0` only after the maintainer approves.
+risks:
+  - A release gate that is too brittle can block normal development work.
+  - A release gate that is too weak can miss missing docs, broken rendering, or unsafe repo hygiene.
+  - Tagging before a maintainer smoke test would overstate readiness.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead
+  checks:
+    - npm run check
+    - git diff --check
+  commit: 056a541
+  notes:
+    - Started after cleanup/retention and email roadmap packets closed.
+    - Closed after full gate passed and implementation checkpoint was committed.

@@ -1,0 +1,25 @@
+{
+  "name": "codex-relay",
+  "version": "0.1.0",
+  "description": "Reusable Codex workflows for Slack-triggered local engineering tasks.",
+  "author": {
+    "name": "Joey Bartlett",
+    "url": "https://github.com/josephbartlett"
+  },
+  "license": "MIT",
+  "keywords": ["slack", "codex", "automation"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "Codex Relay",
+    "shortDescription": "Skills for Slack-dispatched Codex work.",
+    "longDescription": "Reusable planning, implementation, review, and test-triage workflows for a Slack control plane over local Codex runners.",
+    "developerName": "Joey Bartlett",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/josephbartlett/codex-relay",
+    "privacyPolicyURL": "https://github.com/josephbartlett/codex-relay/blob/main/SECURITY.md",
+    "termsOfServiceURL": "https://github.com/josephbartlett/codex-relay/blob/main/LICENSE"
+  }
+}

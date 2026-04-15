@@ -1,0 +1,70 @@
+id: CFO-0025
+title: Release code audit and non-live verification
+status: done
+owner: lead
+role: reviewer
+priority: p0
+objective: Run a broad non-live test and code-audit pass before v0.1.0 tag approval, with live `.env` validation intentionally excluded for local testing.
+paths:
+  - apps/
+  - packages/
+  - scripts/
+  - tests/
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0025-release-code-audit.yaml
+concerns:
+  - concern:release-code-audit
+dependencies:
+  - CFO-0024
+non_goals:
+  - Do not edit `.env`.
+  - Do not run live Slack tasks unless explicitly requested.
+  - Do not tag or publish v0.1.0.
+acceptance:
+  - Full non-live gate passes.
+  - Code review covers Slack gateway, orchestrator, persistence, runner, scripts, and tests.
+  - Concrete bugs found during review are fixed or documented as follow-up risks.
+  - Audit results are recorded in the task tracker and maintenance audit.
+verification:
+  required:
+    - npm run check
+    - targeted code review
+  completed:
+    - npm run check
+    - node --import tsx --test --test-reporter=spec tests/slack-notifications.test.ts tests/pull-request.test.ts tests/orchestrator-flow.test.ts
+    - npm run typecheck
+    - git diff --check
+    - targeted code review of Slack gateway, orchestrator task lifecycle, runner adapter, queue daemon, persistence, PR handoff, audit viewer, config, and release scripts
+  evidence:
+    - Full `npm run check` passed with setup validation, typecheck, build, 95 tests, work-packet validation, release-readiness, high-severity npm audit, and secret scan.
+    - Focused Slack/orchestrator/PR regression suite passed with 49 tests.
+    - Fixed a stale-approval race so revised/test plans reject prior pending approvals before the replacement runner starts.
+    - Hardened Slack mrkdwn card rendering for runner output, status text, repo/branch labels, PR status summaries, and file names.
+    - Expanded notification sanitization for GitHub token-shaped and shorter OpenAI token-shaped errors in addition to Slack tokens.
+    - Escaped backticks in PR body changed-file code spans.
+handoff:
+  expected:
+    - Owner reports test results, reviewed areas, findings, fixes, and remaining risks.
+  completed:
+    - Non-live release audit completed without editing `.env` or printing secret values.
+    - Concrete lifecycle/rendering/token-redaction issues found during review were fixed with regression coverage.
+    - Live Slack validation remains intentionally excluded from this packet at operator request.
+  next:
+    - Human maintainer decides whether to approve the `v0.1.0` tag after reviewing this checkpoint.
+risks:
+  - Manual review can miss defects; prioritize security-sensitive boundaries and lifecycle state.
+  - Local `.env` validation is intentionally excluded from this packet at operator request.
+maintenance_audit:
+  assigned_at: "2026-04-14"
+  completed_at: "2026-04-14"
+  reviewed_by: lead
+  checks:
+    - npm run check
+    - node --import tsx --test --test-reporter=spec tests/slack-notifications.test.ts tests/pull-request.test.ts tests/orchestrator-flow.test.ts
+    - npm run typecheck
+    - git diff --check
+  commit: 65ec8d9
+  notes:
+    - Started after local operator requested broad testing and code review without live validation.
+    - Closed after implementation checkpoint `65ec8d9`.

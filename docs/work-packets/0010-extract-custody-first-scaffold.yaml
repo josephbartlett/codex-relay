@@ -1,0 +1,67 @@
+id: CFO-0010
+title: Extract Custody-First Orchestration scaffold
+status: done
+owner: lead
+role: release
+priority: p2
+objective: Extract the generic Custody-First Orchestration scaffold only after Codex Relay proves it through real follow-up work.
+paths:
+  - concern:external-custody-first-scaffold
+  - docs/work-packets/0010-extract-custody-first-scaffold.yaml
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/ROADMAP.md
+dependencies:
+  - CFO-0003
+  - CFO-0004
+  - CFO-0013
+non_goals:
+  - Do not create an external scaffold before CFO-0004 has used the pattern in practice.
+  - Do not copy Codex Relay-specific Slack IDs, repo paths, secrets, or case-study-only material.
+  - Do not publish a separate project without a fresh license and README review.
+acceptance:
+  - Custody-First Orchestration has been validated through at least one additional implementation packet.
+  - Generic templates, schema, checker, and docs are separated from Codex Relay-specific case study material.
+  - A new repo/folder scaffold can be initialized without copying project-specific secrets, paths, or Slack IDs.
+verification:
+  required:
+    - Scaffold dry run outside this repo
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run check in Codex Relay before extraction
+  completed:
+    - external scaffold clean install/check
+    - rg leakage scan against scaffold for Codex Relay, Slack, local path, token, brand, and CODEX/SLACK strings
+    - npm run check:work-packets
+    - npm run typecheck
+  evidence:
+    - "Dry-run scaffold created outside the project."
+    - "Scaffold includes README, AGENTS guide, pattern spec, templates, sample ready packet, work-packet checker, package metadata, package lock, and extraction notes."
+    - "Clean scaffold install/check passed: `npm install --ignore-scripts && npm run check`."
+    - "Leakage scan found no Codex Relay product names, Slack references, local paths, token config, brand candidate references, or CODEX/SLACK env names in scaffold content."
+    - "Read-only scaffold reviewer found no leakage blockers; reproducibility and stale task-list findings were fixed before closure."
+handoff:
+  expected:
+    - Human or release owner confirms the abstraction has survived at least one more implementation packet.
+    - Release owner records what stays project-specific and what becomes reusable scaffold material.
+  completed:
+    - "Recorded the generic extraction boundary and what stayed project-specific."
+    - "Kept Codex Relay case study, roadmap, runbook, security model, release notes, brand candidates, and Slack setup out of the external scaffold."
+    - "Left the external scaffold unpublished, untagged, unlicensed, private, and without a remote pending maintainer review."
+  next:
+    - Maintainer decides whether to publish the dry-run scaffold as a separate public repository.
+    - Maintainer chooses a license before publication.
+risks:
+  - Extracting too early can freeze weak abstractions before they are proven by real work.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only scaffold extraction reviewer
+  checks:
+    - external scaffold clean install/check
+    - npm run check:work-packets
+    - npm run typecheck
+  commit: "797e244"
+  notes:
+    - Do not create the external repo until CFO-0003 has been closed and at least one later work packet has used the checker.
+    - Publication remains blocked on maintainer approval, license choice, and remote/repo decision.

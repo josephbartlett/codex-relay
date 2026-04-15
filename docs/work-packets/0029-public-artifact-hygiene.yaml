@@ -1,0 +1,80 @@
+id: CFO-0029
+title: Public artifact hygiene audit
+status: done
+owner: lead
+role: release
+priority: p0
+objective: Remove local, personal, private-context, and informal internal artifacts from tracked public-facing repository content before public release.
+paths:
+  - AGENTS.md
+  - CHANGELOG.md
+  - docs/AGENT_ORCHESTRATION.md
+  - docs/DECISIONS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/RELEASE_READINESS.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - docs/work-packets/0010-extract-custody-first-scaffold.yaml
+  - docs/work-packets/0014-custody-first-publication-hardening.yaml
+  - docs/work-packets/0015-external-custody-first-repo-bootstrap.yaml
+  - docs/work-packets/0017-queued-slack-progress.yaml
+  - docs/work-packets/0020-email-control-plane-roadmap.yaml
+  - docs/work-packets/0022-live-release-smoke.yaml
+  - docs/work-packets/0028-v0.1.0-release-publication.yaml
+  - docs/work-packets/0029-public-artifact-hygiene.yaml
+  - tests/pull-request.test.ts
+concerns:
+  - concern:public-release-hygiene
+dependencies:
+  - CFO-0028
+non_goals:
+  - Do not edit `.env`.
+  - Do not rewrite git history in this packet without explicit approval.
+  - Do not remove required public ownership metadata such as package repository URLs, license copyright, or security contact names.
+acceptance:
+  - Current tracked files contain no local Windows/WSL user paths.
+  - Current tracked docs avoid private-context language and internal notes that would look unreviewed in a public repo.
+  - Release smoke evidence is summarized without exact private session IDs, local paths, or unnecessary test-repo URLs.
+  - Generic future roadmap items do not name private local projects.
+  - A history audit identifies whether a separate rewrite decision is needed before public visibility.
+verification:
+  required:
+    - targeted public-hygiene rg scan
+    - npm run check
+    - git diff --check
+  completed:
+    - targeted public-hygiene rg scan
+    - git history hygiene scan
+    - npm run check
+    - git diff --cached --check
+  evidence:
+    - "Current tracked tree scan found no targeted local user identifiers, local Windows/WSL user paths, private mail-project references, pre-release access wording, informal validation wording, maintainer-gate legacy wording, or exact live-smoke test repo/session identifiers."
+    - "Removed tracked internal notes and extraction-detail docs that were not required public artifacts."
+    - "Release-smoke evidence is now summarized without exact test-repo PR URL, session id, branch id, or commit id."
+    - "Author/repository metadata remains only where expected: license, package metadata, security contact, and repository URLs."
+    - "Previous private history was discarded by recreating the GitHub repository before the public root commit."
+    - "`npm run check` passed: setup validation, typecheck, build, 99 tests, work-packet validation, release readiness, high-severity npm audit, and secret scan."
+handoff:
+  expected:
+    - Owner reports sanitized files, residual allowed public metadata, and fresh public-history status.
+  completed:
+    - "Current tracked tree is sanitized for the targeted public-risk strings."
+    - "Residual current-tree personal-name hits are intentional public project metadata: license, package author, security contact, and repository URLs."
+    - "The fresh public repository starts from the sanitized root commit, so no public history rewrite is pending."
+  next: []
+risks:
+  - Current-tree cleanup depends on using a fresh public root commit, not reusing old private history.
+  - Over-sanitizing can remove useful release evidence or ownership metadata that should remain public.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - targeted public-hygiene rg scan
+    - git history hygiene scan
+    - npm run check
+    - git diff --cached --check
+  commit: 97cb4e1
+  notes:
+    - Started after public-readiness audit found local paths, internal notes, and informal maintenance wording in tracked docs.
+    - Closed after current-tree cleanup and verification. The repository was recreated before public launch so the public history can start from the sanitized root commit.

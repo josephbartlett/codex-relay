@@ -1,0 +1,55 @@
+name: Agent-ready task
+description: Define a bounded task that a human or coding agent can own safely.
+title: "task: "
+labels: ["agent-ready", "needs-triage"]
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What exact outcome should this task produce?
+    validations:
+      required: true
+  - type: textarea
+    id: owned-paths
+    attributes:
+      label: Owned paths
+      description: List files or directories this task is expected to touch.
+      placeholder: |
+        - apps/orchestrator/src/tasks.ts
+        - tests/orchestrator-flow.test.ts
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: What must this task avoid changing?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: Commands or manual QA expected before handoff.
+      value: |
+        - [ ] npm test
+        - [ ] npm run check
+    validations:
+      required: true
+  - type: textarea
+    id: security
+    attributes:
+      label: Security considerations
+      description: Mention authorization, sandboxing, secrets, logging, repo binding, persistence, or explain why this is not security-sensitive.
+    validations:
+      required: true

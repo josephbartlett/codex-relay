@@ -1,0 +1,69 @@
+id: CFO-0028
+title: Prepare v0.1.0 release publication
+status: done
+owner: lead
+role: release
+priority: p0
+objective: Prepare Codex Relay for public release and produce a clean v0.1.0 release candidate for tag and GitHub release publication.
+paths:
+  - README.md
+  - CHANGELOG.md
+  - docs/RELEASE_READINESS.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0028-v0.1.0-release-publication.yaml
+  - docs/work-packets/0029-public-artifact-hygiene.yaml
+concerns:
+  - concern:v0.1.0-release-publication
+dependencies:
+  - CFO-0027
+non_goals:
+  - Do not edit `.env`.
+  - Do not make the GitHub repository public.
+  - Do not publish to npm.
+  - Do not change runtime behavior after final verification unless a blocker is found.
+acceptance:
+  - README gives new users a clear install, Slack setup, Codex setup, and first task path.
+  - Release readiness no longer contains stale packet/tag status.
+  - Changelog release date matches the v0.1.0 tag date.
+  - "`npm run check` passes on a clean release candidate."
+  - "`v0.1.0` tag and GitHub release publication are unblocked only after the release candidate is clean."
+verification:
+  required:
+    - npm run check
+    - git status --short
+  completed:
+    - npm run check
+    - npm run validate:live-config
+    - git diff --check
+    - git status --short
+  evidence:
+    - "Full tracked gate passed: setup validation, typecheck, build, 99 tests, work-packet validation, release readiness, high-severity npm audit, and secret scan."
+    - "README now explains requirements, Codex interaction, Slack setup, live validation, and the first Slack task."
+    - "Release readiness and roadmap no longer contain stale tag-approval wording."
+    - "Protected local live-config validation failed closed because local `.env` still has placeholder/missing strict-mode Slack and repo values; `.env` was not edited or printed."
+handoff:
+  expected:
+    - Release owner reports commit SHA, tag, GitHub release URL, verification summary, and remaining post-release operator actions.
+  completed:
+    - "Release candidate commit is `a20830b`."
+    - "Tracked repository gate passes and the repo is ready for `v0.1.0` tag and GitHub release publication."
+  next:
+    - "Tag `v0.1.0`, push the tag, create the GitHub release, then verify it with `gh release view v0.1.0`."
+    - "Before normal live use, replace placeholder local `.env` values with strict Slack user/channel/repo allowlists and run `npm run validate:live-config`."
+risks:
+  - The local protected `.env` may still need strict-mode Slack allowlist updates for normal live operation.
+  - The repository visibility may still need to be changed separately from release creation.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  completed_at: "2026-04-15"
+  reviewed_by: lead
+  checks:
+    - npm run check
+    - npm run validate:live-config
+    - git diff --check
+    - git status --short
+  commit: a20830b
+  notes:
+    - Started as final release-publication preparation for the v0.1.0 public release.

@@ -1,0 +1,43 @@
+id: CFO-0009
+title: Promote approved brand and architecture assets
+status: ready
+owner: maintainer
+role: release
+priority: p2
+objective: Promote only maintainer-approved brand and architecture assets from ignored candidates into tracked project assets.
+paths:
+  - brand-candidates
+  - assets
+  - docs/BRAND.md
+  - README.md
+dependencies:
+  - CFO-0003
+non_goals:
+  - Do not track unapproved visual candidates.
+  - Do not use imagery that creates trademark, copyright, or confusing religious-symbol risks.
+  - Do not change runtime behavior while promoting brand assets.
+acceptance:
+  - Maintainer selects approved logo, architecture diagrams, and audit visuals from brand-candidates.
+  - Rendered desktop and mobile/narrow screenshots are reviewed before any visual asset is promoted.
+  - Overlap, clipping, unintended-symbol, legibility, contrast, and framing checks are recorded.
+  - Approved SVG sources move into a tracked assets path.
+  - Docs reference only approved tracked assets.
+verification:
+  required:
+    - Browser screenshot review
+    - Maintainer approval record
+    - npm run check
+  completed: []
+  evidence: []
+handoff:
+  expected:
+    - Maintainer records approved candidate names before any tracked asset promotion.
+    - Release owner records screenshot review evidence and final tracked asset paths.
+  completed: []
+  next:
+    - Update README and case study references after approval.
+risks:
+  - Unapproved or legally confusing imagery should remain ignored and untracked.
+maintenance_audit:
+  notes:
+    - Requires explicit maintainer approval before tracked asset promotion.

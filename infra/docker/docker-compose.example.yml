@@ -1,0 +1,24 @@
+services:
+  slack-gateway:
+    build:
+      context: ../..
+      dockerfile: infra/docker/runner.Dockerfile
+    command: npm run start:slack
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../.codex-slack:/app/.codex-slack
+      - /absolute/path/to/repos:/repos
+      - ${HOME}/.codex:/home/node/.codex:ro
+
+  local-runner:
+    build:
+      context: ../..
+      dockerfile: infra/docker/runner.Dockerfile
+    command: npm run start:runner
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../.codex-slack:/app/.codex-slack
+      - /absolute/path/to/repos:/repos
+      - ${HOME}/.codex:/home/node/.codex:ro

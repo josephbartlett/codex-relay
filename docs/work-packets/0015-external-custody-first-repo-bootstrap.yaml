@@ -1,0 +1,78 @@
+id: CFO-0015
+title: Bootstrap external Custody-First repository
+status: done
+owner: lead
+role: release
+priority: p1
+objective: Initialize and push the extracted Custody-First Orchestration scaffold as its own private GitHub repository while keeping public release steps maintainer-gated.
+paths:
+  - concern:external-custody-first-scaffold
+  - docs/work-packets/0015-external-custody-first-repo-bootstrap.yaml
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/ROADMAP.md
+dependencies:
+  - CFO-0010
+  - CFO-0014
+non_goals:
+  - Do not make the GitHub repository public from automation.
+  - Do not tag a release before maintainer approval.
+  - Do not publish to npm.
+acceptance:
+  - External scaffold has MIT license, governance docs, GitHub templates, CI, package metadata, and release docs.
+  - External scaffold has a visual asset review gate so diagrams and brand assets require rendered screenshot review and explicit maintainer approval before tracking.
+  - External scaffold is initialized as a git repo with its configured remote.
+  - External scaffold pushes `main` to the private remote.
+  - External scaffold validation, initializer smoke check, inside-target rejection, and publish guard checks pass.
+  - Codex Relay notes reflect the new private-repo state and remaining maintainer-gated steps.
+verification:
+  required:
+    - external scaffold clean install/check/test
+    - external scaffold publish guard fails without release approval
+    - generated-scaffold smoke check
+    - external scaffold inside-target rejection check
+    - npm run check:work-packets
+    - npm run typecheck
+  completed:
+    - external scaffold clean install/check/test
+    - external scaffold publish guard failed without release approval
+    - generated-scaffold smoke check
+    - external scaffold inside-target rejection check
+    - npm run check:work-packets
+    - npm run typecheck
+  evidence:
+    - "External scaffold commits were pushed to the private GitHub remote on `main`."
+    - "Read-only reviewer found initializer leakage, missing `npm test`, and missing publish-guard risks; fixes were applied before push and re-review found no blockers."
+    - "External scaffold generated target smoke repo with neutral metadata and passing checks."
+    - "External scaffold blocks npm publication unless `private` is explicitly false and `ALLOW_NPM_PUBLISH=1` is set."
+    - "External scaffold now includes a visual asset gate requiring rendered screenshot review, overlap/framing/legibility checks, and explicit maintainer approval."
+handoff:
+  expected:
+    - Owner reports external remote state, commits pushed, checks run, and maintainer-gated release decisions.
+  completed:
+    - "Initialized the external scaffold as a git repo with its configured remote."
+    - "Pushed `main` to the private remote."
+    - "Added visual asset review gate and pushed it before public-release review."
+    - "Kept public visibility, branch protection, release tagging, and npm publication as explicit maintainer steps."
+  next:
+    - Configure branch protection after first push.
+    - Maintainer changes repository visibility to public after review.
+    - Maintainer decides whether to tag `v0.1.0`.
+risks:
+  - Public visibility before final review could expose wording or governance choices the maintainer wants to change.
+  - npm publication remains intentionally deferred until the initializer and package contract are stable.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only publication-prep reviewer
+  checks:
+    - external scaffold clean install/check/test
+    - external scaffold publish guard fails without release approval
+    - generated-scaffold smoke check
+    - external scaffold inside-target rejection check
+    - npm run check:work-packets
+    - npm run typecheck
+  commit: "cee4c4f"
+  notes:
+    - The commit recorded here is the external scaffold visual-gate closure commit.
+    - Public visibility, branch protection, release tagging, and npm publication remain maintainer-gated.

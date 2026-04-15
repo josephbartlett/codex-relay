@@ -1,0 +1,49 @@
+id: CFO-0001
+title: Establish Codex Relay foundation
+status: done
+owner: lead
+role: lead
+priority: p0
+objective: Create the first usable Codex Relay foundation for Slack-controlled local Codex execution.
+paths:
+  - apps
+  - packages
+  - infra
+  - docs
+  - scripts
+  - tests
+  - .github
+dependencies: []
+non_goals:
+  - Do not solve team-runner scaling or public Slack Marketplace distribution in the foundation packet.
+  - Do not add real credentials, workspace-specific Slack IDs, or local machine secrets to tracked files.
+acceptance:
+  - Slack Socket Mode gateway exists with mention, shortcut, command, action, and App Home flows.
+  - Two-phase plan and approval-gated execution works in isolated worktrees.
+  - JSON and SQLite persistence exist with tests.
+  - Draft PR creation and release hygiene docs exist.
+verification:
+  required:
+    - npm run check
+  completed:
+    - npm run check
+  evidence:
+    - Initial foundation checkpoint passed local check before commit.
+handoff:
+  expected: []
+  completed:
+    - Foundation checkpoint created the project structure, local Slack gateway, orchestration core, runner adapter, persistence, docs, and tests.
+    - Follow-up packets were required for authorization hardening, product audit, and public repo hygiene.
+  next:
+    - Continue hardening security, audit, and release process before v0.1.0.
+risks:
+  - Large initial surface area required later security and audit hardening.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead
+  checks:
+    - npm run check
+  commit: "6a192d5"
+  notes:
+    - Initial public foundation commit.

@@ -1,0 +1,70 @@
+id: CFO-0019
+title: Runner cleanup and retention policy
+status: done
+owner: lead
+role: worker
+priority: p0
+objective: Define and enforce a conservative cleanup and artifact retention policy for session worktrees and local task artifacts.
+paths:
+  - apps/local-runner/src/worktreeManager.ts
+  - apps/orchestrator/src/artifacts.ts
+  - apps/orchestrator/src/tasks.ts
+  - apps/slack-gateway/src/listeners/commands.ts
+  - apps/slack-gateway/src/listeners/actions.ts
+  - tests/orchestrator-flow.test.ts
+  - tests/runner-hardening.test.ts
+  - docs/TASKS.md
+  - docs/ROADMAP.md
+  - docs/RUNBOOK.md
+  - docs/SECURITY.md
+  - docs/DECISIONS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0019-runner-cleanup-retention.yaml
+concerns:
+  - concern:runner-cleanup-retention
+dependencies:
+  - CFO-0007
+non_goals:
+  - Do not force-delete dirty worktrees.
+  - Do not delete source repositories or user branches.
+  - Do not add cloud/object-storage artifact retention in this packet.
+acceptance:
+  - Cleanup policy is explicit about eligible session statuses, minimum age, dry-run behavior, and dirty-worktree handling.
+  - Cleanup refuses active, queued, awaiting-approval, or PR-incomplete work unless explicitly safe.
+  - Artifact retention boundaries are documented and reflected in code where local artifacts are generated or inspected.
+  - Tests cover dry-run cleanup, confirmed cleanup, dirty-worktree skip, active-session skip, and retention metadata.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+  completed:
+    - npm run check
+  evidence:
+    - Full repository gate passed, including setup validation, typecheck, build, 89 tests, work-packet validation, npm audit, and local secret scan.
+    - Cleanup tests cover dry-run policy reporting, active run skip, queued job skip, pending approval skip, completed session without PR metadata skip, clean worktree removal, and dirty worktree preservation.
+    - Diff artifact tests verify bounded patch previews and ephemeral retention metadata.
+handoff:
+  expected:
+    - Owner reports policy decisions, code changes, tests run, and remaining release-readiness gaps.
+  completed:
+    - Cleanup is owner-scoped, age-gated, status-gated, skips active/queued/pending/PR-incomplete sessions, and never force-removes dirty worktrees.
+    - Local diff details are generated on demand, capped before rendering, marked ephemeral, and not persisted as patch bodies.
+  next:
+    - Run release-readiness review against setup, security, runbook, changelog, CI, and smoke tests.
+    - Keep tracked brand assets maintainer-gated until rendered screenshot review and explicit approval.
+risks:
+  - Cleanup mistakes can delete user-visible work.
+  - Artifacts can contain sensitive Slack text, prompts, diffs, or command output.
+  - Overly aggressive cleanup can remove work before PR handoff or audit review.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead
+  checks:
+    - npm run check
+  commit: b7d9ca5
+  notes:
+    - Started after PR branch guardrail closure.
+    - Closed after full gate passed and implementation checkpoint was committed.

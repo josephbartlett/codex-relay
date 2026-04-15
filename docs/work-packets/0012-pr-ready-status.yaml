@@ -1,0 +1,77 @@
+id: CFO-0012
+title: Add PR ready-for-review handoff
+status: done
+owner: lead
+role: lead
+priority: p1
+objective: Let an authorized task owner or maintainer mark a session draft PR ready for review from Slack after checking compact PR status.
+paths:
+  - packages/shared/src/types.ts
+  - packages/shared/src/events.ts
+  - apps/local-runner/src/pullRequest.ts
+  - apps/orchestrator/src/tasks.ts
+  - apps/slack-gateway/src/blocks/taskCards.ts
+  - apps/slack-gateway/src/listeners/actions.ts
+  - apps/slack-gateway/src/listeners/mentions.ts
+  - tests/pull-request.test.ts
+  - tests/orchestrator-flow.test.ts
+  - docs/RUNBOOK.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0012-pr-ready-status.yaml
+  - CHANGELOG.md
+concerns:
+  - concern:pr-ready-review
+dependencies:
+  - CFO-0005
+non_goals:
+  - Do not ingest full CI logs or build a GitHub checks dashboard.
+  - Do not merge PRs or enable auto-merge.
+  - Do not bypass owner/maintainer authorization for PR state changes.
+acceptance:
+  - Completion and PR lifecycle cards expose a ready-for-review action only when a draft PR exists.
+  - The action validates session ownership/maintainer policy, PR metadata, branch, and origin before calling GitHub.
+  - Marking ready is idempotent when the PR is already ready.
+  - Slack gets a compact result with PR URL, draft state, and check summary.
+verification:
+  required:
+    - npm run typecheck
+    - node --import tsx --test tests/pull-request.test.ts tests/orchestrator-flow.test.ts
+    - npm run check
+  completed:
+    - npm run typecheck
+    - node --import tsx --test tests/pull-request.test.ts tests/orchestrator-flow.test.ts
+    - npm run check
+  evidence:
+    - "Slack cards expose Ready for review only for sessions with draft PR metadata and hide it after local ready metadata exists."
+    - "Local runner validates PR URL origin, session branch, open PR state, and head branch before calling `gh pr ready`."
+    - "Ready-for-review is idempotent when GitHub reports the PR is already non-draft."
+    - "PR status syncs local ready metadata when GitHub has already marked the PR ready externally."
+    - "Reviewer found no auth bypass or origin/branch validation hole; status-sync and duplicate-click UX findings were fixed before checkpoint."
+    - "Full gate passed: setup validation, typecheck, build, 72 node:test tests, work packet check, npm audit, and secret scan."
+handoff:
+  expected:
+    - Worker reports local runner command behavior, Slack action behavior, authorization coverage, and residual GitHub CLI assumptions.
+    - Reviewer checks idempotency, origin validation, and non-owner denial paths.
+  completed:
+    - "Added `gh pr ready` handoff through local runner, orchestrator, Slack action, and thread follow-up intent."
+    - "Added tests for ready, already-ready no-op, closed PR rejection, origin/branch mismatch rejection, owner/maintainer authorization, status sync, and card rendering."
+    - "Updated runbook, roadmap, security model, decision log, README, changelog, task tracker, and maintenance audit."
+    - "Feature checkpoint landed in commit 1145c08."
+  next:
+    - Deeper CI log ingestion remains deferred.
+risks:
+  - Ready-for-review changes a public GitHub PR state, so duplicate clicks and corrupted PR metadata must be safe.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only PR-ready reviewer
+  checks:
+    - npm run typecheck
+    - node --import tsx --test tests/pull-request.test.ts tests/orchestrator-flow.test.ts
+    - npm run check
+  commit: "1145c08"
+  notes:
+    - Treat this as a GitHub publication-state change, not just a status lookup.
+    - Deeper CI log ingestion remains deferred.

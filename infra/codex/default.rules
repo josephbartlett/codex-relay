@@ -1,0 +1,52 @@
+# Starter Codex execpolicy rules for Slack-triggered local automation.
+# Install under ~/.codex/rules/default.rules or a managed team config rules path.
+
+prefix_rule(
+    pattern = ["rm", "-rf"],
+    decision = "forbidden",
+    justification = "Do not recursively delete paths from Slack-triggered runs. Use a narrow cleanup command after human review.",
+    match = [
+        "rm -rf /tmp/build-output",
+    ],
+)
+
+prefix_rule(
+    pattern = ["rm", "-fr"],
+    decision = "forbidden",
+    justification = "Do not recursively delete paths from Slack-triggered runs. Use a narrow cleanup command after human review.",
+    match = [
+        "rm -fr /tmp/build-output",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "remote", ["add", "remove", "rename", "set-url"]],
+    decision = "forbidden",
+    justification = "Slack-triggered runs must not mutate git remotes.",
+    match = [
+        "git remote set-url origin git@example.com:org/repo.git",
+        "git remote remove origin",
+    ],
+)
+
+prefix_rule(
+    pattern = [["curl", "wget", "nc", "netcat"]],
+    decision = "forbidden",
+    justification = "Network tools are disabled by default for local Slack runs. Use a repo-specific profile when network is explicitly allowed.",
+    match = [
+        "curl https://example.com",
+        "wget https://example.com/file",
+        "nc example.com 443",
+    ],
+)
+
+prefix_rule(
+    pattern = ["docker", ["system", "volume", "network"], "prune"],
+    decision = "forbidden",
+    justification = "Destructive Docker cleanup must be run manually outside Slack-triggered automation.",
+    match = [
+        "docker system prune",
+        "docker volume prune",
+        "docker network prune",
+    ],
+)

@@ -1,0 +1,66 @@
+id: CFO-0027
+title: Document orchestration tracking policy
+status: done
+owner: lead
+role: lead
+priority: p1
+objective: Make the tracked versus untracked orchestration policy explicit in Codex Relay documentation and confirm the external scaffold is the reusable policy home.
+paths:
+  - docs/TASK_MANAGEMENT.md
+  - docs/AGENT_ORCHESTRATION.md
+  - docs/DOCUMENTATION.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0027-document-tracking-policy.yaml
+concerns:
+  - concern:orchestration-tracking-policy
+dependencies:
+  - CFO-0026
+non_goals:
+  - Do not change product runtime code.
+  - Do not edit `.env` or local runtime state.
+  - Do not reopen visual asset approval or release tagging.
+acceptance:
+  - Codex Relay docs explicitly state which orchestration artifacts are tracked.
+  - Codex Relay docs explicitly state which runtime, scratch, secret, transcript, and candidate files stay untracked.
+  - Documentation guide points maintainers to the tracking policy.
+  - The external custody-first repo is evaluated and updated separately only for reusable scaffold policy.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+    - external scaffold npm run check and generated-scaffold smoke check
+  evidence:
+    - "Codex Relay `docs/TASK_MANAGEMENT.md` now lists tracked orchestration artifacts and untracked runtime/scratch/sensitive artifacts."
+    - "Codex Relay `docs/AGENT_ORCHESTRATION.md` points maintainers to the tracking policy during custody work."
+    - "Codex Relay `docs/DOCUMENTATION.md` includes the tracking policy in the public docs map."
+    - "External scaffold now has a first-class `docs/TRACKING_POLICY.md` and initializer inheritance coverage."
+handoff:
+  expected:
+    - Owner reports where the policy lives in this repo and what was updated in the external scaffold repo.
+  completed:
+    - "In this repo, the primary policy lives in `docs/TASK_MANAGEMENT.md`, with pointers from `docs/AGENT_ORCHESTRATION.md` and `docs/DOCUMENTATION.md`."
+    - "In the external repo, the reusable policy lives in `docs/TRACKING_POLICY.md` and is copied by `scripts/init-scaffold.mjs`."
+  next:
+    - "Use this policy when deciding whether future agent transcripts, screenshots, packet evidence, or local state should be tracked."
+risks:
+  - A policy that is too vague lets runtime residue or private transcripts leak into public history.
+  - A policy that is too broad creates process noise for tiny fixes.
+maintenance_audit:
+  assigned_at: "2026-04-14"
+  completed_at: "2026-04-14"
+  reviewed_by: lead
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+    - external scaffold npm run check
+    - external generated-scaffold smoke check
+  commit: 8db5821
+  notes:
+    - Started after user asked whether the orchestration tracking policy is documented in both repos.

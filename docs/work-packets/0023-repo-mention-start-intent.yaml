@@ -1,0 +1,67 @@
+id: CFO-0023
+title: Fix repo-qualified mention start intent
+status: done
+owner: lead
+role: worker
+priority: p0
+objective: Fix live-smoke blocker where a repo-qualified Slack mention with words like "stop" is misclassified as a follow-up instead of starting a new task.
+paths:
+  - apps/orchestrator/src/context.ts
+  - tests/context.test.ts
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0023-repo-mention-start-intent.yaml
+concerns:
+  - concern:slack-mention-start-intent
+dependencies:
+  - CFO-0022
+non_goals:
+  - Do not change follow-up cancel behavior for existing sessions.
+  - Do not change Slack authorization policy.
+  - Do not tag v0.1.0.
+acceptance:
+  - A no-session mention with an explicit `repo:<id>` is classified as a new task even if the task text includes "stop" as an instruction.
+  - Existing-session cancel/stop follow-ups still classify as cancellation.
+  - Regression tests cover both paths.
+verification:
+  required:
+    - node --import tsx --test --test-reporter=spec tests/context.test.ts
+    - npm run typecheck
+    - npm run build
+    - npm run check:work-packets
+  completed:
+    - node --import tsx --test --test-reporter=spec tests/context.test.ts
+    - npm run typecheck
+    - npm run build
+    - npm run check:work-packets
+    - git diff --check
+  evidence:
+    - Focused context regression test passed for repo-qualified no-session text containing "stop".
+    - Existing-session "stop" still classifies as cancel.
+    - Build and typecheck passed before gateway restart.
+handoff:
+  expected:
+    - Owner reports the classifier fix, regression coverage, and gateway restart status for live smoke retry.
+  completed:
+    - No-session mentions with explicit `repo:<id>` now classify as `new_task` before cancel/stop/abort handling.
+    - Existing-session cancellation precedence is unchanged.
+  next:
+    - Rebuild and restart Slack gateway from the fixed code.
+    - Retry CFO-0022 live Slack smoke.
+risks:
+  - Incorrect intent precedence can either block new tasks or prevent legitimate cancellation.
+  - Live Slack retry should use rebuilt gateway code.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead
+  checks:
+    - node --import tsx --test --test-reporter=spec tests/context.test.ts
+    - npm run typecheck
+    - npm run build
+    - npm run check:work-packets
+    - git diff --check
+  commit: 115aeb4
+  notes:
+    - Started after live smoke mention returned "No Codex session was found" because "then stop" was classified as cancel without an existing session.
+    - Closed before retrying the live smoke test.

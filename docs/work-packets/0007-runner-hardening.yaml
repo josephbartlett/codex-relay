@@ -1,0 +1,74 @@
+id: CFO-0007
+title: Harden runner execution policy
+status: done
+owner: lead
+role: lead
+priority: p0
+objective: Harden runner startup and execution policy so unsafe local Codex configurations are visible before work starts.
+paths:
+  - apps/local-runner/src/startupChecks.ts
+  - apps/orchestrator/src/runner/ExecAdapter.ts
+  - apps/local-runner/src/daemon.ts
+  - apps/slack-gateway/src/app.ts
+  - infra/codex
+  - packages/shared/src/config.ts
+  - .env.example
+  - README.md
+  - docs/RUNBOOK.md
+  - docs/SECURITY.md
+  - docs/SECURITY_REVIEW.md
+  - docs/DECISIONS.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - CHANGELOG.md
+  - tests
+dependencies:
+  - CFO-0003
+non_goals:
+  - Do not default to network-enabled or danger-full-access execution.
+  - Do not print secrets, raw tokens, or full environment dumps in diagnostics.
+  - Do not require one exact Codex CLI version unless compatibility testing proves it is necessary.
+acceptance:
+  - Runner profiles exist for read-only, write, PR, and cleanup operations.
+  - Startup checks report unsafe Codex sandbox, network, or exec policy posture.
+  - Child-process environment allowlists are documented and enforced where practical.
+verification:
+  required:
+    - npm test
+    - npm run typecheck
+  completed:
+    - npm run typecheck
+    - node --import tsx --test tests/runner-hardening.test.ts tests/codex-exec-args.test.ts
+    - npm run check
+  evidence:
+    - "Read-only runner-hardening explorer recommended four explicit runner profiles, startup posture checks, complete env allowlist enforcement, and deterministic tests."
+    - "Targeted tests cover config parsing for runner env/policy paths, child env filtering, shipped profile/rule posture checks, unsafe profile rejection, and codex exec argument compatibility."
+    - "Read-only security reviewer found advisory-only profiles, heuristic policy scanning, and warning-only execpolicy validation. The implementation now binds runtime args to named profiles, strips comments and checks prefix_rule blocks, and requires execpolicy validation by default."
+    - "Security re-review reported no remaining blockers."
+    - "Full gate passed: typecheck, build, 58 node:test tests, work packet check, npm audit, and secret scan."
+handoff:
+  expected:
+    - Worker reports policy assumptions, compatibility limits, and any command/environment allowlist changes.
+    - Security reviewer checks secret exposure, sandbox posture, and dangerous-default risks.
+  completed:
+    - "Runtime `codex exec` arguments now bind task modes to named relay profiles and inline safe profile config."
+    - "Startup checks validate configured profile names, reject `danger-full-access`, reject default network access, require execpolicy validation by default, and check dangerous-command guards."
+    - "`ExecAdapter` filters child-process environment variables through `CODEX_RUNNER_ENV_ALLOWLIST`."
+    - Feature checkpoint landed in commit 40478cd.
+  next:
+    - Feed hardened runner checks into packaging and setup validation.
+risks:
+  - Codex CLI policy support can vary by installed version; compatibility tests should be explicit.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only security reviewer
+  checks:
+    - npm run typecheck
+    - node --import tsx --test tests/runner-hardening.test.ts tests/codex-exec-args.test.ts
+    - npm run check
+  commit: "40478cd"
+  notes:
+    - Treat this as security-sensitive and assign a read-only reviewer.
+    - Default env allowlist intentionally omits Slack, GitHub, OpenAI, cloud-provider, and SSH-agent credentials.
+    - Execpolicy CLI validation is required by default; deployments can opt out only with an explicit compatibility setting.

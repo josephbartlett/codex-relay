@@ -1,0 +1,78 @@
+id: CFO-0017
+title: Queued Slack progress delivery
+status: done
+owner: lead
+role: worker
+priority: p0
+objective: Add durable Slack thread notifications for queued runner work so runner daemons can publish major lifecycle changes through the Slack gateway without owning Slack I/O.
+paths:
+  - packages/shared/src/types.ts
+  - apps/orchestrator/src/persistence
+  - apps/orchestrator/src/queue.ts
+  - apps/orchestrator/src/slackNotifications.ts
+  - apps/orchestrator/src/tasks.ts
+  - apps/local-runner/src/daemon.ts
+  - apps/slack-gateway/src
+  - tests/daemon.test.ts
+  - tests/queue.test.ts
+  - tests/sqlite-store.test.ts
+  - tests/slack-notifications.test.ts
+  - tests/orchestrator-flow.test.ts
+  - docs/TASKS.md
+  - docs/ROADMAP.md
+  - docs/RUNBOOK.md
+  - docs/SECURITY.md
+  - docs/DECISIONS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0017-queued-slack-progress.yaml
+concerns:
+  - concern:queued-slack-progress-delivery
+dependencies:
+  - CFO-0006
+non_goals:
+  - Do not replace the current direct Slack mention/action execution path in this packet.
+  - Do not stream raw runner output or command logs into Slack.
+  - Do not add networked runner-to-gateway callbacks.
+acceptance:
+  - Runner daemon lifecycle changes create durable pending Slack notifications tied to the original Slack thread.
+  - Slack gateway can claim, render, send, and mark pending notifications without duplicate successful delivery.
+  - Delivery failures are retained with retry-safe status and sanitized error text.
+  - JSON and SQLite stores preserve notification state.
+  - Docs describe the queued progress delivery model and operational expectations.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+  completed:
+    - npm run check
+  evidence:
+    - "Full `npm run check` passed: setup validation, typecheck, build, 82 tests, work-packet check, npm audit, and secret scan."
+    - "Runner daemon now emits durable Slack notifications for queued start, plan-ready approval, completion, and final failure states."
+    - "Slack gateway now polls, leases, renders, posts, retries, and marks queued-run notifications."
+    - "JSON and SQLite stores now persist Slack notification state; SQLite claims use an immediate transaction."
+    - "Roadmap includes future email control-plane exploration using local bridge-style transport."
+handoff:
+  expected:
+    - Owner reports files changed, delivery model, verification commands, remaining queued-mode gaps, and release impact.
+  completed:
+    - "Added shared notification types, durable store support, daemon emission, gateway delivery, tests, and docs."
+    - "Recorded that full Slack UX conversion from direct execution to queued execution remains a follow-on product gap."
+  next:
+    - Add worktree/branch divergence guardrails for PR handoff.
+    - Finish runner cleanup and artifact retention policy.
+risks:
+  - Slack delivery must be idempotent across process restarts and Slack API retries.
+  - Notification metadata must remain compact and avoid raw prompts, command output, diffs, or secrets.
+  - JSON mode remains single-process compatibility only; SQLite is the intended multi-process queue backend.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead
+  checks:
+    - npm run check
+  commit: "2450c92"
+  notes:
+    - Started after refocusing Codex Relay maintenance back to `v0.1.0` product hardening.
+    - Implementation checkpoint added durable queued-run Slack progress delivery and future email control-plane roadmap notes.

@@ -1,0 +1,76 @@
+id: CFO-0024
+title: v0.1.0 release prep closeout
+status: done
+owner: lead
+role: release
+priority: p0
+objective: Finalize tracked v0.1.0 release materials and add a secret-safe live configuration validator before maintainer tag approval.
+paths:
+  - package.json
+  - scripts/validate-live-config.mjs
+  - scripts/release-readiness.mjs
+  - tests/live-config.test.ts
+  - tests/release-readiness.test.ts
+  - CHANGELOG.md
+  - README.md
+  - docs/RELEASE_PROCESS.md
+  - docs/RELEASE_READINESS.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0024-release-prep-closeout.yaml
+concerns:
+  - concern:release-readiness
+dependencies:
+  - CFO-0022
+non_goals:
+  - Do not tag or publish v0.1.0.
+  - Do not edit `.env` or print local secret values.
+  - Do not change product behavior outside release validation and documentation.
+acceptance:
+  - Changelog has a dated v0.1.0 release entry.
+  - Release readiness distinguishes tracked repo readiness from protected local `.env` operator configuration.
+  - A secret-safe live configuration validator exists for strict-mode Slack allowlist posture.
+  - GitHub repository settings that can be checked from CLI are recorded.
+  - Full release gate passes after changes.
+verification:
+  required:
+    - npm run validate:live-config
+    - npm run check
+  completed:
+    - npm run validate:live-config
+    - node --import tsx --test --test-reporter=spec tests/live-config.test.ts tests/release-readiness.test.ts
+    - gh repo view josephbartlett/codex-relay --json nameWithOwner,isPrivate,defaultBranchRef,deleteBranchOnMerge,hasIssuesEnabled,hasWikiEnabled,isSecurityPolicyEnabled,securityPolicyUrl,viewerPermission,viewerCanAdminister,url
+    - "gh api repos/josephbartlett/codex-relay --jq '{private: .private, default_branch: .default_branch, has_issues: .has_issues, has_wiki: .has_wiki, archived: .archived, security_and_analysis: .security_and_analysis, private_vulnerability_reporting_enabled: .private_vulnerability_reporting_enabled}'"
+    - npm run check
+  evidence:
+    - "`npm run validate:live-config` ran without printing secret values and correctly failed the protected local `.env` because strict Slack user/channel/repo allowlists are missing."
+    - Focused validator and release-readiness tests passed.
+    - GitHub CLI reported the repo is private, default branch is `main`, issues are enabled, wiki is disabled, top-level security policy is enabled, and the authenticated user has admin permission.
+    - GitHub branch protection API reported private-repo protection requires GitHub Pro or public visibility in the current repository/account posture.
+    - Full `npm run check` passed with 94 tests, release readiness, high-severity npm audit, and secret scan.
+handoff:
+  expected:
+    - Owner reports release material changes, local config validation status, checks, and remaining maintainer-only tag step.
+  completed:
+    - Dated `CHANGELOG.md` for `v0.1.0` and updated release docs.
+    - Added `npm run validate:live-config` to validate real local `.env` posture without printing tokens, paths, or Slack IDs.
+    - Recorded that the current protected `.env` needs strict Slack user/channel/repo allowlists before normal live use.
+    - Confirmed the only release tag blocker left in tracked repo state is maintainer approval.
+  next:
+    - Operator applies local `.env` strict-mode allowlists and reruns `npm run validate:live-config` before normal live use.
+    - Maintainer approves and creates the `v0.1.0` tag.
+risks:
+  - Local `.env` cannot be changed safely without an explicit targeted operator request.
+  - GitHub branch protection capabilities can depend on repository visibility or account plan.
+maintenance_audit:
+  assigned_at: "2026-04-14"
+  completed_at: "2026-04-14"
+  reviewed_by: lead
+  checks:
+    - npm run validate:live-config
+    - node --import tsx --test --test-reporter=spec tests/live-config.test.ts tests/release-readiness.test.ts
+    - npm run check
+  commit: f5212eb
+  notes:
+    - Started after live Slack smoke passed and CFO-0022 was closed.

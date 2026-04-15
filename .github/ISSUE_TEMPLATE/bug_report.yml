@@ -1,0 +1,48 @@
+name: Bug report
+description: Report incorrect or broken behavior.
+title: "fix: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include commands or Slack flow, but do not include secrets or private Slack text.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      value: |
+        - OS:
+        - Node:
+        - Codex CLI:
+        - Store kind:
+        - Slack transport:
+    validations:
+      required: true
+  - type: checkboxes
+    id: security
+    attributes:
+      label: Security check
+      options:
+        - label: I did not include tokens, secrets, private repo paths, or sensitive Slack content.
+          required: true

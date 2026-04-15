@@ -1,0 +1,86 @@
+id: CFO-0026
+title: Relay-started local session handoff
+status: done
+owner: lead
+role: lead
+priority: p0
+objective: Let an operator start a Codex run locally through Codex Relay, receive Slack lifecycle/summary notifications when it finishes, and continue the same saved Codex session from Slack.
+paths:
+  - apps/orchestrator/src/tasks.ts
+  - apps/local-runner/src/localSession.ts
+  - apps/slack-gateway/src/listeners/commands.ts
+  - apps/slack-gateway/src/slackNotificationPublisher.ts
+  - apps/slack-gateway/src/blocks/taskCards.ts
+  - packages/shared/src/prompts.ts
+  - package.json
+  - tests/local-session.test.ts
+  - tests/slack-notifications.test.ts
+  - README.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/RUNBOOK.md
+  - docs/ROADMAP.md
+  - docs/DECISIONS.md
+  - docs/SECURITY.md
+  - CHANGELOG.md
+  - docs/work-packets/0026-local-session-handoff.yaml
+concerns:
+  - concern:local-session-handoff
+dependencies:
+  - CFO-0025
+non_goals:
+  - Do not edit `.env`.
+  - Do not require live Slack validation.
+  - Do not attach arbitrary already-running terminal Codex sessions without a recorded Relay session/worktree boundary.
+  - Do not run local write continuations in a developer's active branch.
+acceptance:
+  - A local command can create a Slack-bound session, run Codex through the existing queue/runner path, and enqueue Slack start/completion/failure notifications.
+  - Completed local runs store the Codex session id when the runner reports one.
+  - A Slack follow-up in the bound thread resumes the saved Codex session and worktree.
+  - Slack completion notifications show a useful session summary and continuation-oriented actions.
+  - Docs explain how to create a handoff thread and run the local command safely.
+verification:
+  required:
+    - npm run check
+    - focused local-session regression tests
+  completed:
+    - node --import tsx --test --test-reporter=spec tests/local-session.test.ts tests/slack-notifications.test.ts tests/daemon.test.ts tests/context.test.ts
+    - node --import tsx --test --test-reporter=spec tests/local-session.test.ts tests/daemon.test.ts
+    - npm run typecheck
+    - npm run check
+    - git diff --check
+    - targeted code review of local-session enqueue lifecycle, queued session state, Slack notification rendering, and docs/security boundaries
+  evidence:
+    - Focused local-session and notification regressions covered local enqueue, runner completion, stored Codex session id, Slack follow-up resume, and Slack completion summary rendering.
+    - Full check passed with setup validation, typecheck, build, 99 tests, work-packet validation, release readiness, npm audit high gate, and local secret scan.
+    - Queued local handoff sessions remain idle until the runner daemon claims the queue job, avoiding stale queued sessions being normalized to failed on restart.
+    - Local handoff uses the existing repo authorization, isolated worktree creation, durable queue, runner sandbox policy, notification, and audit boundaries.
+handoff:
+  expected:
+    - Owner reports command shape, supported workflow, unsupported arbitrary attach boundary, checks, and remaining risks.
+  completed:
+    - Added `npm run local:session -- --thread-key TEAM:CHANNEL:THREAD_TS --user U123 --repo default --mode implement --prompt "..."`
+    - Added `/codex handoff` helper that creates a Slack thread and returns a secret-free local command skeleton.
+    - Documented that this supports Relay-started local sessions only; arbitrary attachment to already-running terminal Codex sessions remains deferred until session/workspace provenance can be captured safely.
+    - Confirmed no `.env` edits, printing, or normalization were performed.
+  next:
+    - Human live-smoke can use `/codex handoff repo:default`, then run the generated `npm run local:session` command while gateway and runner share the same durable store.
+    - Future arbitrary terminal-session attach requires a separate ADR, provenance model, and security review.
+risks:
+  - Operators must provide the correct Slack team/channel/thread/user IDs until a richer Slack helper command exists.
+  - Notification delivery still requires the Slack gateway to be running or later started against the same durable store.
+  - Arbitrary attach remains unsafe without reliable Codex session/workspace provenance.
+maintenance_audit:
+  assigned_at: "2026-04-14"
+  completed_at: "2026-04-14"
+  reviewed_by: lead
+  checks:
+    - node --import tsx --test --test-reporter=spec tests/local-session.test.ts tests/slack-notifications.test.ts tests/daemon.test.ts tests/context.test.ts
+    - node --import tsx --test --test-reporter=spec tests/local-session.test.ts tests/daemon.test.ts
+    - npm run typecheck
+    - npm run check
+    - git diff --check
+  commit: e0c8073
+  notes:
+    - Started after user clarified that remote continuation and finished-session summaries are the key product need.
+    - External scaffold repository remains tabled; this packet did not change the generic schema/checker/template contract.

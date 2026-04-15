@@ -1,0 +1,71 @@
+id: CFO-0018
+title: PR worktree branch guardrails
+status: done
+owner: lead
+role: worker
+priority: p0
+objective: Add guardrails that prevent draft PR creation/update from using a dirty, detached, divergent, or unexpected worktree branch.
+paths:
+  - apps/local-runner/src/git.ts
+  - apps/local-runner/src/pullRequest.ts
+  - apps/orchestrator/src/tasks.ts
+  - apps/slack-gateway/src/blocks/taskCards.ts
+  - tests/pull-request.test.ts
+  - tests/orchestrator-flow.test.ts
+  - docs/TASKS.md
+  - docs/ROADMAP.md
+  - docs/RUNBOOK.md
+  - docs/SECURITY.md
+  - docs/DECISIONS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0018-pr-worktree-branch-guardrails.yaml
+concerns:
+  - concern:pr-worktree-branch-guardrails
+dependencies:
+  - CFO-0005
+non_goals:
+  - Do not change GitHub authentication behavior.
+  - Do not merge PRs or enable auto-merge.
+  - Do not alter queued-run Slack notification delivery.
+acceptance:
+  - PR creation/update rejects detached HEAD, wrong branch, missing upstream when required, or branch divergence that would publish unexpected commits.
+  - Dirty worktree handling distinguishes intentional session changes from unsafe unstaged/index state where appropriate.
+  - Error messages are Slack-safe and do not expose credentials or full command output.
+  - Tests cover clean rejection, wrong branch rejection, detached rejection, divergence rejection, and valid create/update behavior.
+  - Docs describe the PR branch/worktree safety model and operator recovery steps.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+  completed:
+    - npm run check
+  evidence:
+    - "Full `npm run check` passed: setup validation, typecheck, build, 86 tests, work-packet check, npm audit, and secret scan."
+    - "Focused `tests/pull-request.test.ts` passed with detached HEAD, pre-staged index, missing-upstream recovery, behind-upstream, and pushed-recovery coverage."
+    - "Draft PR handoff now rejects detached HEAD, wrong branch, pre-staged changes, behind-upstream branches, and clean recovery commits not present on upstream."
+    - "Runbook, security review checklist, roadmap, and decision log describe the PR branch custody model."
+handoff:
+  expected:
+    - Owner reports guardrails added, files touched, tests run, remaining risks, and next release-blocking chunk.
+  completed:
+    - "Added branch/upstream helpers, PR handoff assertions, regression tests, and docs."
+    - "Kept the existing recovery path for pushed commits after `gh pr edit` failures."
+  next:
+    - Finish runner cleanup and artifact retention policy.
+    - Run release-readiness review after cleanup/retention is complete.
+risks:
+  - Git branch/upstream state differs between new session branches, existing PR branches, and local-only test remotes.
+  - Guardrails must not reject legitimate uncommitted Codex changes before draft PR creation.
+  - Git command errors must stay bounded and Slack-safe.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead
+  checks:
+    - npm run check
+  commit: "582e9fd"
+  notes:
+    - Started after queued Slack progress delivery closure.
+    - Implementation checkpoint hardened draft PR creation/update branch custody and recovery semantics.

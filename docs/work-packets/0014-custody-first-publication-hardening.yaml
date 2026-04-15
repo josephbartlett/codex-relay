@@ -1,0 +1,72 @@
+id: CFO-0014
+title: Harden Custody-First scaffold for publication review
+status: done
+owner: lead
+role: release
+priority: p1
+objective: Add review-ready scaffold tooling, schema, examples, leakage checks, and publication notes without publishing or licensing the scaffold.
+paths:
+  - concern:external-custody-first-scaffold
+  - docs/work-packets/0014-custody-first-publication-hardening.yaml
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/ROADMAP.md
+dependencies:
+  - CFO-0010
+non_goals:
+  - Do not publish the scaffold, initialize a remote, or choose a license.
+  - Do not copy Codex Relay product docs, brand assets, Slack setup, or case-study material into the scaffold.
+  - Do not make Codex Relay depend on the external scaffold.
+acceptance:
+  - Scaffold exports a machine-readable work packet schema.
+  - Scaffold includes publication-review tooling for initialization, packet closure assistance, and leakage checks.
+  - Scaffold includes neutral examples beyond the adoption packet.
+  - Scaffold docs explain the pattern clearly enough for reviewers to assess it as a reusable practice.
+  - Verification proves the scaffold can clean install and run its checks.
+verification:
+  required:
+    - external scaffold clean install/check
+    - Scaffold leakage scan
+    - npm run check:work-packets
+    - npm run typecheck
+  completed:
+    - external scaffold clean install/check
+    - generated-scaffold smoke check
+    - close-packet smoke workflow with --allow-unverified-artifact
+    - init-scaffold inside-source target rejection check
+    - npm run check:work-packets
+    - npm run typecheck
+  evidence:
+    - "Scaffold `npm run check` passed after clean install; it now runs work-packet validation, leakage scanning, and schema consistency checks."
+    - "Smoke scaffold initialized outside source, clean-installed, and passed `npm run check`."
+    - "Smoke close-packet workflow passed only after verification evidence, handoff, reviewer, and checks were present."
+    - "init-scaffold rejected a target inside the scaffold source tree and left no target behind."
+    - "Read-only reviewer found helper-script hardening issues; fixes were applied before checkpoint."
+handoff:
+  expected:
+    - Worker reports scaffold files changed, review tooling added, verification results, and publication blockers.
+    - Reviewer checks project-specific leakage, package reproducibility, and whether publication decisions remain maintainer-gated.
+  completed:
+    - "Added JSON Schema, schema checker, leakage scanner, init helper, close helper, publication review checklist, and neutral feature/security/release examples."
+    - "Updated scaffold README, AGENTS guide, pattern spec, extraction notes, and work-packet docs."
+    - "Kept scaffold unpublished, unlicensed, private, and remote-free pending maintainer review."
+  next:
+    - Maintainer reviews license/repo/publication decisions.
+risks:
+  - Hardening can accidentally make the scaffold look published before license and ownership decisions are made.
+  - Generic examples can still leak source-project assumptions if not scanned.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only scaffold publication reviewer
+  checks:
+    - external scaffold clean install/check
+    - generated-scaffold smoke check
+    - close-packet smoke workflow with --allow-unverified-artifact
+    - init-scaffold inside-source target rejection check
+    - npm run check:work-packets
+    - npm run typecheck
+  commit: "45277cd"
+  notes:
+    - Keep this packet focused on publication readiness, not publication itself.
+    - Publication remains blocked on maintainer approval for license, repository, package visibility, contribution policy, and CI.

@@ -1,0 +1,74 @@
+id: CFO-0006
+title: Add durable queue and runner leases
+status: done
+owner: lead
+role: lead
+priority: p1
+objective: Introduce durable queue and runner leases as the bridge from solo local mode to team runner mode.
+paths:
+  - apps/orchestrator/src/queue.ts
+  - apps/orchestrator/src/persistence
+  - apps/orchestrator/src/tasks.ts
+  - apps/local-runner/src/daemon.ts
+  - packages/shared/src/config.ts
+  - packages/shared/src/types.ts
+  - tests
+  - docs/work-packets/0006-queue-runner-leases.yaml
+  - docs/TASKS.md
+  - docs/RUNBOOK.md
+  - docs/ROADMAP.md
+  - docs/SECURITY.md
+  - docs/DECISIONS.md
+  - CHANGELOG.md
+dependencies:
+  - CFO-0004
+non_goals:
+  - Do not replace the current local solo mode in one step.
+  - Do not require Postgres or hosted infrastructure for the first queue implementation.
+  - Do not add container isolation in this packet.
+acceptance:
+  - Gateway can enqueue work without executing it in-process.
+  - Worker process can claim, heartbeat, complete, and abandon leases.
+  - Per-session and per-repo concurrency limits are represented.
+  - Abandoned leases recover safely.
+verification:
+  required:
+    - npm test
+    - npm run typecheck
+  completed:
+    - npm run typecheck
+    - node --import tsx --test tests/daemon.test.ts tests/queue.test.ts
+    - npm run check
+  evidence:
+    - "Queue/daemon targeted tests pass for enqueue/claim, heartbeat, completion, wrong-runner rejection, expired-lease recovery, JSON persistence, SQLite atomic claim behavior, daemon completion, and daemon retry/fail behavior."
+    - "Read-only persistence explorer recommended SQLite-backed queue claims and keeping JSON as single-process compatibility only."
+    - "Read-only daemon explorer recommended store-backed claims, explicit recovery tests, and a future direct/queued gateway execution mode."
+    - "Read-only implementation reviewer found stale lease mutation, missing queued-plan approval creation, and retried-session idle state. All three were fixed with regression coverage before the checkpoint."
+    - "Full gate passed: typecheck, build, 52 node:test tests, work packet check, npm audit, and secret scan."
+handoff:
+  expected:
+    - Worker documents lease state transitions, recovery behavior, and migration impact.
+    - Reviewer checks abandoned-lease and concurrency edge cases.
+  completed:
+    - Durable queue jobs, leases, heartbeat, completion, failure, cancellation, and abandoned-lease recovery are implemented.
+    - SQLite queue claims use an immediate transaction and enforce per-session/per-repo concurrency limits.
+    - The local runner daemon can claim queued work, create approval records for completed queued plan jobs, and preserve retry state without making sessions look idle.
+    - Feature checkpoint landed in commit f34d587.
+  next:
+    - Use lease semantics as the foundation for later isolated runner pools.
+risks:
+  - Queue semantics can break current local mode if migration is not incremental.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead plus read-only subagent reviewer
+  checks:
+    - npm run typecheck
+    - node --import tsx --test tests/daemon.test.ts tests/queue.test.ts
+    - npm run check
+  commit: "f34d587"
+  notes:
+    - Prefer SQLite-compatible schema first; Postgres can wait.
+    - Gateway direct execution remains default; queue/daemon API is additive foundation for team mode.
+    - Queued plan jobs now recreate the normal approval boundary after the worker completes the read-only plan.
+    - "Reviewer findings were fixed before feature checkpoint: stale lease mutation rejection, queued plan approval creation, and active retry session state."

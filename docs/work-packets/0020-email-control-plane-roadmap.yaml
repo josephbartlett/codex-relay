@@ -1,0 +1,64 @@
+id: CFO-0020
+title: Roadmap email control plane
+status: done
+owner: lead
+role: lead
+priority: p2
+objective: Add a future development path for email as a local-first Codex Relay control plane alongside Slack.
+paths:
+  - docs/ROADMAP.md
+  - docs/DECISIONS.md
+  - docs/SECURITY.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0020-email-control-plane-roadmap.yaml
+concerns:
+  - concern:email-control-plane-roadmap
+dependencies:
+  - CFO-0017
+non_goals:
+  - Do not implement an email adapter in this packet.
+  - Do not inspect or modify any local mail-bridge project.
+  - Do not add email credentials, bridge configuration, or mailbox state to this repository.
+acceptance:
+  - Roadmap describes email as an optional local-first control plane that preserves the existing orchestrator, queue, audit, and runner boundaries.
+  - Local IMAP/SMTP bridge workflows are captured as future integration references without making them release blockers.
+  - Security notes call out sender allowlists, mailbox scoping, approval authentication, and raw email retention risks.
+  - Task tracker and maintenance audit reflect the roadmap-only scope.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+  evidence:
+    - Work packet check passed with 20 packets.
+    - TypeScript typecheck passed.
+    - Whitespace diff check passed.
+handoff:
+  expected:
+    - Owner reports the future-path shape and confirms no implementation or credential changes were made.
+  completed:
+    - Roadmap now defines email as a post-v0.1.0 local-first control-plane adapter using the same orchestrator, queue, audit, and runner boundaries as Slack.
+    - Local IMAP/SMTP bridge workflows are recorded as future integration references only.
+    - Security and decision docs now require a separate ADR/security review before email-originated write approvals.
+  next:
+    - Keep email adapter discovery after Slack v0.1.0 release readiness unless a shared adapter boundary needs earlier refactoring.
+risks:
+  - Email commands can be spoofed if sender identity or reply approvals are treated as sufficient authentication.
+  - Raw email bodies can contain secrets, signatures, attachments, or proprietary content.
+  - Over-scoping this path could distract from the Slack `v0.1.0` release target.
+maintenance_audit:
+  assigned_at: "2026-04-13"
+  completed_at: "2026-04-13"
+  reviewed_by: lead
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+  commit: df3adb0
+  notes:
+    - Started as roadmap-only work for email as another no-public-inbound control plane.
+    - Closed as roadmap-only work; no email credentials or product runtime code were touched.
