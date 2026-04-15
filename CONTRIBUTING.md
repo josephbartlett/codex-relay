@@ -61,6 +61,15 @@ Every PR should include:
 - Documentation updated or explanation for why docs are not needed.
 - Linked task, issue, ADR, or roadmap item when applicable.
 
+## Publication And Push Policy
+
+Local commits are acceptable for verified work. Publishing is a separate maintainer-controlled step.
+
+- Default public-repo handoff is branch plus pull request.
+- Do not push directly to `main` unless a maintainer explicitly asks for that direct push in the current conversation.
+- Do not push tags, create GitHub releases, or change repository settings without explicit maintainer approval in the current conversation.
+- A maintainer may approve a direct push for a narrow cleanup or release operation; record the approval-sensitive work in the relevant packet, task, changelog, or maintenance audit entry.
+
 ## Delegating Work
 
 The full operating model lives in `docs/AGENT_ORCHESTRATION.md`.
@@ -96,7 +105,7 @@ Security-sensitive changes should update `SECURITY.md` and `docs/SECURITY.md`.
 
 ## Release Standards
 
-This project uses Semantic Versioning. The first public release target is `v0.1.0`.
+This project uses Semantic Versioning. `v0.1.0` was the first public release.
 
 Do not create a release tag until:
 
@@ -104,3 +113,4 @@ Do not create a release tag until:
 - `CHANGELOG.md` has a release entry.
 - `docs/ROADMAP.md` and `docs/TASKS.md` reflect the release state.
 - Security docs are current.
+- A maintainer explicitly approves the tag and release publication.

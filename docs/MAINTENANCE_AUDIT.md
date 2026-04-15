@@ -287,3 +287,12 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - verification: `npm run check`
 - commit: `a252bec`
 - notes: Post-public sanity audit found stale top-level security and release-readiness wording from the pre-public `v0.1.0` preparation phase. Updated the public security policy, release readiness status, README current-scope wording, changelog, and release-readiness checker language.
+
+### CFO-0032: Public Repository Publish Approval Policy
+
+- owner: lead
+- reviewer: lead
+- status: review
+- verification: `npm run check`
+- commit: pending
+- notes: Documented that local commits are allowed verified checkpoints, while direct pushes to `main`, tags, GitHub releases, and repository-setting changes require explicit maintainer approval in the current conversation. Maintainer explicitly approved pushing, tagging, and publishing `v0.1.2` in the current conversation.

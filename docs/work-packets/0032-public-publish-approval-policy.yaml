@@ -1,0 +1,58 @@
+id: CFO-0032
+title: Public repository publish approval policy
+status: review
+owner: lead
+role: lead
+priority: p1
+objective: Document the approval boundary between local commits and public repository publication.
+paths:
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - CHANGELOG.md
+  - package.json
+  - package-lock.json
+  - docs/RELEASE_READINESS.md
+  - docs/DECISIONS.md
+  - docs/RELEASE_PROCESS.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0032-public-publish-approval-policy.yaml
+concerns:
+  - public repository custody
+  - release discipline
+dependencies: []
+non_goals:
+  - Do not tag a release.
+  - Do not change runtime code.
+  - Do not edit `.env`.
+acceptance:
+  - Agent guidance states that direct pushes, tags, releases, and repo-setting changes require explicit current-conversation maintainer approval.
+  - Contributor guidance defaults public-repo work to branch-and-PR handoff.
+  - Release process separates local commits from publication.
+  - Patch release metadata is updated for `v0.1.2`.
+  - Decision log records the approval boundary.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run check
+  evidence:
+    - Work-packet validation and TypeScript typecheck passed for the docs/process update.
+    - Full release gate passed before tagging `v0.1.2`.
+handoff:
+  expected:
+    - Summarize the policy update, verification, push status, and release tag status.
+  completed:
+    - Publication approval policy documented across agent, contributor, release, decision, and changelog surfaces.
+  next:
+    - Push commit, tag `v0.1.2`, and publish GitHub release after explicit maintainer approval already given in the current conversation.
+risks:
+  - Future agents may confuse local commit permission with publication permission if this policy is not kept visible.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  notes:
+    - Created after a direct push exposed the need for a stricter documented public publication boundary.
+    - Maintainer explicitly approved pushing, tagging, and publishing this patch release in the current conversation.

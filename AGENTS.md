@@ -89,16 +89,20 @@ npm run typecheck
 - Prefer one large, meaningful checkpoint over many tiny mixed commits.
 - Small commits are appropriate for isolated bug fixes, broken build fixes, or documentation corrections.
 - Do not commit broken tests unless the commit is explicitly marked as a failing reproduction.
+- Local commits are allowed when they are needed to checkpoint verified work.
+- Do not push commits, tags, releases, or repository-setting changes without explicit maintainer approval in the current conversation.
+- For the public repository, default to branch-and-PR handoff. Direct pushes to `main` are allowed only when the maintainer explicitly asks for that exact push.
 
 ## Release Discipline
 
 - This project uses Semantic Versioning.
-- The first official release target is `v0.1.0`.
+- `v0.1.0` was the first official release.
 - Do not tag a release until tests pass, docs are current, and `CHANGELOG.md` has a release entry.
+- Do not tag or publish a release without explicit maintainer approval in the current conversation.
 - Release tags must use `vMAJOR.MINOR.PATCH`.
 
 ## Current Product Shape
 
 Slack is the control plane. Codex is the execution plane. Skills/plugins/MCP are reusable behavior inside the runner.
 
-The product is not fully built until durable persistence, authorization policy, Slack lifecycle UX, GitHub PR lifecycle, queue/runner split, runner hardening, and release hygiene are complete enough for public `v0.1.0`.
+The product is not fully built until durable persistence, authorization policy, Slack lifecycle UX, GitHub PR lifecycle, queue/runner split, runner hardening, and release hygiene are complete enough for regular local-first operation.

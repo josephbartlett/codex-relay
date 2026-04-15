@@ -20,9 +20,18 @@ Pre-1.0 releases may still change quickly, but release notes must call out migra
 
 ## First Release
 
-The first official release target is `v0.1.0`.
+The first official release was `v0.1.0`.
 
-Do not tag `v0.1.0` until the acceptance criteria in `docs/ROADMAP.md` are complete or explicitly deferred with a decision record.
+Future releases should keep acceptance criteria in `docs/ROADMAP.md` complete or explicitly deferred with a decision record.
+
+## Publication Authority
+
+Local commits are allowed as verified checkpoints. Publishing is separate.
+
+- Do not push directly to `main` without explicit maintainer approval in the current conversation.
+- Do not push release tags without explicit maintainer approval in the current conversation.
+- Do not create or edit GitHub releases without explicit maintainer approval in the current conversation.
+- Default to branch-and-PR handoff for public repository changes unless the maintainer asks for a direct push.
 
 ## Release Checklist
 
@@ -57,7 +66,7 @@ Run:
 npm run check:release
 ```
 
-This gate verifies that required public files exist, package metadata is consistent with the `v0.1.0` release, changelog and release docs have the expected sections, CI uses `npm ci` and `npm run check`, local-only runtime paths are not tracked, and tracked Markdown files have balanced fenced code blocks.
+This gate verifies that required public files exist, package metadata is consistent with the current release line, changelog and release docs have the expected sections, CI uses `npm ci` and `npm run check`, local-only runtime paths are not tracked, and tracked Markdown files have balanced fenced code blocks.
 
 `npm run check` also runs this gate. Keep it deterministic and Slack-less so CI can execute it without credentials.
 

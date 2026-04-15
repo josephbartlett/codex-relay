@@ -6,9 +6,16 @@ This project uses Semantic Versioning. Release entries are written when a versio
 
 ## [Unreleased]
 
+No unreleased changes.
+
+## [0.1.2] - 2026-04-15
+
+Patch release for public repository publication discipline after the initial public launch.
+
 ### Changed
 
 - Updated public security and release-readiness documentation after the `v0.1.1` release.
+- Documented explicit maintainer approval requirements for direct pushes, tags, GitHub releases, and repository-setting changes.
 
 ## [0.1.1] - 2026-04-15
 
