@@ -173,7 +173,7 @@ Possible local architecture:
 
 ```text
 Email client / mobile mailbox
-  -> Proton Mail Bridge or local IMAP/SMTP bridge
+  -> local IMAP/SMTP bridge
     -> local mail polling daemon
       -> Codex Relay Email Adapter
         -> Orchestrator + queue + audit

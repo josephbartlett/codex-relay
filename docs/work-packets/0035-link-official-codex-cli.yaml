@@ -40,7 +40,7 @@ handoff:
   completed:
     - Official Codex CLI documentation link is present in operator-facing docs.
   next:
-    - Do not push without explicit maintainer approval in the current conversation.
+    - Publication remains maintainer-gated.
 risks:
   - Overstating the relationship could imply official endorsement, so wording stays limited to dependency/upstream context.
 maintenance_audit:

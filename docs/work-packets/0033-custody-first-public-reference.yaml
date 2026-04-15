@@ -37,7 +37,7 @@ handoff:
   completed:
     - Codex Relay now links to the reusable Custody-First scaffold.
   next:
-    - Do not push without explicit maintainer approval in the current conversation.
+    - Publication remains maintainer-gated.
 risks:
   - The external repository should not be set public until its own public-readiness audit passes.
 maintenance_audit:

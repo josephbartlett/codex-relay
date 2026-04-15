@@ -60,4 +60,4 @@ maintenance_audit:
     - targeted public-risk string scan
   commit: 1a8ba87
   notes:
-    - Maintainer explicitly approved doing the release actions for both repositories in the current conversation.
+    - Release actions completed after maintainer approval.

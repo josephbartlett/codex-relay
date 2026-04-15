@@ -66,8 +66,8 @@ Every PR should include:
 Local commits are acceptable for verified work. Publishing is a separate maintainer-controlled step.
 
 - Default public-repo handoff is branch plus pull request.
-- Do not push directly to `main` unless a maintainer explicitly asks for that direct push in the current conversation.
-- Do not push tags, create GitHub releases, or change repository settings without explicit maintainer approval in the current conversation.
+- Do not push directly to `main` unless a maintainer explicitly asks for that direct push for the current operation.
+- Do not push tags, create GitHub releases, or change repository settings without explicit maintainer approval for the current operation.
 - A maintainer may approve a direct push for a narrow cleanup or release operation; record the approval-sensitive work in the relevant packet, task, changelog, or maintenance audit entry.
 
 ## Delegating Work

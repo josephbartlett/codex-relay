@@ -6,7 +6,9 @@ This project uses Semantic Versioning. Release entries are written when a versio
 
 ## [Unreleased]
 
-No unreleased changes.
+### Changed
+
+- Sanitized public maintenance and release-history wording while preserving the `AGENTS.md` approval guardrails for future agent work.
 
 ## [0.1.3] - 2026-04-15
 
@@ -16,7 +18,7 @@ Patch release for public documentation links and reusable Custody-First Orchestr
 
 - Linked Codex Relay documentation to the reusable Custody-First Orchestration scaffold repository.
 - Added operator-facing links to OpenAI's official Codex CLI documentation.
-- Polished public maintenance notes to remove stale private-publication wording while preserving the audit trail.
+- Polished public maintenance notes to remove stale pre-release wording while preserving the audit trail.
 
 ## [0.1.2] - 2026-04-15
 

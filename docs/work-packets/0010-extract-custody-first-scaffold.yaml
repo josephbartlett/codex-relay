@@ -47,7 +47,7 @@ handoff:
   completed:
     - "Recorded the generic extraction boundary and what stayed project-specific."
     - "Kept Codex Relay case study, roadmap, runbook, security model, release notes, brand candidates, and Slack setup out of the external scaffold."
-    - "Left the external scaffold unpublished, untagged, unlicensed, private, and without a remote pending maintainer review."
+    - "Left external scaffold publication, tagging, licensing, and repository setup pending maintainer review."
   next:
     - Maintainer decides whether to publish the dry-run scaffold as a separate public repository.
     - Maintainer chooses a license before publication.
@@ -64,4 +64,4 @@ maintenance_audit:
   commit: "797e244"
   notes:
     - Do not create the external repo until CFO-0003 has been closed and at least one later work packet has used the checker.
-    - Publication remains blocked on maintainer approval, license choice, and remote/repo decision.
+    - Publication remained blocked on maintainer approval, license choice, and repository setup decisions.

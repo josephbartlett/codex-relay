@@ -4,7 +4,7 @@
 
 Local commits are acceptable agent checkpoints after verification. Publishing those commits is a separate approval boundary.
 
-For the public repository, agents and maintainers default to branch-and-PR handoff. Direct pushes to `main`, release tags, GitHub releases, and repository-setting changes require explicit maintainer approval in the current conversation. This keeps local implementation momentum while preserving public repository custody.
+For the public repository, agents and maintainers default to branch-and-PR handoff. Direct pushes to `main`, release tags, GitHub releases, and repository-setting changes require explicit maintainer approval for the specific operation. This keeps local implementation momentum while preserving public repository custody.
 
 ## 2026-04-13: Slack Buttons Are Intentional Approval Boundaries
 

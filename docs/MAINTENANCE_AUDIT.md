@@ -131,7 +131,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - status: done
 - verification: external scaffold clean install/check, `npm run check:work-packets`, `npm run typecheck`
 - commit: `797e244`
-- notes: Created a dry-run generic scaffold outside this repo with a README, AGENTS guide, pattern spec, templates, sample packet, checker, package metadata, and extraction notes. Reviewer found no Codex Relay-specific leakage; clean scaffold install/check was rerun before closure. Publication, license, and remote initialization remain maintainer-gated.
+- notes: Created a dry-run generic scaffold outside this repo with a README, AGENTS guide, pattern spec, templates, sample packet, checker, package metadata, and extraction notes. Reviewer found no Codex Relay-specific leakage; clean scaffold install/check was rerun before closure. Publication, license, and repository setup decisions remained maintainer-gated.
 
 ### CFO-0014: Harden Custody-First Scaffold For Publication Review
 
@@ -140,7 +140,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - status: done
 - verification: external scaffold clean install/check, generated-scaffold smoke check, close-helper smoke workflow with `--allow-unverified-artifact`, inside-target rejection check, `npm run check:work-packets`, `npm run typecheck`
 - commit: `45277cd`
-- notes: Added JSON Schema, schema consistency checks, leakage scanning, scaffold initialization helper, packet closure helper, neutral feature/security/release examples, and a publication review checklist to the external scaffold. Reviewer found helper hardening issues before checkpoint; fixes were applied and the scaffold was verified from a clean install and smoke copy. Publication remains blocked on maintainer decisions for license, repository ownership/remote, package visibility/name, contribution policy, and CI.
+- notes: Added JSON Schema, schema consistency checks, leakage scanning, scaffold initialization helper, packet closure helper, neutral feature/security/release examples, and a review checklist to the external scaffold. Reviewer found helper hardening issues before checkpoint; fixes were applied and the scaffold was verified from a clean install and smoke copy. Release and publication choices remained maintainer-gated.
 
 ### CFO-0015: Bootstrap External Custody-First Repository
 
@@ -149,7 +149,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - status: done
 - verification: external `npm ci && npm run check && npm test`, external publish guard rejection, external initializer smoke check, external inside-target rejection check, `npm run check:work-packets`, `npm run typecheck`
 - commit: external scaffold checkpoint `cee4c4f`
-- notes: Initialized the external scaffold repository, pushed `main`, added MIT/governance/CI/release hygiene, added a visual asset review gate after rendered-review quality issues, and kept public visibility, branch protection, release tagging, and npm publication maintainer-gated.
+- notes: Initialized the external scaffold repository, pushed `main`, added MIT/governance/CI/release hygiene, added a visual asset review gate after rendered-review quality issues, and kept branch protection, release tagging, and npm publication maintainer-gated.
 
 ### CFO-0016: Refocus Codex Relay Maintenance
 
@@ -295,7 +295,7 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - status: done
 - verification: `npm run check`
 - commit: `339161a`
-- notes: Documented that local commits are allowed verified checkpoints, while direct pushes to `main`, tags, GitHub releases, and repository-setting changes require explicit maintainer approval in the current conversation. Maintainer explicitly approved pushing, tagging, and publishing `v0.1.2` in the current conversation.
+- notes: Documented that local commits are allowed verified checkpoints, while direct pushes to `main`, tags, GitHub releases, and repository-setting changes require explicit maintainer approval for the specific operation. The `v0.1.2` release actions completed after maintainer approval.
 
 ### CFO-0033: Link Custody-First Reusable Scaffold
 
@@ -331,4 +331,4 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 - status: done
 - verification: `npm run check`; `git diff --check`; targeted public-risk string scan
 - commit: `1a8ba87`
-- notes: Prepared the patch release that publishes the public documentation polish, reusable Custody-First scaffold reference, and official Codex CLI documentation link. Maintainer explicitly approved release actions for both repositories in the current conversation.
+- notes: Prepared the patch release that publishes the public documentation polish, reusable Custody-First scaffold reference, and official Codex CLI documentation link. Release actions completed after maintainer approval.

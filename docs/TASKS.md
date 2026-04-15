@@ -4,7 +4,12 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 ## Active
 
-- No active release chunk is assigned after this checkpoint.
+- owner: lead
+  scope: `CHANGELOG.md`; `CONTRIBUTING.md`; `docs/DECISIONS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/RELEASE_PROCESS.md`; `docs/ROADMAP.md`; `docs/TASKS.md`; selected historical work packets
+  status: In progress
+  objective: Sanitize public maintenance wording while preserving the `AGENTS.md` approval guardrails.
+  verification: pending
+  handoff: pending
 
 ## Next
 
@@ -20,7 +25,7 @@ This file is the running implementation tracker for Codex Relay. Keep it current
   status: Done
   objective: Link the reusable Custody-First Orchestration scaffold and identify Codex Relay as the proving ground.
   verification: `npm run check:work-packets`; `npm run typecheck`
-  handoff: Local commit `e05c279`; do not push without explicit maintainer approval in the current conversation.
+  handoff: Local commit `e05c279`; publication remains maintainer-gated.
 
 - owner: lead
   scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; `docs/work-packets/0035-link-official-codex-cli.yaml`; `docs/work-packets/0036-v0.1.3-release.yaml`
@@ -34,7 +39,7 @@ This file is the running implementation tracker for Codex Relay. Keep it current
   status: Done
   objective: Document the explicit maintainer approval boundary for direct pushes, tags, GitHub releases, and repository-setting changes.
   verification: `npm run check`
-  handoff: Push, tag, and GitHub release publication for `v0.1.2` are explicitly approved by the maintainer in the current conversation.
+  handoff: Push, tag, and GitHub release publication for `v0.1.2` completed after maintainer release approval.
 
 - owner: lead
   scope: `README.md`; `SECURITY.md`; `CHANGELOG.md`; `docs/RELEASE_READINESS.md`; `docs/work-packets/0031-public-docs-posture.yaml`; `scripts/release-readiness.mjs`
@@ -280,9 +285,9 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 - CFO-0011 authenticated audit viewer: fail-closed remote bind opt-in, Basic Auth for dashboard/events, safe health checks, path redaction, generic error responses, setup validation, and security-review-backed tests.
 - CFO-0012 PR ready-for-review handoff: authorized Slack action and follow-up intent, `gh pr ready` runner helper, origin/branch/open-state validation, idempotent duplicate behavior, status-to-local-ready sync, and regression tests.
 - CFO-0013 compact PR check detail: normalized GitHub check/status rollups, capped Slack check detail, count-only audit metadata, parser compatibility and Slack-link safety regressions.
-- CFO-0010 Custody-First scaffold dry run: generic scaffold created outside this repo, clean install/check verified, no Codex Relay-specific leakage found, publication remains maintainer-gated.
-- CFO-0014 Custody-First scaffold publication hardening: added JSON Schema, schema consistency checks, leakage scanning, init/close helpers, neutral examples, and publication review notes to the external scaffold. Clean scaffold install/check, smoke init/check, close-helper smoke, inside-target rejection, Relay packet checker, and Relay typecheck all passed. Publication remains maintainer-gated.
-- CFO-0015 External scaffold repository bootstrap: initialized the external scaffold as a GitHub-backed repo, added MIT/governance/CI/release hygiene and a visual asset review gate, pushed `main`, and left public visibility, branch protection, release tagging, and npm publication maintainer-gated.
+- CFO-0010 Custody-First scaffold dry run: generic scaffold created outside this repo, clean install/check verified, no Codex Relay-specific leakage found, and publication decisions remained maintainer-gated.
+- CFO-0014 Custody-First scaffold hardening: added JSON Schema, schema consistency checks, leakage scanning, init/close helpers, neutral examples, and review notes to the external scaffold. Clean scaffold install/check, smoke init/check, close-helper smoke, inside-target rejection, Relay packet checker, and Relay typecheck all passed.
+- CFO-0015 External scaffold repository bootstrap: initialized the external scaffold as a GitHub-backed repo, added MIT/governance/CI/release hygiene and a visual asset review gate, pushed `main`, and kept branch protection, release tagging, and npm publication maintainer-gated.
 - CFO-0016 Codex Relay maintenance refocus: tabled external scaffold work, made Custody-First packet usage explicit in `AGENTS.md`, tightened visual asset approval rules, and reset the active build order to Codex Relay product hardening.
 
 ## Deferred

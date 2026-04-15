@@ -1,0 +1,56 @@
+id: CFO-0037
+title: Public language sanitization follow-up
+status: active
+owner: lead
+role: verifier
+priority: p1
+objective: Remove avoidable public-facing process residue from documentation and historical maintenance records while preserving agent safety guardrails.
+paths:
+  - CHANGELOG.md
+  - CONTRIBUTING.md
+  - docs/DECISIONS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/RELEASE_PROCESS.md
+  - docs/ROADMAP.md
+  - docs/TASKS.md
+  - docs/work-packets/0010-extract-custody-first-scaffold.yaml
+  - docs/work-packets/0014-custody-first-publication-hardening.yaml
+  - docs/work-packets/0015-external-custody-first-repo-bootstrap.yaml
+  - docs/work-packets/0032-public-publish-approval-policy.yaml
+  - docs/work-packets/0033-custody-first-public-reference.yaml
+  - docs/work-packets/0034-public-doc-polish.yaml
+  - docs/work-packets/0035-link-official-codex-cli.yaml
+  - docs/work-packets/0036-v0.1.3-release.yaml
+concerns:
+  - public documentation hygiene
+  - release discipline
+dependencies: []
+non_goals:
+  - Do not weaken `AGENTS.md` push, tag, release, or repository-setting guardrails.
+  - Do not edit `.env` or runtime secrets.
+  - Do not change product behavior.
+  - Do not push, tag, or publish a release from this packet without maintainer approval.
+acceptance:
+  - Public-facing docs avoid avoidable live-session wording and private/public transition chatter.
+  - "`AGENTS.md` retains explicit current-conversation approval requirements for pushes, tags, releases, and repository-setting changes."
+  - Targeted public-risk scan returns only intentional `AGENTS.md` guardrail matches.
+  - Work-packet validation and typecheck pass.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - git diff --check
+    - targeted public-risk string scan
+  completed: []
+  evidence: []
+handoff:
+  expected:
+    - Report changed documentation surfaces, guardrails preserved, scan output, verification, and publication status.
+  completed: []
+  next: []
+risks:
+  - Over-sanitizing historical records could weaken the audit trail, so this packet keeps the facts and changes only unnecessary public wording.
+maintenance_audit:
+  assigned_at: "2026-04-15"
+  notes:
+    - Created after public-language audit found avoidable process residue outside the intentional `AGENTS.md` guardrails.

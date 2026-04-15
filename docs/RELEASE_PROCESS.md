@@ -28,9 +28,9 @@ Future releases should keep acceptance criteria in `docs/ROADMAP.md` complete or
 
 Local commits are allowed as verified checkpoints. Publishing is separate.
 
-- Do not push directly to `main` without explicit maintainer approval in the current conversation.
-- Do not push release tags without explicit maintainer approval in the current conversation.
-- Do not create or edit GitHub releases without explicit maintainer approval in the current conversation.
+- Do not push directly to `main` without explicit maintainer approval for that operation.
+- Do not push release tags without explicit maintainer approval for that operation.
+- Do not create or edit GitHub releases without explicit maintainer approval for that operation.
 - Default to branch-and-PR handoff for public repository changes unless the maintainer asks for a direct push.
 
 ## Release Checklist
