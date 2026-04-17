@@ -1,0 +1,84 @@
+id: CFO-0049
+title: Publish v0.2.1 Slack UX patch release
+status: done
+owner: lead
+role: release
+priority: p1
+objective: Prepare the v0.2.1 patch release metadata for Slack UX action-refresh fixes and live validation evidence after maintainer approval to treat the work as a patch release.
+paths:
+  - package.json
+  - package-lock.json
+  - CHANGELOG.md
+  - docs/RELEASE_READINESS.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0048-slack-live-ux-validation.yaml
+  - docs/work-packets/0049-v0.2.1-release.yaml
+concerns:
+  - concern:release-v0.2.1
+  - concern:slack-ux
+  - concern:release-hygiene
+dependencies:
+  - CFO-0048
+non_goals:
+  - Do not edit `.env`.
+  - Do not print, track, or commit Slack tokens, Slack IDs, PR URLs, local paths, local usernames, private task text, or live workspace details.
+  - Do not push, tag, publish, or create a GitHub release without explicit maintainer approval in the current conversation.
+  - Do not add new feature scope beyond Slack UX patch metadata and validation records.
+acceptance:
+  - "Package metadata is bumped to `0.2.1`."
+  - "`CHANGELOG.md` has a dated `0.2.1` release entry focused on user-visible patch fixes."
+  - "Release readiness documentation clearly separates historical `v0.2.0` evidence from `v0.2.1` patch validation."
+  - Work packet and maintenance audit state are current and redacted.
+  - Full local release gate passes after metadata updates.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - "Package metadata is bumped to `0.2.1`."
+    - "`CHANGELOG.md` has a dated `0.2.1` patch release entry."
+    - "`docs/RELEASE_READINESS.md` records historical `v0.2.0` evidence separately from the `v0.2.1` Slack UX follow-up validation."
+    - "The first `npm run check` under `0.2.1` passed setup validation, typecheck, build, and 138 tests, then exposed a YAML packet syntax issue; the packet syntax was fixed before closure."
+    - "Final `npm run check` passed with setup validation, typecheck, build, 138 tests, work-packet validation, release readiness, npm audit, and secret scan."
+    - "Targeted public-risk string scan found only intentional placeholders, test fixtures, and guardrail language."
+handoff:
+  expected:
+    - Report local commit, verification status, and explicit note that push/tag/release remains maintainer-gated.
+  completed:
+    - Release metadata and validation records were prepared locally.
+    - Push, tag, and release publication remain maintainer-gated.
+  next:
+    - Push, tag, and publish only after explicit maintainer approval.
+risks:
+  - Historical `v0.2.0` validation notes should not be rewritten as `v0.2.1`.
+  - Patch release notes should not overstate scope as a feature release.
+maintenance_audit:
+  assigned_at: "2026-04-17"
+  completed_at: "2026-04-17"
+  reviewed_by: "lead"
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  artifact: "v0.2.1 release metadata local checkpoint; commit SHA assigned after verification"
+  notes:
+    - Opened after live Slack UX validation completed and the maintainer confirmed the fixes should be treated as a patch release.
+    - Closed with package metadata, changelog, release readiness, task tracker, and maintenance audit prepared for v0.2.1.

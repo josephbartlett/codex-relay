@@ -4,7 +4,7 @@ This document is the human-readable release gate for Codex Relay releases.
 
 ## Current Status
 
-Status: Release readiness materials are current through `v0.2.0`. Local operator `.env` strict-mode posture may still need protected-file updates before normal live use on a new machine or workspace.
+Status: Release readiness materials are current through `v0.2.1`. Local operator `.env` strict-mode posture may still need protected-file updates before normal live use on a new machine or workspace.
 
 Reason: the automated local gate is repeatable, Slack live smoke tests passed for ask, threaded ask, plan approval, worktree execution, and diff-summary viewing, and email live validation passed for generic SMTP/IMAP ask, reply continuation, and local handoff summary delivery. The local `.env` file remains protected by repo safety rules and must be updated explicitly for strict-mode normal operation if validation reports missing policy values.
 
@@ -47,8 +47,8 @@ It reads the local `.env`, validates strict-mode Slack user/channel/repo policy,
 
 Required before each release tag:
 
-- Run a live Slack task against a disposable or test repository. Status: passed for `v0.1.0`, `v0.1.1`, and `v0.2.0`.
-- Approve an implementation and verify the write happens in the session worktree. Status: passed for `v0.1.0`, `v0.1.1`, and `v0.2.0`.
+- Run a live Slack task against a disposable or test repository. Status: passed for `v0.1.0`, `v0.1.1`, `v0.2.0`, and `v0.2.1`.
+- Approve an implementation and verify the write happens in the session worktree. Status: passed for `v0.1.0`, `v0.1.1`, `v0.2.0`, and `v0.2.1`.
 - Review `CHANGELOG.md` and convert the pending release section into a dated release entry.
 - Confirm no unapproved `brand-candidates/` assets are tracked. Status: completed by release-readiness gate.
 - Confirm `docs/TASKS.md` has no active release-blocking packet.
@@ -57,8 +57,8 @@ Required before each release tag:
 
 Required when PR lifecycle behavior changes:
 
-- Create or update a draft PR from the session branch. Status: passed for `v0.1.0` and `v0.1.1`; deterministic PR lifecycle tests covered `v0.2.0`.
-- Verify compact PR status and ready-for-review behavior if a test PR is available. Status: covered by deterministic tests; live PR handoff was exercised during `v0.1.1`.
+- Create or update a draft PR from the session branch. Status: passed for `v0.1.0`, `v0.1.1`, and the `v0.2.1` Slack UX follow-up validation.
+- Verify compact PR status and ready-for-review behavior if a test PR is available. Status: passed during the `v0.2.1` Slack UX follow-up validation against a disposable repo.
 
 ## Live Smoke Result
 
@@ -114,7 +114,27 @@ Notes:
 
 - A stale duplicate local gateway process caused one transient stale-approval failure during smoke testing. The process was removed, a single gateway/runner pair was restarted, and the patched smoke passed.
 - Automated Slack smoke posting remains optional and local-only. It requires locally configured smoke identity values and does not require tracking Slack IDs or tokens.
-- Slash commands, App Home/status surfaces, and current PR lifecycle behavior were tightened after the `v0.2.0` live smoke in `CFO-0047` with deterministic tests. A new live slash/App Home/PR lifecycle mutation smoke remains a local operator-gated check because it requires workspace app configuration and disposable PR state.
+- Slash commands, App Home/status surfaces, and current PR lifecycle behavior were tightened after the `v0.2.0` live smoke in `CFO-0047` with deterministic tests.
+
+## v0.2.1 Slack UX Follow-Up Validation Result
+
+Date: 2026-04-17
+
+Repository: disposable test repository configured as `repo:default`
+
+Result:
+
+- `/codex status` returned the expected status response through the live Slack app.
+- `/codex new` opened a live planning flow against the disposable repo.
+- App Home showed recent session and audit state for the live task.
+- App Home approval accepted the execution request, removed the Home approval button, and refreshed the original thread approval card.
+- The implementation completed in an isolated worktree and the disposable source repo remained clean.
+- Create PR, PR status, and Ready for review actions completed through Slack against the disposable repo.
+
+Notes:
+
+- The live pass found that App Home approval refreshed the Home surface but left the original thread approval button visible. The action handler now locates and replaces the source thread approval card after acceptance, and focused regression coverage verifies that behavior.
+- Public validation notes intentionally omit Slack IDs, PR URLs, local machine paths, tokens, and live task content.
 
 ## v0.2.0 Email Live Validation Result
 

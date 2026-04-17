@@ -21,6 +21,22 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 ## 2026-04-17
 
+### CFO-0049: Publish v0.2.1 Slack UX Patch Release
+
+- owner: lead
+- status: done
+- verification: `npm run check:work-packets`, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, targeted public-risk string scan
+- commit: local release metadata checkpoint artifact
+- notes: Prepared local `v0.2.1` package metadata, changelog, release-readiness notes, task tracker updates, and work-packet closure for Slack UX action-refresh fixes and live validation evidence. Historical `v0.2.0` release evidence remains separate from the `v0.2.1` patch validation. Push, tag, and GitHub release publication remain maintainer-gated.
+
+### CFO-0048: Slack Live UX Validation
+
+- owner: lead
+- status: done
+- verification: `npm run check:work-packets`, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, targeted public-risk string scan
+- commit: local validation checkpoint artifact
+- notes: Live Slack validation passed for slash status/new, App Home approval, original thread approval-card refresh after App Home approval, isolated implementation, source-repo cleanliness, Create PR, PR status, and Ready for review against a disposable repo. The live pass found and fixed the stale thread approval-card surface; focused regression coverage now verifies the original thread approval card is replaced after acceptance. No Slack IDs, PR URLs, tokens, private repo paths, local machine details, or live task content were recorded.
+
 ### CFO-0047: Slack UX Hardening Sweep
 
 - owner: lead

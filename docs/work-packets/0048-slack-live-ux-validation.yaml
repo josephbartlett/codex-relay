@@ -1,6 +1,6 @@
 id: CFO-0048
 title: Slack live UX validation
-status: active
+status: done
 owner: lead
 role: verifier
 priority: p1
@@ -43,7 +43,14 @@ verification:
     - npm run check
     - git diff --check
     - targeted public-risk string scan
-  completed: []
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
   evidence:
     - "Live `/codex status` returned a normal no-tasks status response after restarting the gateway with the intended local-dev override."
     - "Live `/codex new` created a `repo:default` planning session against the disposable repo."
@@ -52,23 +59,38 @@ verification:
     - "The disposable source repo remained clean after approval-gated execution."
     - "Live smoke found that App Home approval buttons remain visually actionable after click; code now refreshes approval source surfaces after acceptance."
     - "Focused Slack regression tests passed after the one-shot action refresh fix."
-    - "A patched gateway/runner pair was started for retest, but no second deterministic changed-file task reached the gateway before services were stopped."
     - "Follow-up testing found that App Home approval refresh removed the Home button but left the original thread approval button. The action handler now locates the source thread approval message with `conversations.replies` and replaces it after approval."
     - "Focused regression coverage now verifies App Home approval refreshes the original thread approval card and removes the approval action."
+    - "A patched live retest confirmed the App Home approval button is removed after click and the original thread approval card is replaced with accepted/running status."
+    - "The implementation completed in an isolated worktree and the disposable source repo remained clean."
+    - "Create PR, PR status, and Ready for review actions completed through Slack against the disposable repo."
+    - "`npm run check` passed with 138 tests after the Slack action refresh fixes."
 handoff:
   expected:
     - Report live surfaces tested, redacted outcomes, bugs found or not found, and any remaining local-only prerequisites.
-  completed: []
+  completed:
+    - Redacted live Slack outcomes were recorded without Slack IDs, PR URLs, private repo paths, tokens, or local machine details.
+    - The stale thread approval-card issue found during live testing was fixed and covered by regression tests.
+    - PR lifecycle actions were live-validated after the approval-card fix.
   next:
-    - Re-run the deterministic changed-file Slack task on the patched gateway.
-    - Confirm App Home approval disappears and the original thread approval card is replaced after click.
-    - Complete Create PR, PR status, and Ready for review live smoke against the disposable repo.
+    - Keep future live Slack mutation checks scoped to disposable repositories.
 risks:
   - Live Slack smoke depends on workspace app configuration and may require maintainer-side clicks.
   - PR lifecycle smoke mutates disposable branch and PR state; keep it scoped to a disposable repository.
   - Captured evidence must be summarized without exposing private Slack workspace details or local machine details.
 maintenance_audit:
   assigned_at: "2026-04-17"
-  artifact: "Slack live UX validation packet opened"
+  completed_at: "2026-04-17"
+  reviewed_by: "lead"
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  artifact: "Slack live UX validation local checkpoint; commit SHA assigned after verification"
   notes:
     - Opened after CFO-0047 added deterministic coverage and the maintainer volunteered to assist with live Slack validation.
+    - Closed after live Slack slash command, App Home approval, thread approval refresh, implementation, and PR lifecycle checks passed against a disposable repo.

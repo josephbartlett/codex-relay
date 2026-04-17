@@ -4,14 +4,23 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 ## Active
 
-- owner: lead
-  scope: Live Slack slash command, App Home/status, and disposable-repo PR lifecycle validation; packet `CFO-0048`
-  status: Active
-  objective: Validate the Slack UX hardening checkpoint through the live app without recording private Slack, token, repo, or local machine details.
-  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; targeted public-risk string scan
-  handoff: Report redacted live outcomes, blockers, any bugs found, and whether a follow-up code fix is needed.
+- No active packets.
 
 ## Completed Checkpoints
+
+- owner: lead
+  scope: v0.2.1 Slack UX patch release metadata and validation records; packet `CFO-0049`
+  status: Done
+  objective: Prepare patch release metadata for Slack action-refresh fixes and live validation evidence.
+  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Package metadata, changelog, release readiness, task tracker, work packets, and maintenance audit are prepared locally for `v0.2.1`. Push, tag, and GitHub release publication remain maintainer-gated.
+
+- owner: lead
+  scope: Live Slack slash command, App Home/status, thread approval-card refresh, and disposable-repo PR lifecycle validation; packet `CFO-0048`
+  status: Done
+  objective: Validate the Slack UX hardening checkpoint through the live app without recording private Slack, token, repo, or local machine details.
+  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Live Slack validation passed for slash status/new, App Home approval, thread approval-card refresh, isolated implementation, source repo cleanliness, Create PR, PR status, and Ready for review against a disposable repo. The stale thread approval-card issue found during live testing was fixed and covered by regression tests.
 
 - owner: lead
   scope: Slack slash command smoke, App Home/status smoke, PR lifecycle smoke, user guidance copy, bug sweep, and public docs sweep; packet `CFO-0047`

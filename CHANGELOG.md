@@ -6,6 +6,15 @@ This project uses Semantic Versioning. Release entries are written when a versio
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-04-17
+
+Patch release for Slack action-state and live-validation hardening after `v0.2.0`.
+
+### Fixed
+
+- Refreshed Slack one-shot action surfaces after App Home approval and PR lifecycle actions so stale buttons do not remain actionable.
+- Improved Slack no-session and stale-approval guidance, with deterministic coverage for slash command, App Home, approval, and PR lifecycle surfaces.
+
 ## [0.2.0] - 2026-04-17
 
 ### Added
