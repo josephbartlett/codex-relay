@@ -18,7 +18,7 @@ features:
   slash_commands:
     - command: /codex
       description: Start or inspect Codex Relay tasks.
-      usage_hint: status
+      usage_hint: new | status | audit | handoff | cleanup
       should_escape: false
 oauth_config:
   scopes:

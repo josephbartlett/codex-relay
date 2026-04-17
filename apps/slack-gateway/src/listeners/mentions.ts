@@ -76,7 +76,8 @@ export function registerMentionListeners(app: App, orchestrator: Orchestrator, c
                 ? "source workspace"
                 : existingSession?.branchName ?? "creating worktree",
             mode: startsAsk ? "ask" : startsDirect ? "direct" : intent === "run_tests" ? "test-plan" : "plan",
-            status: startsAsk ? "Answering read-only question" : startsDirect ? "Editing source workspace" : intent === "run_tests" ? "Planning test run" : "Inspecting repo"
+            status: startsAsk ? "Answering read-only question" : startsDirect ? "Editing source workspace" : intent === "run_tests" ? "Planning test run" : "Inspecting repo",
+            detailsSessionId: existingSession?.id
           })
         });
       }

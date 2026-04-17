@@ -11,7 +11,7 @@ Codex Relay does not replace Codex. It wraps local Codex execution with a safer 
 1. Slack receives a mention, shortcut, slash command, approval click, or local handoff thread.
 2. Codex Relay maps that Slack thread to a session, checks user/channel/repo authorization, and binds the task to a configured local repo.
 3. Read-only planning or ask/query mode runs through `codex exec --json`.
-4. Approved or explicitly local-started write work runs in an isolated git worktree, not in your active branch.
+4. Approved or explicitly local-started write work uses isolated git worktrees by default; direct workspace quick mode is a separate opt-in exception for trusted solo repos.
 5. Relay stores compact session, queue, approval, audit, and PR metadata locally.
 6. Slack gets concise answer, plan, approval, progress, completion, diff, and PR cards.
 7. Follow-up mentions in the same thread continue the saved Codex session when Codex reports a resumable session id.
@@ -32,13 +32,13 @@ Codex Relay does not replace Codex. It wraps local Codex execution with a safer 
 2. Thread-to-session routing with JSON or SQLite-backed local state.
 3. Read-only `codex exec --json` plan phase.
 4. Slack approval button.
-5. Approved `workspace-write` implementation phase in an isolated git worktree.
+5. Approved `workspace-write` implementation phase in an isolated git worktree by default.
 6. Message shortcut flow for turning an existing Slack message into a task.
 7. Compact Slack status and completion cards.
 8. Draft PR creation, update, compact check status, and ready-for-review handoff from completed session worktrees.
 9. App Home visibility for approvals and recent sessions.
 10. Structured audit events, `/codex audit`, and local read-only audit viewer.
-11. Explicit Slack thread follow-up intents: continue, revise plan, run tests, summarize diff, update PR, and cancel.
+11. Explicit Slack thread follow-up intents: continue, revise plan, run tests, summarize diff, update PR, ready for review, and cancel.
 12. Durable queue jobs, runner leases, and a local worker daemon API for the team-mode bridge.
 13. Relay-started local session handoff for Slack completion summaries and remote continuation.
 14. Runner hardening checks for shipped Codex profiles, execpolicy rules, and child-process environment filtering.
@@ -199,7 +199,7 @@ In Slack:
 
 The bot posts a kickoff card, runs a read-only plan, then posts an approval card. Approved execution creates a worktree under `CODEX_WORKTREE_ROOT`. You can also use `/codex new` for a top-level task or the "Run with Codex" message shortcut; both open modals and create a Slack thread for the plan/approval loop.
 
-In an existing Codex Relay thread, mention the bot with follow-up intents such as `continue`, `revise plan`, `run tests`, `summarize diff`, `update PR`, or `cancel`. Test runs are approval-gated because they execute repository code. After a draft PR exists, `update PR` commits any new session worktree changes to the same branch and updates the existing draft PR instead of creating a duplicate.
+In an existing Codex Relay thread, mention the bot with follow-up intents such as `continue`, `revise plan`, `run tests`, `summarize diff`, `update PR`, `ready for review`, or `cancel`. Test runs are approval-gated because they execute repository code. After a draft PR exists, `update PR` commits any new session worktree changes to the same branch and updates the existing draft PR instead of creating a duplicate.
 
 Use `ask` or `query` in a thread when the request is informational. It runs read-only and returns an answer without creating an approval or PR controls.
 

@@ -1,0 +1,95 @@
+id: CFO-0047
+title: Slack UX smoke and hardening sweep
+status: done
+owner: lead
+role: worker
+priority: p1
+objective: Tighten Slack slash command, App Home/status, PR lifecycle, and guidance-copy behavior without rewriting the control plane.
+paths:
+  - apps/slack-gateway/src/listeners/actions.ts
+  - apps/slack-gateway/src/listeners/commands.ts
+  - apps/slack-gateway/src/listeners/home.ts
+  - apps/slack-gateway/src/blocks/taskCards.ts
+  - apps/orchestrator/src/tasks.ts
+  - tests/slack-commands.test.ts
+  - tests/slack-notifications.test.ts
+  - tests/orchestrator-flow.test.ts
+  - docs/RUNBOOK.md
+  - docs/RELEASE_READINESS.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0047-slack-ux-hardening.yaml
+concerns:
+  - concern:slack-ux
+  - concern:slack-smoke
+  - concern:pr-lifecycle
+  - concern:public-docs
+dependencies:
+  - CFO-0045
+  - CFO-0046
+non_goals:
+  - Do not edit `.env`.
+  - Do not print or record Slack tokens, Slack IDs, private channel names, local paths, or live task contents.
+  - Do not push, tag, publish, or create a release.
+  - Do not redesign the Slack workflow or change the default safety model.
+  - Do not add Discord, Gmail live validation, or email-originated write approvals.
+acceptance:
+  - Slash command behavior has a smoke pass through automated tests or documented local-only manual checks.
+  - App Home/status behavior has a smoke pass through automated tests or documented local-only manual checks.
+  - PR lifecycle behavior has a smoke pass through automated tests or documented disposable-repo manual checks.
+  - "'No session' and stale approval guidance copy is more useful and avoids implying the operator did something wrong."
+  - Bug sweep and public documentation sweep are completed before checkpoint.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - "Full `npm run check` passed with setup validation, typecheck, build, 136 tests, work-packet validation, release readiness, npm audit, and secret scan."
+    - "Focused Slack suite passed with 37 tests after adding slash command smoke coverage."
+    - "Slash command smoke coverage now verifies `/codex new` opens the modal, `/codex status` returns only visible sessions, and unknown subcommands show supported usage."
+    - "App Home smoke coverage verifies pending approvals, recent sessions, and audit events render through the exported Home view builder."
+    - "PR lifecycle smoke coverage verifies concurrent draft PR handoffs are rejected while one handoff is already running."
+    - "Stale approval and missing-session copy now points users toward the task thread, App Home, `repo:<id> ...`, `ask repo:<id> ...`, or `/codex new` instead of generic failure text."
+    - "Public-risk string scan found no tracked secrets, private emails, private Slack IDs, or local machine details outside intentional test fixtures and historical bug notes."
+handoff:
+  expected:
+    - Report code/doc changes, reviewer findings, automated checks, smoke coverage, and any remaining manual live Slack checks.
+  completed:
+    - Code and documentation sweeps were completed.
+    - Deterministic slash command, App Home, and PR lifecycle coverage was added or rerun.
+    - More helpful stale approval and no-session guidance was implemented.
+  next:
+    - Run a live slash/App Home/PR lifecycle smoke only when a dedicated local Slack smoke identity and disposable repo/PR state are configured for that purpose.
+risks:
+  - Slack live smoke can mutate disposable repositories or PR state if scoped incorrectly.
+  - Slash command and App Home flows depend on Slack app configuration and may need operator-side workspace settings to test live.
+  - More helpful copy must still avoid leaking session IDs, repo paths, Slack IDs, or local configuration values.
+maintenance_audit:
+  assigned_at: "2026-04-17"
+  completed_at: "2026-04-17"
+  reviewed_by: "lead"
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  artifact: "Slack UX hardening local checkpoint; commit SHA assigned after verification"
+  notes:
+    - Started after v0.2.0 publication to tighten existing Slack UX surfaces and run a bug/doc sweep without broad feature expansion.
+    - Closed with deterministic smoke coverage for slash commands, App Home/status rendering, stale approvals, and PR handoff concurrency; live Slack mutation coverage remains a local operator-gated check.

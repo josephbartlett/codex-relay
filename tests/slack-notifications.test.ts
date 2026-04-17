@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { publishPendingSlackNotifications } from "../apps/slack-gateway/src/slackNotificationPublisher.js";
 import { completionBlocks, failureBlocks, kickoffBlocks, planBlocks } from "../apps/slack-gateway/src/blocks/taskCards.js";
+import { buildAppHomeView } from "../apps/slack-gateway/src/listeners/home.js";
 import { InMemoryStore } from "../apps/orchestrator/src/persistence/inMemory.js";
 import { enqueueSlackNotification } from "../apps/orchestrator/src/slackNotifications.js";
 import type { ApprovalRequest, Session } from "../packages/shared/src/types.js";
@@ -249,6 +250,61 @@ test("Slack task cards escape mrkdwn-controlled content from runner output", () 
   assert.match(kickoffText, /Inspecting &lt;@U123&gt;/);
   assert.doesNotMatch(kickoffText, /<@U123>/);
   assert.doesNotMatch(kickoffText, /<!channel>/);
+});
+
+test("kickoff cards avoid details actions until a session id is available", () => {
+  const startingText = JSON.stringify(
+    kickoffBlocks({
+      repoId: "default",
+      branchName: "creating worktree",
+      status: "Inspecting repo"
+    })
+  );
+  const followUpText = JSON.stringify(
+    kickoffBlocks({
+      repoId: "default",
+      branchName: "codex/slack/session-1",
+      status: "Inspecting repo",
+      detailsSessionId: "session-1"
+    })
+  );
+
+  assert.doesNotMatch(startingText, /Open details/);
+  assert.match(startingText, /Cancel/);
+  assert.match(followUpText, /Open details/);
+  assert.match(followUpText, /session-1/);
+});
+
+test("App Home view shows pending approvals sessions and audit events", () => {
+  const session = sampleSession({ status: "awaiting_approval" });
+  const view = buildAppHomeView(
+    {
+      listSessions: () => [session],
+      listPendingApprovalsForUser: () => [sampleApproval()],
+      listAuditEventsForSlackUser: () => [
+        {
+          id: "audit-1",
+          at: baseNow.toISOString(),
+          type: "approval.created",
+          outcome: "success",
+          summary: "Execution approval requested.",
+          actorSlackUserId: "U1",
+          repoId: "default",
+          sessionId: "session-1"
+        }
+      ],
+      getSession: () => session
+    } as any,
+    "U1"
+  );
+  const text = blockText(view.blocks);
+
+  assert.match(text, /Pending approvals/);
+  assert.match(text, /Approval needed/);
+  assert.match(text, /Recent sessions/);
+  assert.match(text, /awaiting_approval/);
+  assert.match(text, /Recent audit events/);
+  assert.match(text, /approval\.created/);
 });
 
 test("Slack task cards redact local paths from runner-authored summaries", () => {

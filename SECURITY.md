@@ -24,7 +24,7 @@ The most important security properties are:
 
 - Slack users cannot run Codex against repos they are not authorized to use.
 - Write-capable execution happens only after explicit approval.
-- Writes are isolated to session worktrees.
+- Approved implementation and Relay-started local handoff writes are isolated to session worktrees by default; direct workspace quick mode is a separate opt-in exception for trusted solo repos.
 - Repo paths are selected from configured bindings, not Slack text.
 - Secrets are not logged, posted to Slack, committed, or copied into PR bodies.
 - Dangerous Codex execution settings are never defaults.

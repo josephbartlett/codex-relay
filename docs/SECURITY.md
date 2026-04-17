@@ -10,7 +10,7 @@ Codex Relay is a remote control plane for local or self-hosted code execution. S
 - Email direct workspace mode requires both the global direct workspace gate and the email-specific gate.
 - The harness does not use `danger-full-access` or `--yolo`.
 - Repositories must be explicitly configured in `CODEX_ALLOWED_REPOS`.
-- Writes happen in a git worktree under `CODEX_WORKTREE_ROOT`.
+- Approved implementation writes happen in a git worktree under `CODEX_WORKTREE_ROOT` by default. Direct workspace quick mode is the explicit opt-in exception.
 - Relay-started local handoff runs use the same configured repo bindings and session worktree isolation as Slack-originated runs.
 - Codex child processes receive only the configured runner environment allowlist, plus `NO_COLOR=1`.
 
@@ -135,7 +135,7 @@ Primary mitigations:
 - Treat diff details as bounded ephemeral artifacts; do not persist patch bodies in durable state.
 - Require a separate ADR and security review before enabling email-originated write approvals.
 - Keep runtime state, logs, tokens, worktrees, and candidate assets out of git.
-- Add policy checks for users, channels, and repos before `v0.1.0`.
+- Keep user, channel, and repo policy checks covered before every release.
 
 ## Security Review Checklist
 
@@ -148,7 +148,7 @@ For any PR touching execution, persistence, Slack actions, GitHub, or repo paths
 - If PR/CI status detail changes, does it avoid raw CI logs, annotations, artifacts, and full check payload storage?
 - If PR handoff changes, can it publish only from the expected session branch and avoid locally advanced or behind-upstream branch state?
 - Could logs, Slack cards, PR bodies, or errors expose secrets?
-- Are write operations constrained to the session worktree?
+- Are default write operations constrained to the session worktree, and does any direct workspace path remain explicitly gated?
 - If queue/runner code changes, can duplicate claims, stale leases, and retries be explained from the audit trail?
 - If cleanup changes, can active, queued, pending, dirty, and PR-incomplete sessions still avoid deletion?
 - If artifact handling changes, are patch bodies bounded and excluded from durable state by default?

@@ -9,6 +9,13 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 ## Completed Checkpoints
 
 - owner: lead
+  scope: Slack slash command smoke, App Home/status smoke, PR lifecycle smoke, user guidance copy, bug sweep, and public docs sweep; packet `CFO-0047`
+  status: Done
+  objective: Tighten existing Slack UX surfaces without changing the safety model or expanding release scope.
+  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Added deterministic slash command, App Home/status, stale approval, kickoff details, and PR lifecycle hardening coverage. Public docs were swept for stale safety claims, local/private details, and over-broad v0.2.0 smoke claims. Live slash/App Home/PR lifecycle mutation smokes remain local operator-gated checks.
+
+- owner: lead
   scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; v0.2.0 validation packets; packet `CFO-0046`
   status: Done
   objective: Prepare, verify, tag, push, and publish the `v0.2.0` release after maintainer approval.
@@ -329,7 +336,7 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 - Safe stale worktree cleanup.
 - Starter skills/plugin packaging.
 - Starter security/runbook docs.
-- Real Slack workspace smoke test against `codex-relay-test-repo`.
+- Real Slack workspace smoke test against a disposable test repository.
 - Codex CLI argument compatibility regression tests.
 - Draft PR title/body sanitizer for Codex markdown summaries.
 - Draft PR metadata persistence on sessions, including duplicate create protection.
@@ -344,7 +351,7 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 - Public agent/subagent orchestration guide, delegation packet, handoff template, and agent-ready issue template.
 - Structured audit events, `/codex audit`, App Home audit summaries, and local read-only audit viewer.
 - Custody-First Orchestration pattern spec, machine-readable work packets, strict packet checker, maintenance audit, case study, and reusable packet templates.
-- Explicit Slack thread follow-up intent handling for continue, revise plan, run tests, summarize diff, update PR, cancel, and unsupported intents.
+- Explicit Slack thread follow-up intent handling for continue, revise plan, run tests, summarize diff, update PR, ready for review, cancel, and unsupported intents.
 - CFO-0005 GitHub draft PR lifecycle: create/update/no-op PR actions, PR status summaries, origin validation, and retry recovery.
 - CFO-0006 durable queue and runner leases: queue jobs, SQLite atomic claims, worker daemon, heartbeat/retry/recovery behavior, queued-plan approval creation, and queue audit events.
 - CFO-0007 runner hardening: relay runner profiles, startup policy posture checks, required execpolicy validation, filtered child-process environment, and security-review-backed tests.

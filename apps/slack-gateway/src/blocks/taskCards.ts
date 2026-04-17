@@ -12,7 +12,17 @@ import { sanitizeNotificationText } from "../../../orchestrator/src/slackNotific
 
 export type SlackBlock = KnownBlock | Block;
 
-export function kickoffBlocks(input: { repoId: string; branchName: string; status: string; mode?: string }): SlackBlock[] {
+export function kickoffBlocks(input: {
+  repoId: string;
+  branchName: string;
+  status: string;
+  mode?: string;
+  detailsSessionId?: string;
+}): SlackBlock[] {
+  const actionButtons = input.detailsSessionId
+    ? [button("Open details", SlackActionIds.openDetails, input.detailsSessionId), button("Cancel", SlackActionIds.cancelTask, "cancel", "danger")]
+    : [button("Cancel", SlackActionIds.cancelTask, "cancel", "danger")];
+
   return [
     section(
       [
@@ -23,10 +33,7 @@ export function kickoffBlocks(input: { repoId: string; branchName: string; statu
         `Status: ${safeSlackText(input.status)}`
       ].join("\n")
     ),
-    actions([
-      button("Open details", SlackActionIds.openDetails, "details"),
-      button("Cancel", SlackActionIds.cancelTask, "cancel", "danger")
-    ])
+    actions(actionButtons)
   ];
 }
 

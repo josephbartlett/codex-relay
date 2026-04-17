@@ -10,7 +10,7 @@ Codex Relay is fully built when it can reliably run day-to-day engineering tasks
 
 - Slack thread continuity works for new tasks, follow-ups, approvals, cancellations, PR creation, and status review.
 - Relay-started local sessions can post Slack completion summaries and continue from the bound Slack thread.
-- Every write task runs in a session worktree and never touches a developer's active branch.
+- Approved implementation writes run in session worktrees by default and never touch a developer's active branch unless direct workspace quick mode is explicitly enabled for a trusted repo.
 - Users, channels, and repos are authorized before any Codex run starts.
 - Risky state transitions require explicit Slack button approval from the task owner or an authorized maintainer.
 - State survives process restarts without losing sessions, approvals, PR metadata, or queue entries.
@@ -63,8 +63,9 @@ Exit criteria:
 Goal: make Slack usable as a control plane instead of just a demo surface.
 
 - Add richer follow-up intent handling in threads. Status: implemented for local `v0.1.0` scope.
-- Support "continue", "revise plan", "run tests", "summarize diff", "update PR", and "cancel" intents. Status: implemented for local `v0.1.0` scope.
-- Add App Home session detail cards, runner status, and pending approvals.
+- Support "continue", "revise plan", "run tests", "summarize diff", "update PR", "ready for review", and "cancel" intents. Status: implemented for current local scope.
+- Add App Home pending approvals, recent sessions, and audit visibility. Status: implemented for current local scope.
+- Add richer App Home session detail cards and runner status. Status: deferred.
 - Add human-readable audit summaries for user-visible lifecycle events.
 - Add authenticated remote audit dashboard mode for operator deployments. Status: implemented for local `v0.1.0` scope.
 - Add message updates for major state changes without spamming channels.

@@ -1,5 +1,7 @@
 # Product Requirements
 
+This document is the historical seed PRD for the original local MVP. For the current product scope, release status, and build order, use `README.md`, `docs/ROADMAP.md`, and `docs/RELEASE_READINESS.md`.
+
 ## Goal
 
 From Slack mobile or desktop, a user can ask Codex to inspect, plan, implement, test, and summarize work in a configured local repository without using Slack as a terminal.

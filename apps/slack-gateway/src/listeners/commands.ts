@@ -252,10 +252,10 @@ export function registerCommandListeners(app: App, orchestrator: Orchestrator, c
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logger.error(message);
-      await client.chat.postMessage({
+      await client.chat.postEphemeral({
         channel: metadata.channelId,
-        text: "Codex could not start.",
-        blocks: failureBlocks({ title: "Could not start task", error: message })
+        user: requestingUserId,
+        text: `Codex could not start: ${message}`
       });
     }
   });

@@ -10,7 +10,7 @@ import { DurableQueue } from "../apps/orchestrator/src/queue.js";
 import { Orchestrator } from "../apps/orchestrator/src/tasks.js";
 import { completionBlocks, diffSummaryBlocks, prLifecycleBlocks, prStatusBlocks } from "../apps/slack-gateway/src/blocks/taskCards.js";
 import type { HarnessConfig, HarnessPolicyConfig } from "../packages/shared/src/config.js";
-import type { Session } from "../packages/shared/src/types.js";
+import type { ApprovalRequest, Session } from "../packages/shared/src/types.js";
 import type {
   RunHandle,
   RunnerAdapter,
@@ -163,6 +163,62 @@ test("plan approval execute flow writes in a worktree and reports untracked file
   }
 });
 
+test("concurrent draft PR handoffs are rejected while the first handoff is running", async () => {
+  const temp = mkdtempSync(join(tmpdir(), "codex-relay-pr-lock-"));
+
+  try {
+    const sourceRepo = join(temp, "source");
+    mkdirSync(sourceRepo);
+    await initRepo(sourceRepo);
+
+    const runner = new FakeRunner();
+    const store = new InMemoryStore();
+    let prCreatorCalls = 0;
+    let releaseFirstHandoff: (() => void) | undefined;
+    let resolveFirstStarted: (() => void) | undefined;
+    const firstHandoffStarted = new Promise<void>((resolve) => {
+      resolveFirstStarted = resolve;
+    });
+    const orchestrator = new Orchestrator(makeConfig(temp, sourceRepo), store, runner, async (input) => {
+      prCreatorCalls += 1;
+      resolveFirstStarted?.();
+      await new Promise<void>((release) => {
+        releaseFirstHandoff = release;
+      });
+
+      return {
+        title: input.title,
+        body: input.body,
+        branchName: input.branchName,
+        commitSha: "b".repeat(40),
+        prUrl: "https://github.com/example/repo/pull/8",
+        changedFiles: ["src/codex-output.txt"]
+      };
+    });
+
+    const plan = await orchestrator.startPlanFromSlack({
+      thread: { teamId: "T1", channelId: "C1", threadTs: "pr-lock" },
+      requestingUserId: "U1",
+      text: "repo:default add a generated output file"
+    });
+    await orchestrator.approveAndExecute(plan.approval.id, "U1");
+
+    const sessionId = orchestrator.listSessions()[0]?.id ?? "";
+    const first = orchestrator.createDraftPullRequest({ sessionId, requestingUserId: "U1", slackChannelId: "C1" });
+    await firstHandoffStarted;
+    await assert.rejects(
+      () => orchestrator.createDraftPullRequest({ sessionId, requestingUserId: "U1", slackChannelId: "C1" }),
+      /PR handoff is already running/
+    );
+    releaseFirstHandoff?.();
+    const result = await first;
+    assert.equal(result.operation, "created");
+    assert.equal(prCreatorCalls, 1);
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
 test("ask mode answers from the source repo without approval or PR controls", async () => {
   const temp = mkdtempSync(join(tmpdir(), "codex-relay-ask-mode-"));
 
@@ -202,6 +258,38 @@ test("ask mode answers from the source repo without approval or PR controls", as
       () => orchestrator.createDraftPullRequest({ sessionId: result.session.id, requestingUserId: "U1", slackChannelId: "C1" }),
       /source workspace/u
     );
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test("pending approval listings expire stale approvals before App Home renders them", async () => {
+  const temp = mkdtempSync(join(tmpdir(), "codex-relay-expired-approvals-"));
+
+  try {
+    const sourceRepo = join(temp, "source");
+    mkdirSync(sourceRepo);
+    await initRepo(sourceRepo);
+
+    const store = new InMemoryStore();
+    const orchestrator = new Orchestrator(makeConfig(temp, sourceRepo), store, new FakeRunner());
+    const expiredApproval: ApprovalRequest = {
+      id: "approval-expired",
+      taskRunId: "run-1",
+      sessionId: "session-1",
+      requestedBySlackUserId: "U1",
+      type: "execute_plan",
+      summary: "Expired plan",
+      expiresAt: "2000-01-01T00:00:00.000Z",
+      status: "pending",
+      createdAt: "2000-01-01T00:00:00.000Z"
+    };
+
+    store.saveApproval(expiredApproval);
+
+    assert.deepEqual(orchestrator.listPendingApprovalsForUser("U1"), []);
+    assert.equal(store.approvals.get(expiredApproval.id)?.status, "expired");
+    assert.equal(orchestrator.expireApprovalIfNeeded(expiredApproval.id)?.status, "expired");
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
@@ -1446,6 +1534,7 @@ test("configured maintainers can approve owner tasks but unauthorized users cann
     const executed = await orchestrator.approveAndExecute(plan.approval.id, "UM");
     assert.equal(executed.runnerResult.status, "completed");
     assert.equal(orchestrator.listSessions()[0]?.status, "done");
+    await assert.rejects(() => orchestrator.approveAndExecute(plan.approval.id, "U1"), /already accepted/);
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }

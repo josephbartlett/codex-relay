@@ -131,7 +131,7 @@ function printUsage() {
   npm run smoke:slack -- --text "ask repo:default what is the package name in package.json?" --expect "Answer"
 
 Required local env:
-  SLACK_SMOKE_TOKEN       Dedicated local test user token or bot-like account token
+  SLACK_SMOKE_TOKEN       Dedicated non-Relay local test identity token; do not use the Codex Relay bot token
   SLACK_SMOKE_CHANNEL_ID  Private test channel ID
   SLACK_SMOKE_BOT_USER_ID Codex Relay app/bot user ID to mention
 

@@ -14,19 +14,54 @@ import {
 import { diffSummaryModal } from "../modals/diffSummaryModal.js";
 
 export function registerActionListeners(app: App, orchestrator: Orchestrator, config: HarnessConfig): void {
-  app.action(SlackActionIds.approveExecution, async ({ ack, body, action, client, logger }: any) => {
+  app.action(SlackActionIds.approveExecution, async ({ ack, body, action, client, respond, logger }: any) => {
     await ack();
 
     const approvalId = action.value as string;
     const userId = body.user?.id;
-    const approval = orchestrator.getApproval(approvalId);
+    const approval = orchestrator.expireApprovalIfNeeded(approvalId);
+
+    if (!userId) {
+      logger.error("Missing Slack user on approval action.");
+      return;
+    }
+
+    if (!approval) {
+      await sendActionNotice({
+        client,
+        respond,
+        userId,
+        channel: body.channel?.id,
+        text: "This approval is no longer available. Open App Home or the task thread for the latest state."
+      });
+      return;
+    }
+
+    if (approval.status !== "pending") {
+      await sendActionNotice({
+        client,
+        respond,
+        userId,
+        channel: body.channel?.id,
+        text: approvalStatusGuidance(approval.status)
+      });
+      return;
+    }
+
     const session = approval ? orchestrator.getSession(approval.sessionId) : undefined;
     const slackThread = session ? parseSessionThread(session) : undefined;
     const channel = slackThread?.channelId ?? body.channel?.id;
     const threadTs = slackThread?.threadTs ?? body.message?.thread_ts ?? body.message?.ts;
 
-    if (!channel || !threadTs || !userId) {
+    if (!channel || !threadTs) {
       logger.error("Missing Slack channel, thread, or user on approval action.");
+      await sendActionNotice({
+        client,
+        respond,
+        userId,
+        channel,
+        text: "This approval is valid, but Relay could not identify the task thread. Open the task thread and try again."
+      });
       return;
     }
 
@@ -117,6 +152,18 @@ export function registerActionListeners(app: App, orchestrator: Orchestrator, co
       .catch(async (error: unknown) => {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(message);
+
+        if (isApprovalStaleMessage(message)) {
+          await sendActionNotice({
+            client,
+            respond,
+            userId,
+            channel,
+            text: staleApprovalGuidance(message)
+          });
+          return;
+        }
+
         await client.chat.postMessage({
           channel,
           thread_ts: threadTs,
@@ -202,7 +249,10 @@ export function registerActionListeners(app: App, orchestrator: Orchestrator, co
           : undefined;
 
     if (!session) {
-      await respond({ response_type: "ephemeral", text: "No Codex session was found for this Slack thread." });
+      await respond({
+        response_type: "ephemeral",
+        text: "This task is still starting or is not linked to a saved session yet. Try again after the next task update."
+      });
       return;
     }
 
@@ -395,7 +445,87 @@ function getSessionBySlackActionThread(
   }
 
   return orchestrator.listSessions().find((session) => {
-    const [, channelId, threadTs] = session.slackThreadKey.split(":");
-    return channelId === input.channelId && threadTs === input.threadTs;
+    const [teamId, channelId, threadTs] = session.slackThreadKey.split(":");
+    return teamId === input.teamId && channelId === input.channelId && threadTs === input.threadTs;
   });
+}
+
+async function sendActionNotice(input: {
+  client: any;
+  respond?: (message: { response_type: "ephemeral"; text: string }) => Promise<void>;
+  userId: string;
+  channel?: string;
+  text: string;
+}): Promise<void> {
+  if (input.respond) {
+    try {
+      await input.respond({ response_type: "ephemeral", text: input.text });
+      return;
+    } catch {
+      // App Home actions may not have a response URL; fall back to direct user notification.
+    }
+  }
+
+  if (input.channel) {
+    try {
+      await input.client.chat.postEphemeral({
+        channel: input.channel,
+        user: input.userId,
+        text: input.text
+      });
+      return;
+    } catch {
+      // Fall through to App Home DM-style notification.
+    }
+  }
+
+  await input.client.chat.postMessage({
+    channel: input.userId,
+    text: input.text
+  });
+}
+
+function approvalStatusGuidance(status: string): string {
+  if (status === "approved") {
+    return "This approval was already accepted. Check the task thread for the current run status.";
+  }
+
+  if (status === "expired") {
+    return "This approval expired. Ask Codex Relay to revise the plan or start a new task.";
+  }
+
+  if (status === "rejected") {
+    return "This approval is no longer active. Open App Home or the task thread for the latest state.";
+  }
+
+  return `This approval is already ${status}. Open App Home or the task thread for the latest state.`;
+}
+
+function isApprovalStaleMessage(message: string): boolean {
+  return (
+    message === "Approval request was not found." ||
+    message === "Approval request expired." ||
+    message === "This approval is no longer available. Open App Home or the task thread for the latest state." ||
+    message === "This approval expired. Ask Codex Relay to revise the plan or start a new task." ||
+    message === "This approval was already accepted. Check the task thread for the current run status." ||
+    message === "This approval is no longer active. Open App Home or the task thread for the latest state." ||
+    /^Approval request is already /u.test(message)
+  );
+}
+
+function staleApprovalGuidance(message: string): string {
+  if (message.startsWith("This approval ")) {
+    return message;
+  }
+
+  if (message === "Approval request was not found.") {
+    return "This approval is no longer available. Open App Home or the task thread for the latest state.";
+  }
+
+  if (message === "Approval request expired.") {
+    return "This approval expired. Ask Codex Relay to revise the plan or start a new task.";
+  }
+
+  const status = message.match(/^Approval request is already ([^.]+)\./u)?.[1];
+  return approvalStatusGuidance(status ?? "inactive");
 }

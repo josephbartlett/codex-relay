@@ -21,6 +21,14 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 ## 2026-04-17
 
+### CFO-0047: Slack UX Hardening Sweep
+
+- owner: lead
+- status: done
+- verification: `npm run check:work-packets`, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, targeted public-risk string scan
+- commit: local checkpoint artifact
+- notes: Tightened existing Slack UX without changing the safety model. Added deterministic slash command smoke coverage, exported and tested App Home/status rendering, expired stale App Home approvals before display, avoided premature Open Details buttons on kickoff cards, improved no-session and stale-approval copy, and guarded concurrent draft PR handoffs. Public docs were swept for stale direct-workspace wording, missing ready-for-review references, over-broad smoke claims, and local/private details. Live slash/App Home/PR lifecycle mutation smokes remain operator-gated local checks because they require workspace app configuration and disposable PR state.
+
 ### CFO-0046: Publish v0.2.0 Control-Plane Release
 
 - owner: lead

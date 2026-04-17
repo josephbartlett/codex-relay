@@ -100,7 +100,16 @@ Use "Run with Codex" from a Slack message action menu. The modal asks for a repo
 
 ## Slash Command
 
-Use `/codex new` for a top-level task. The modal asks for repo id and task text, posts a kickoff message to the channel, and uses that message as the session thread. Use `/codex status` for a compact list of recent in-memory sessions.
+Use `/codex` for top-level task and operator actions:
+
+| Command | Surface | Notes |
+| --- | --- | --- |
+| `/codex new` | modal plus channel kickoff | Starts a top-level plan/approval task in a new Slack thread. |
+| `/codex handoff` | channel kickoff plus ephemeral command | Creates a Slack handoff thread and returns a local `npm run local:session` command. |
+| `/codex status` | ephemeral | Shows recent sessions visible to the current Slack user. |
+| `/codex audit` | ephemeral | Shows recent audit events visible to the current Slack user. |
+| `/codex cleanup` | ephemeral | Dry-runs stale worktree cleanup for eligible sessions. |
+| `/codex cleanup --confirm` | ephemeral plus local cleanup | Removes eligible clean worktrees with `git worktree remove` without force. |
 
 ## App Home
 
@@ -360,12 +369,12 @@ At gateway startup, the app checks:
 
 ## Local Slack Smoke Automation
 
-Use a private test channel and a dedicated local Slack test identity to reduce maintainer-in-the-loop smoke testing. Keep the real token, channel ID, test identity, and bot user ID only in local environment or `.env`; do not commit them or paste them into work packets.
+Use a private test channel and a dedicated non-Relay Slack test identity to reduce maintainer-in-the-loop smoke testing. Keep the real token, channel ID, test identity, and bot user ID only in local environment or `.env`; do not commit them or paste them into work packets. Do not use the Codex Relay bot token as the smoke posting identity, because bot-originated messages may not produce the same `app_mention` events as a real operator message.
 
 Required local environment:
 
 ```text
-SLACK_SMOKE_TOKEN=<dedicated local test identity token>
+SLACK_SMOKE_TOKEN=<dedicated non-Relay local test identity token>
 SLACK_SMOKE_CHANNEL_ID=<private test channel id>
 SLACK_SMOKE_BOT_USER_ID=<Codex Relay app/bot user id>
 ```

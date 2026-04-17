@@ -49,13 +49,16 @@ Required before each release tag:
 
 - Run a live Slack task against a disposable or test repository. Status: passed for `v0.1.0`, `v0.1.1`, and `v0.2.0`.
 - Approve an implementation and verify the write happens in the session worktree. Status: passed for `v0.1.0`, `v0.1.1`, and `v0.2.0`.
-- Create or update a draft PR from the session branch. Status: passed for `v0.1.0` and `v0.1.1`; deterministic PR lifecycle tests cover the current release.
-- Verify compact PR status and ready-for-review behavior if a test PR is available. Status: covered by deterministic tests; live PR handoff was exercised during `v0.1.1`.
 - Review `CHANGELOG.md` and convert the pending release section into a dated release entry.
 - Confirm no unapproved `brand-candidates/` assets are tracked. Status: completed by release-readiness gate.
 - Confirm `docs/TASKS.md` has no active release-blocking packet.
 - Confirm GitHub branch protection and private vulnerability reporting settings are acceptable for the release.
 - Configure strict-mode Slack user/channel/repo allowlists in `.env` for the live workspace. Status: `.env` remains protected; repo safety rules prevent automated `.env` edits without an explicit targeted operator request.
+
+Required when PR lifecycle behavior changes:
+
+- Create or update a draft PR from the session branch. Status: passed for `v0.1.0` and `v0.1.1`; deterministic PR lifecycle tests covered `v0.2.0`.
+- Verify compact PR status and ready-for-review behavior if a test PR is available. Status: covered by deterministic tests; live PR handoff was exercised during `v0.1.1`.
 
 ## Live Smoke Result
 
@@ -111,6 +114,7 @@ Notes:
 
 - A stale duplicate local gateway process caused one transient stale-approval failure during smoke testing. The process was removed, a single gateway/runner pair was restarted, and the patched smoke passed.
 - Automated Slack smoke posting remains optional and local-only. It requires locally configured smoke identity values and does not require tracking Slack IDs or tokens.
+- Slash commands, App Home/status surfaces, and current PR lifecycle behavior were tightened after the `v0.2.0` live smoke in `CFO-0047` with deterministic tests. A new live slash/App Home/PR lifecycle mutation smoke remains a local operator-gated check because it requires workspace app configuration and disposable PR state.
 
 ## v0.2.0 Email Live Validation Result
 

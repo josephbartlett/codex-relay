@@ -181,6 +181,7 @@ interface StartPlanOptions {
 
 export class Orchestrator {
   private readonly worktrees: WorktreeManager;
+  private readonly prHandoffLocks = new Set<string>();
 
   constructor(
     private readonly config: HarnessConfig,
@@ -210,9 +211,29 @@ export class Orchestrator {
   }
 
   listPendingApprovalsForUser(slackUserId: string): ApprovalRequest[] {
-    return [...this.store.approvals.values()]
+    const approvals = [...this.store.approvals.values()];
+
+    for (const approval of approvals) {
+      if (approval.status === "pending" && approval.requestedBySlackUserId === slackUserId && isExpired(approval)) {
+        approval.status = "expired";
+        this.store.saveApproval(approval);
+      }
+    }
+
+    return approvals
       .filter((approval) => approval.status === "pending" && approval.requestedBySlackUserId === slackUserId)
       .sort((a, b) => a.expiresAt.localeCompare(b.expiresAt));
+  }
+
+  expireApprovalIfNeeded(id: string): ApprovalRequest | undefined {
+    const approval = this.store.approvals.get(id);
+
+    if (approval?.status === "pending" && isExpired(approval)) {
+      approval.status = "expired";
+      this.store.saveApproval(approval);
+    }
+
+    return approval;
   }
 
   listAuditEventsForSlackUser(slackUserId: string, limit = 25): AuditEvent[] {
@@ -517,66 +538,76 @@ export class Orchestrator {
       throw new Error("Cannot create a PR while a run is still active.");
     }
 
-    const diff = await collectDiffSummary(session.workspacePath);
-    const bodyChangedFiles =
-      session.draftPullRequest && diff.changedFiles.length === 0
-        ? await getChangedFilesSince(session.workspacePath, session.draftPullRequest.commitSha)
-        : diff.changedFiles;
-    const latestRunSummary = this.latestRunSummary(session.id);
-    const title = buildPullRequestTitle(latestRunSummary, session.id);
-    const body = buildPullRequestBody({
-      sessionId: session.id,
-      repoId: session.repoId,
-      branchName: session.branchName,
-      summary: latestRunSummary,
-      changedFiles: bodyChangedFiles
-    });
-
-    const result = await this.draftPullRequestCreator({
-      workspacePath: session.workspacePath,
-      branchName: session.branchName,
-      title,
-      body,
-      existingPullRequest: session.draftPullRequest
-    });
-    const existingPullRequest = session.draftPullRequest;
-    const operation = existingPullRequest ? inferPullRequestOperation(existingPullRequest, result) : "created";
-
-    if (operation === "unchanged") {
-      return { operation, result };
+    if (this.prHandoffLocks.has(session.id)) {
+      throw new Error("A PR handoff is already running for this session. Wait for it to finish before trying again.");
     }
 
-    session.draftPullRequest = {
-      ...result,
-      createdAt: existingPullRequest?.createdAt ?? new Date().toISOString(),
-      createdBySlackUserId: existingPullRequest?.createdBySlackUserId ?? input.requestingUserId,
-      ...(existingPullRequest
-        ? {
-            updatedAt: new Date().toISOString(),
-            updatedBySlackUserId: input.requestingUserId
-          }
-        : {})
-    };
-    touchSession(session, session.status);
-    this.store.saveSession(session);
+    this.prHandoffLocks.add(session.id);
 
-    this.recordAuditEvent({
-      type: operation === "created" ? "pr.created" : "pr.updated",
-      outcome: "success",
-      summary: operation === "created" ? "Draft pull request created." : "Draft pull request updated.",
-      actorSlackUserId: input.requestingUserId,
-      slackThreadKey: session.slackThreadKey,
-      repoId: session.repoId,
-      sessionId: session.id,
-      metadata: {
-        branchName: result.branchName,
-        changedFiles: result.changedFiles.length,
-        commitSha: result.commitSha.slice(0, 12),
-        prUrl: result.prUrl
+    try {
+      const diff = await collectDiffSummary(session.workspacePath);
+      const bodyChangedFiles =
+        session.draftPullRequest && diff.changedFiles.length === 0
+          ? await getChangedFilesSince(session.workspacePath, session.draftPullRequest.commitSha)
+          : diff.changedFiles;
+      const latestRunSummary = this.latestRunSummary(session.id);
+      const title = buildPullRequestTitle(latestRunSummary, session.id);
+      const body = buildPullRequestBody({
+        sessionId: session.id,
+        repoId: session.repoId,
+        branchName: session.branchName,
+        summary: latestRunSummary,
+        changedFiles: bodyChangedFiles
+      });
+
+      const result = await this.draftPullRequestCreator({
+        workspacePath: session.workspacePath,
+        branchName: session.branchName,
+        title,
+        body,
+        existingPullRequest: session.draftPullRequest
+      });
+      const existingPullRequest = session.draftPullRequest;
+      const operation = existingPullRequest ? inferPullRequestOperation(existingPullRequest, result) : "created";
+
+      if (operation === "unchanged") {
+        return { operation, result };
       }
-    });
 
-    return { operation, result };
+      session.draftPullRequest = {
+        ...result,
+        createdAt: existingPullRequest?.createdAt ?? new Date().toISOString(),
+        createdBySlackUserId: existingPullRequest?.createdBySlackUserId ?? input.requestingUserId,
+        ...(existingPullRequest
+          ? {
+              updatedAt: new Date().toISOString(),
+              updatedBySlackUserId: input.requestingUserId
+            }
+          : {})
+      };
+      touchSession(session, session.status);
+      this.store.saveSession(session);
+
+      this.recordAuditEvent({
+        type: operation === "created" ? "pr.created" : "pr.updated",
+        outcome: "success",
+        summary: operation === "created" ? "Draft pull request created." : "Draft pull request updated.",
+        actorSlackUserId: input.requestingUserId,
+        slackThreadKey: session.slackThreadKey,
+        repoId: session.repoId,
+        sessionId: session.id,
+        metadata: {
+          branchName: result.branchName,
+          changedFiles: result.changedFiles.length,
+          commitSha: result.commitSha.slice(0, 12),
+          prUrl: result.prUrl
+        }
+      });
+
+      return { operation, result };
+    } finally {
+      this.prHandoffLocks.delete(session.id);
+    }
   }
 
   async getDraftPullRequestStatusForSlackUser(input: {
@@ -1139,7 +1170,7 @@ export class Orchestrator {
       return {
         kind: "guidance",
         intent: "unsupported",
-        message: "No Codex session was found in this Slack thread. Start a new task with a repo request first."
+        message: "This thread is not linked to a Codex Relay session yet. Start with `repo:<id> ...`, use `ask repo:<id> ...`, or run `/codex new`."
       };
     }
 
@@ -1294,17 +1325,17 @@ export class Orchestrator {
     const approval = this.store.approvals.get(approvalId);
 
     if (!approval) {
-      throw new Error("Approval request was not found.");
+      throw new Error("This approval is no longer available. Open App Home or the task thread for the latest state.");
     }
 
     if (approval.status !== "pending") {
-      throw new Error(`Approval request is already ${approval.status}.`);
+      throw new Error(approvalStatusError(approval.status));
     }
 
     if (isExpired(approval)) {
       approval.status = "expired";
       this.store.saveApproval(approval);
-      throw new Error("Approval request expired.");
+      throw new Error("This approval expired. Ask Codex Relay to revise the plan or start a new task.");
     }
 
     const session = this.store.sessions.get(approval.sessionId);
@@ -1518,7 +1549,7 @@ export class Orchestrator {
     const session = this.getSessionBySlackThread(input);
 
     if (!session) {
-      throw new Error("No Codex session was found for this Slack thread.");
+      throw new Error("This thread is not linked to a Codex Relay session yet. Start with `repo:<id> ...`, use `ask repo:<id> ...`, or run `/codex new`.");
     }
 
     const result = await this.cancelSession({
@@ -1884,6 +1915,18 @@ function stripModePrefix(text: string): string {
     .replace(/\brepo:[a-zA-Z0-9._-]+\b/gu, "")
     .replace(/^(ask|query|question|quick|direct(?:\s+workspace)?)\b[:\s-]*/iu, "")
     .trim();
+}
+
+function approvalStatusError(status: ApprovalRequest["status"]): string {
+  if (status === "approved") {
+    return "This approval was already accepted. Check the task thread for the current run status.";
+  }
+
+  if (status === "expired") {
+    return "This approval expired. Ask Codex Relay to revise the plan or start a new task.";
+  }
+
+  return "This approval is no longer active. Open App Home or the task thread for the latest state.";
 }
 
 function inferPullRequestOperation(
