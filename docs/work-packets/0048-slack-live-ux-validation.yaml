@@ -8,6 +8,7 @@ objective: Live-validate slash command, App Home/status, and PR lifecycle behavi
 paths:
   - apps/slack-gateway/src/blocks/taskCards.ts
   - apps/slack-gateway/src/listeners/actions.ts
+  - tests/slack-actions.test.ts
   - tests/slack-notifications.test.ts
   - docs/TASKS.md
   - docs/MAINTENANCE_AUDIT.md
@@ -52,13 +53,15 @@ verification:
     - "Live smoke found that App Home approval buttons remain visually actionable after click; code now refreshes approval source surfaces after acceptance."
     - "Focused Slack regression tests passed after the one-shot action refresh fix."
     - "A patched gateway/runner pair was started for retest, but no second deterministic changed-file task reached the gateway before services were stopped."
+    - "Follow-up testing found that App Home approval refresh removed the Home button but left the original thread approval button. The action handler now locates the source thread approval message with `conversations.replies` and replaces it after approval."
+    - "Focused regression coverage now verifies App Home approval refreshes the original thread approval card and removes the approval action."
 handoff:
   expected:
     - Report live surfaces tested, redacted outcomes, bugs found or not found, and any remaining local-only prerequisites.
   completed: []
   next:
     - Re-run the deterministic changed-file Slack task on the patched gateway.
-    - Confirm App Home approval disappears or refreshes after click.
+    - Confirm App Home approval disappears and the original thread approval card is replaced after click.
     - Complete Create PR, PR status, and Ready for review live smoke against the disposable repo.
 risks:
   - Live Slack smoke depends on workspace app configuration and may require maintainer-side clicks.

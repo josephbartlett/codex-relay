@@ -572,8 +572,10 @@ async function refreshApprovalSurface(input: {
     return;
   }
 
-  const channel = input.body.channel?.id;
-  const messageTs = input.body.message?.ts;
+  const session = input.orchestrator.getSession(approval.sessionId);
+  const thread = session ? parseSessionThread(session) : undefined;
+  const channel = input.body.channel?.id ?? thread?.channelId;
+  const messageTs = input.body.message?.ts ?? (await findApprovalMessageTs(input));
 
   if (channel && messageTs) {
     try {
@@ -598,6 +600,52 @@ async function refreshApprovalSurface(input: {
       input.logger.warn(error instanceof Error ? error.message : String(error));
     }
   }
+}
+
+async function findApprovalMessageTs(input: {
+  body: any;
+  client: any;
+  logger: any;
+  orchestrator: Orchestrator;
+  approvalId: string;
+}): Promise<string | undefined> {
+  const approval = input.orchestrator.getApproval(input.approvalId);
+  const session = approval ? input.orchestrator.getSession(approval.sessionId) : undefined;
+
+  if (!session) {
+    return undefined;
+  }
+
+  const { channelId, threadTs } = parseSessionThread(session);
+
+  try {
+    const replies = await input.client.conversations?.replies?.({
+      channel: channelId,
+      ts: threadTs,
+      limit: 100
+    });
+
+    if (!replies?.ok || !Array.isArray(replies.messages)) {
+      return undefined;
+    }
+
+    const approvalMessage = replies.messages.find((message: any) => messageHasApprovalAction(message, input.approvalId));
+    return approvalMessage?.ts;
+  } catch (error) {
+    input.logger.warn(error instanceof Error ? error.message : String(error));
+    return undefined;
+  }
+}
+
+function messageHasApprovalAction(message: any, approvalId: string): boolean {
+  const blocks = Array.isArray(message?.blocks) ? message.blocks : [];
+
+  return blocks.some((block: any) => {
+    const elements = Array.isArray(block?.elements) ? block.elements : [];
+    return elements.some(
+      (element: any) => element?.action_id === SlackActionIds.approveExecution && element?.value === approvalId
+    );
+  });
 }
 
 async function postOrUpdateSourceMessage(input: {
