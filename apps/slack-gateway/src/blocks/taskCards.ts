@@ -51,6 +51,19 @@ export function planBlocks(approval: ApprovalRequest): SlackBlock[] {
   ];
 }
 
+export function approvalAcceptedBlocks(approval: ApprovalRequest): SlackBlock[] {
+  const title = approval.type === "run_tests" ? "Test run approved" : "Execution approved";
+  const detail =
+    approval.type === "run_tests"
+      ? "The approved checks are running in the isolated worktree."
+      : "Implementation is running in the isolated worktree.";
+
+  return [
+    section(`*${title}*\n${detail}`),
+    context("This approval has already been accepted. Check the task thread for the current run status.")
+  ];
+}
+
 export function progressBlocks(input: { title: string; detail: string }): SlackBlock[] {
   return [section(`*${safeSlackText(input.title)}*\n${truncate(safeSlackText(input.detail), 2500)}`)];
 }

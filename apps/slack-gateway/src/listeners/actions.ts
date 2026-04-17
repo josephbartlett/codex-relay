@@ -4,6 +4,7 @@ import type { Session } from "../../../../packages/shared/src/types.js";
 import { SlackActionIds } from "../../../../packages/shared/src/events.js";
 import type { Orchestrator } from "../../../orchestrator/src/tasks.js";
 import {
+  approvalAcceptedBlocks,
   completionBlocks,
   failureBlocks,
   prLifecycleBlocks,
@@ -12,6 +13,7 @@ import {
   prStatusBlocks
 } from "../blocks/taskCards.js";
 import { diffSummaryModal } from "../modals/diffSummaryModal.js";
+import { buildAppHomeView } from "./home.js";
 
 export function registerActionListeners(app: App, orchestrator: Orchestrator, config: HarnessConfig): void {
   app.action(SlackActionIds.approveExecution, async ({ ack, body, action, client, respond, logger }: any) => {
@@ -84,12 +86,29 @@ export function registerActionListeners(app: App, orchestrator: Orchestrator, co
     }
 
     let progressPosted = false;
+    let sourceSurfaceRefreshed = false;
+    const refreshSourceSurface = async () => {
+      if (sourceSurfaceRefreshed) {
+        return;
+      }
+
+      sourceSurfaceRefreshed = true;
+      await refreshApprovalSurface({
+        body,
+        client,
+        logger,
+        orchestrator,
+        approvalId,
+        userId
+      });
+    };
     const postApprovalProgress = async () => {
       if (progressPosted) {
         return;
       }
 
       progressPosted = true;
+      await refreshSourceSurface();
       const approvalAfterStart = orchestrator.getApproval(approvalId);
       await client.chat.postMessage({
         channel,
@@ -105,10 +124,15 @@ export function registerActionListeners(app: App, orchestrator: Orchestrator, co
       });
     };
 
-    void orchestrator
-      .approveAndExecute(approvalId, userId, async () => {
+    const execution = orchestrator.approveAndExecute(approvalId, userId, async () => {
         await postApprovalProgress();
-      })
+      });
+
+    if (orchestrator.getApproval(approvalId)?.status === "approved") {
+      await postApprovalProgress();
+    }
+
+    void execution
       .then(async ({ implementRun, runnerResult, diff }) => {
         const approvalAfterRun = orchestrator.getApproval(approvalId);
         const sessionAfterRun = approvalAfterRun ? orchestrator.getSession(approvalAfterRun.sessionId) : undefined;
@@ -328,9 +352,11 @@ export function registerActionListeners(app: App, orchestrator: Orchestrator, co
         throw new Error("Session was not found after PR handoff.");
       }
 
-      await client.chat.postMessage({
+      await postOrUpdateSourceMessage({
+        client,
         channel,
-        thread_ts: threadTs,
+        ts: body.message?.ts,
+        threadTs,
         text: `${actionText}: ${lifecycle.result.prUrl}`,
         blocks: prLifecycleBlocks({
           lifecycle,
@@ -410,9 +436,11 @@ export function registerActionListeners(app: App, orchestrator: Orchestrator, co
         return;
       }
 
-      await client.chat.postMessage({
+      await postOrUpdateSourceMessage({
+        client,
         channel,
-        thread_ts: threadTs,
+        ts: body.message?.ts,
+        threadTs,
         text: `PR marked ready for review: ${ready.prUrl}`,
         blocks: prReadyBlocks({ ready, session })
       });
@@ -528,4 +556,72 @@ function staleApprovalGuidance(message: string): string {
 
   const status = message.match(/^Approval request is already ([^.]+)\./u)?.[1];
   return approvalStatusGuidance(status ?? "inactive");
+}
+
+async function refreshApprovalSurface(input: {
+  body: any;
+  client: any;
+  logger: any;
+  orchestrator: Orchestrator;
+  approvalId: string;
+  userId: string;
+}): Promise<void> {
+  const approval = input.orchestrator.getApproval(input.approvalId);
+
+  if (!approval) {
+    return;
+  }
+
+  const channel = input.body.channel?.id;
+  const messageTs = input.body.message?.ts;
+
+  if (channel && messageTs) {
+    try {
+      await input.client.chat.update({
+        channel,
+        ts: messageTs,
+        text: approval.type === "run_tests" ? "Codex test run approved." : "Codex execution approved.",
+        blocks: approvalAcceptedBlocks(approval)
+      });
+    } catch (error) {
+      input.logger.warn(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  if (input.body.view || input.body.container?.type === "view") {
+    try {
+      await input.client.views.publish({
+        user_id: input.userId,
+        view: buildAppHomeView(input.orchestrator, input.userId)
+      });
+    } catch (error) {
+      input.logger.warn(error instanceof Error ? error.message : String(error));
+    }
+  }
+}
+
+async function postOrUpdateSourceMessage(input: {
+  client: any;
+  channel: string;
+  ts?: string;
+  threadTs: string;
+  text: string;
+  blocks: unknown[];
+}): Promise<void> {
+  if (input.ts) {
+    await input.client.chat.update({
+      channel: input.channel,
+      ts: input.ts,
+      text: input.text,
+      blocks: input.blocks
+    });
+    return;
+  }
+
+  await input.client.chat.postMessage({
+    channel: input.channel,
+    thread_ts: input.threadTs,
+    text: input.text,
+    blocks: input.blocks
+  });
 }

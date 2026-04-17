@@ -4,7 +4,12 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 ## Active
 
-- No active release-blocking packets.
+- owner: lead
+  scope: Live Slack slash command, App Home/status, and disposable-repo PR lifecycle validation; packet `CFO-0048`
+  status: Active
+  objective: Validate the Slack UX hardening checkpoint through the live app without recording private Slack, token, repo, or local machine details.
+  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Report redacted live outcomes, blockers, any bugs found, and whether a follow-up code fix is needed.
 
 ## Completed Checkpoints
 

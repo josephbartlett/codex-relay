@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { publishPendingSlackNotifications } from "../apps/slack-gateway/src/slackNotificationPublisher.js";
-import { completionBlocks, failureBlocks, kickoffBlocks, planBlocks } from "../apps/slack-gateway/src/blocks/taskCards.js";
+import {
+  approvalAcceptedBlocks,
+  completionBlocks,
+  failureBlocks,
+  kickoffBlocks,
+  planBlocks
+} from "../apps/slack-gateway/src/blocks/taskCards.js";
 import { buildAppHomeView } from "../apps/slack-gateway/src/listeners/home.js";
 import { InMemoryStore } from "../apps/orchestrator/src/persistence/inMemory.js";
 import { enqueueSlackNotification } from "../apps/orchestrator/src/slackNotifications.js";
@@ -88,6 +94,15 @@ test("Slack notification publisher renders plan approvals with action buttons", 
   assert.equal(calls.length, 1);
   assert.match(JSON.stringify(calls[0]), /Approve execution/);
   assert.match(JSON.stringify(calls[0]), /approval-1/);
+});
+
+test("approval accepted cards remove one-shot approval actions", () => {
+  const text = JSON.stringify(approvalAcceptedBlocks(sampleApproval()));
+
+  assert.match(text, /Execution approved/);
+  assert.match(text, /already been accepted/);
+  assert.doesNotMatch(text, /Approve execution/);
+  assert.doesNotMatch(text, /approve_execution/);
 });
 
 test("Slack notification publisher renders completed runner summaries with continuation actions", async () => {
