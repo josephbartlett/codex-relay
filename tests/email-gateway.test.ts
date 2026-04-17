@@ -211,6 +211,112 @@ test("email command parser accepts ask mode and gates direct workspace mode", ()
     assert.equal(replyAsk.prompt, "what files did you inspect?");
   }
 
+  const replyAskAfterRelayMetadata = parseInboundEmailCommand(askConfig, {
+    messageId: "message-reply-ask-metadata",
+    from: "operator@example.test",
+    subject: "Re: Codex Relay queued: default [relay:abc123def456]",
+    text: [
+      "Codex Relay queued your read-only plan request.",
+      "",
+      "Repo: default",
+      "Workspace: codex/email/example",
+      "Session: abc123def456",
+      "Reply reference: relay:abc123def456",
+      "Queue job: queue123",
+      "",
+      "ask what files did you inspect?"
+    ].join("\n")
+  });
+
+  assert.equal(replyAskAfterRelayMetadata.kind, "start_ask");
+  if (replyAskAfterRelayMetadata.kind === "start_ask") {
+    assert.equal(replyAskAfterRelayMetadata.replySessionId, "abc123def456");
+    assert.equal(replyAskAfterRelayMetadata.prompt, "what files did you inspect?");
+  }
+
+  const askWithGenericSubject = parseInboundEmailCommand(askConfig, {
+    messageId: "message-ask-body",
+    from: "operator@example.test",
+    subject: "Codex Relay",
+    text: "ask repo:default what is the package name in package.json?"
+  });
+
+  assert.equal(askWithGenericSubject.kind, "start_ask");
+  if (askWithGenericSubject.kind === "start_ask") {
+    assert.equal(askWithGenericSubject.repoId, "default");
+    assert.equal(askWithGenericSubject.prompt, "what is the package name in package.json?");
+  }
+
+  const generatedQueuedNotification = parseInboundEmailCommand(askConfig, {
+    messageId: "message-generated-queued",
+    from: "operator@example.test",
+    subject: "Codex Relay queued: default [relay:abc123def456]",
+    text: [
+      "Codex Relay queued your read-only plan request.",
+      "",
+      "Repo: default",
+      "Workspace: codex/email/example",
+      "Session: abc123def456",
+      "Reply reference: relay:abc123def456",
+      "Queue job: queue123",
+      "",
+      "Email approvals are disabled. You will receive a compact plan-ready reply when the runner finishes."
+    ].join("\n")
+  });
+
+  assert.deepEqual(generatedQueuedNotification, {
+    kind: "ignored",
+    messageId: "message-generated-queued",
+    reason: "unsupported"
+  });
+
+  const directConfig = loadConfig(
+    {
+      ...baseEnv,
+      EMAIL_CONTROL_PLANE_ENABLED: "true",
+      EMAIL_ALLOWED_SENDERS: "operator@example.test",
+      CODEX_DIRECT_WORKSPACE_ENABLED: "true",
+      CODEX_DIRECT_WORKSPACE_ALLOWED_REPOS: "api",
+      EMAIL_DIRECT_WORKSPACE_ENABLED: "true"
+    },
+    { requireSlack: false }
+  );
+  const generatedDirectQueuedNotification = parseInboundEmailCommand(directConfig, {
+    messageId: "message-generated-direct-queued",
+    from: "operator@example.test",
+    subject: "Codex Relay queued: api [relay:abc123def456]",
+    text: [
+      "Codex Relay queued your direct workspace request.",
+      "",
+      "Repo: api",
+      "Workspace: source working tree",
+      "Session: abc123def456",
+      "Reply reference: relay:abc123def456",
+      "Queue job: queue123",
+      "",
+      "Direct workspace mode edits the source working tree. You will receive a compact completion reply."
+    ].join("\n")
+  });
+
+  assert.deepEqual(generatedDirectQueuedNotification, {
+    kind: "ignored",
+    messageId: "message-generated-direct-queued",
+    reason: "unsupported"
+  });
+
+  const generatedSmtpSmoke = parseInboundEmailCommand(askConfig, {
+    messageId: "message-generated-smoke",
+    from: "operator@example.test",
+    subject: "Codex Relay SMTP smoke test",
+    text: "Codex Relay SMTP smoke test."
+  });
+
+  assert.deepEqual(generatedSmtpSmoke, {
+    kind: "ignored",
+    messageId: "message-generated-smoke",
+    reason: "unsupported"
+  });
+
   assert.deepEqual(
     parseInboundEmailCommand(askConfig, {
       messageId: "message-direct-disabled",
@@ -224,17 +330,6 @@ test("email command parser accepts ask mode and gates direct workspace mode", ()
     }
   );
 
-  const directConfig = loadConfig(
-    {
-      ...baseEnv,
-      EMAIL_CONTROL_PLANE_ENABLED: "true",
-      EMAIL_ALLOWED_SENDERS: "operator@example.test",
-      CODEX_DIRECT_WORKSPACE_ENABLED: "true",
-      CODEX_DIRECT_WORKSPACE_ALLOWED_REPOS: "api",
-      EMAIL_DIRECT_WORKSPACE_ENABLED: "true"
-    },
-    { requireSlack: false }
-  );
   const direct = parseInboundEmailCommand(directConfig, {
     messageId: "message-direct",
     from: "operator@example.test",

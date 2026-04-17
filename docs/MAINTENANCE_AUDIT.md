@@ -19,6 +19,16 @@ Maintenance audit entries should include:
 
 The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is the narrative rollup.
 
+## 2026-04-17
+
+### CFO-0044: Email Live-Validation Hardening And Local Smoke Automation
+
+- owner: lead
+- status: done
+- verification: `npm run check:work-packets`, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, local WSL Codex sandbox preflight skip, and redacted Windows Codex sandbox preflight completed
+- commit: local checkpoint SHA reported after packet closure
+- notes: Windows Proton Bridge SMTP and IMAP validation continued with redacted reporting. Live ask intake, reply continuation, and local-session email summary paths succeeded. Email direct workspace intake reached the runner against a disposable repo, but Windows Codex reported write-sandbox denial and no source edit occurred. Parser hardening now ignores Relay-generated status mail unless an explicit user command is present. Local Slack smoke automation remains local-config only; no Slack IDs, token values, email addresses, provider endpoint details, or local private paths were recorded. CFO-0042 remains open until maintainer acceptance of the redacted evidence and the remaining Windows Codex write-sandbox blocker.
+
 ## 2026-04-13
 
 ### CFO-0001: Establish Codex Relay Foundation

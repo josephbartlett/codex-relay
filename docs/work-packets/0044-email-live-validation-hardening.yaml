@@ -1,0 +1,95 @@
+id: CFO-0044
+title: Email live-validation hardening and local smoke automation
+status: done
+owner: lead
+role: worker
+priority: p1
+objective: Fix live email ask/reply parsing found during Windows Proton validation, add a Codex Windows write-sandbox preflight, and prepare local-only Slack smoke automation so release validation does not depend on the maintainer manually posting each test message.
+paths:
+  - apps/email-gateway/src
+  - apps/local-runner/src
+  - apps/slack-gateway/src
+  - docs/TASKS.md
+  - docs/work-packets/0044-email-live-validation-hardening.yaml
+  - package.json
+  - scripts
+  - tests
+concerns:
+  - concern:email-parser-hardening
+  - concern:windows-codex-sandbox
+  - concern:slack-smoke-automation
+dependencies:
+  - CFO-0042
+  - CFO-0043
+non_goals:
+  - Do not edit `.env`.
+  - Do not print or record SMTP/IMAP credentials, token values, mailbox names, email addresses, Slack IDs, local usernames, or provider endpoint details.
+  - Do not push, tag, publish, or close release validation.
+  - Do not add unsafe Codex execution defaults such as `danger-full-access` or bypass flags to product code.
+  - Do not mark CFO-0042 done unless live validation is actually completed with redacted evidence.
+acceptance:
+  - Email ask/query mode is detected from the first real command line even when provider/client reply subjects or Codex Relay notification metadata precede the command.
+  - Email reply continuation with `relay:<sessionId>` still routes to the existing session and remains read-only for ask/query replies.
+  - Windows Codex write-sandbox availability can be checked without exposing secrets or modifying tracked files.
+  - Slack smoke automation supports a dedicated locally configured test identity/channel without tracking IDs or tokens.
+  - Live Proton validation can continue with redacted SMTP/IMAP outcomes and clear blocker reporting for Windows write-sandbox failures.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+  completed:
+    - node --import tsx --test --test-reporter=spec tests/email-gateway.test.ts
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - npm run check:codex-windows-sandbox
+  evidence:
+    - "Focused email-gateway regression tests passed after parser hardening."
+    - "Redacted SMTP smoke through local Bridge succeeded with one configured recipient."
+    - "Redacted live IMAP ask intake queued `start_ask`, runner completed read-only answer mode, and outbound completion email was sent."
+    - "Redacted live reply continuation with `relay:<sessionId>` routed to the existing email session as `start_ask`, completed read-only answer mode, and sent a completion email."
+    - "Redacted local handoff plan session completed and sent a plan-ready email summary."
+    - "Redacted live email direct workspace intake queued `start_direct` against a disposable repo, but Windows Codex write sandbox rejected writes; the disposable source repo remained unchanged."
+    - "Regression coverage now ignores Relay-generated queued/completed/status emails, including direct-workspace status wording, unless an explicit user command is present."
+    - "`npm run check` passed with 127 tests, setup validation, work-packet validation, release readiness, npm audit, and secret scan."
+    - "`git diff --check` passed."
+    - "`npm run check:codex-windows-sandbox` failed with redacted `codex_windows_sandbox_write_failed`, matching the observed Windows write-sandbox blocker."
+    - "WSL verification passed after rebuilding the local native SQLite dependency for the WSL runtime; no tracked dependency or lockfile changes were made."
+handoff:
+  expected:
+    - Report parser fixes, Windows sandbox-preflight behavior, local Slack smoke-driver usage, automated checks, and redacted live email validation outcomes.
+  completed:
+    - Email parser now selects the first real command line after Relay metadata and ignores Relay-generated status mail without explicit user commands.
+    - Local Slack smoke helper was added for a dedicated locally configured test identity/channel without tracking local identity or credential values.
+    - Windows Codex sandbox preflight script was added; current Windows environment reports write-sandbox failure with redacted output.
+    - Proton Bridge SMTP/IMAP ask, reply continuation, local handoff email summary, and direct-mode intake were exercised with redacted evidence.
+  next:
+    - Keep CFO-0042 open until the maintainer accepts the redacted live-validation evidence and remaining Windows Codex write-sandbox blocker.
+    - Re-run email direct workspace execution after the Windows Codex write-sandbox issue is fixed upstream or locally.
+risks:
+  - Live mailbox subjects and reply bodies vary by client; parser changes must stay conservative and avoid turning arbitrary mailbox text into commands.
+  - Windows Codex sandbox writes may remain unavailable even when Relay is correctly configured.
+  - Slack smoke automation must not commit local Slack identities, channel IDs, tokens, or message content artifacts.
+maintenance_audit:
+  assigned_at: "2026-04-17"
+  completed_at: "2026-04-17"
+  reviewed_by: "lead"
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - npm run check:codex-windows-sandbox
+  artifact: "local validation hardening checkpoint; commit SHA reported after packet closure"
+  notes:
+    - Opened after Windows live validation found Proton Bridge TLS-mode overrides, email ask misclassification, and Codex Windows write-sandbox denial despite workspace-write requests.
+    - CFO-0042 remains open until maintainer acceptance of the redacted live-validation evidence and remaining Windows Codex write-sandbox blocker.

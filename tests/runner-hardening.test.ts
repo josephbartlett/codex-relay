@@ -20,8 +20,8 @@ test("runner config parses env allowlist and policy paths", () => {
   });
 
   assert.deepEqual(config.codex.runnerEnvAllowlist, ["PATH", "HOME", "CODEX_HOME"]);
-  assert.equal(config.codex.profilesPath.endsWith("infra/codex/profiles.toml"), true);
-  assert.equal(config.codex.rulesPath.endsWith("infra/codex/default.rules"), true);
+  assert.equal(toPosixPath(config.codex.profilesPath).endsWith("infra/codex/profiles.toml"), true);
+  assert.equal(toPosixPath(config.codex.rulesPath).endsWith("infra/codex/default.rules"), true);
   assert.equal(config.codex.requireExecPolicyCheck, false);
 });
 
@@ -88,3 +88,7 @@ test("runner policy check does not accept commented execpolicy text as a guard",
   assert.equal(result.failures.some((failure) => failure.includes("network tools")), true);
   assert.equal(result.failures.some((failure) => failure.includes("prefix_rule")), true);
 });
+
+function toPosixPath(path: string): string {
+  return path.replace(/\\/gu, "/");
+}

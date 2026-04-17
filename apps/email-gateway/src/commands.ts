@@ -79,7 +79,13 @@ export function parseInboundEmailCommand(config: HarnessConfig, message: Inbound
     return { kind: "ignored", messageId: message.messageId, reason: "empty_message" };
   }
 
-  if (isWriteApprovalLike(commandText)) {
+  const instructionText = extractEmailInstructionText(commandText);
+
+  if (!instructionText) {
+    return { kind: "ignored", messageId: message.messageId, reason: "unsupported" };
+  }
+
+  if (isWriteApprovalLike(instructionText)) {
     return rejected(message, "write_approval_not_supported");
   }
 
@@ -92,8 +98,8 @@ export function parseInboundEmailCommand(config: HarnessConfig, message: Inbound
     return rejected(message, "repo_not_configured");
   }
 
-  const mode = extractEmailMode(commandText);
-  const prompt = extractEmailPrompt(commandText);
+  const mode = extractEmailMode(instructionText);
+  const prompt = extractEmailPrompt(instructionText);
 
   if (!prompt) {
     return rejected(message, "missing_prompt");
@@ -143,12 +149,7 @@ function extractEmailPrompt(text: string): string {
 }
 
 function extractEmailMode(text: string): "plan" | "ask" | "direct" {
-  const normalized = extractEmailInstructionText(text)
-    .replace(/\brepo:[a-zA-Z0-9._-]+\b/gu, "")
-    .replace(/\brelay:[a-zA-Z0-9_-]{6,40}\b/gu, "")
-    .replace(/^codex(?: relay)?:/iu, "")
-    .trim()
-    .toLowerCase();
+  const normalized = normalizeInstructionForMode(extractEmailInstructionText(text));
 
   if (/^(ask|query|question)\b/u.test(normalized) || /^(what|which|where|why|how|who|when)\b/u.test(normalized)) {
     return "ask";
@@ -162,12 +163,21 @@ function extractEmailMode(text: string): "plan" | "ask" | "direct" {
 }
 
 function extractEmailInstructionText(text: string): string {
-  return text
+  const lines = text
     .split(/\r?\n/u)
     .map((line) => stripRelayMetadataLine(line))
-    .filter(Boolean)
-    .join("\n")
-    .trim();
+    .filter(Boolean);
+  const explicitCommand = lines.find((line) => isExplicitInstructionLine(line) && !isRelayGeneratedInstructionLine(line));
+
+  if (explicitCommand) {
+    return explicitCommand.trim();
+  }
+
+  if (looksLikeRelayGeneratedEmail(text)) {
+    return "";
+  }
+
+  return lines.join("\n").trim();
 }
 
 function stripRelayMetadataLine(line: string): string {
@@ -175,7 +185,9 @@ function stripRelayMetadataLine(line: string): string {
   const withoutReplyPrefix = withoutRelayMarker.replace(/^re:\s*/iu, "").trim();
 
   if (
-    /^codex relay (queued|completed|failed|plan ready)\b/iu.test(withoutReplyPrefix) ||
+    /^codex relay (queued|completed|failed|plan ready|email request failed)\b/iu.test(withoutReplyPrefix) ||
+    /^codex relay (email request rejected|smtp smoke test)\b/iu.test(withoutReplyPrefix) ||
+    /^codex relay (queued|completed|failed|plan ready):/iu.test(withoutReplyPrefix) ||
     /^reply reference:\s*$/iu.test(withoutReplyPrefix) ||
     /^session:\s*[a-zA-Z0-9_-]+$/iu.test(withoutReplyPrefix) ||
     /^queue job:\s*[a-zA-Z0-9_-]+$/iu.test(withoutReplyPrefix) ||
@@ -185,6 +197,42 @@ function stripRelayMetadataLine(line: string): string {
   }
 
   return /^re:\s*/iu.test(withoutRelayMarker) ? withoutReplyPrefix : withoutRelayMarker;
+}
+
+function looksLikeRelayGeneratedEmail(text: string): boolean {
+  return (
+    /(?:^|\n)\s*(?:re:\s*)?codex relay (queued|completed|failed|plan ready|email request failed|email request rejected|smtp smoke test)\b/iu.test(text) ||
+    /(?:^|\n)\s*reply reference:\s*relay:[a-zA-Z0-9_-]{6,40}\b/iu.test(text) ||
+    /(?:^|\n)\s*queue job:\s*[a-zA-Z0-9_-]+/iu.test(text) ||
+    /(?:^|\n)\s*session:\s*[a-zA-Z0-9_-]+/iu.test(text)
+  );
+}
+
+function isExplicitInstructionLine(line: string): boolean {
+  const normalized = normalizeInstructionForMode(line);
+
+  return /^(ask|query|question|quick|direct|direct workspace)\b/u.test(normalized);
+}
+
+function isRelayGeneratedInstructionLine(line: string): boolean {
+  const normalized = normalizeInstructionForMode(line);
+
+  return (
+    /^direct workspace mode\b/u.test(normalized) ||
+    /^email approvals are disabled\b/u.test(normalized) ||
+    /^you will receive\b/u.test(normalized) ||
+    /^reply to this email\b/u.test(normalized) ||
+    /^continue from the configured slack thread\b/u.test(normalized)
+  );
+}
+
+function normalizeInstructionForMode(text: string): string {
+  return text
+    .replace(/\brepo:[a-zA-Z0-9._-]+\b/gu, "")
+    .replace(/\brelay:[a-zA-Z0-9_-]{6,40}\b/gu, "")
+    .replace(/^codex(?: relay)?:/iu, "")
+    .trim()
+    .toLowerCase();
 }
 
 function isQuotedEmailLine(line: string): boolean {

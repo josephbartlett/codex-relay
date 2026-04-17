@@ -18,6 +18,8 @@
     "start:local-session": "node dist/apps/local-runner/src/localSession.js",
     "validate:setup": "node scripts/validate-setup.mjs",
     "validate:live-config": "node scripts/validate-live-config.mjs",
+    "check:codex-windows-sandbox": "node scripts/check-codex-windows-sandbox.mjs",
+    "smoke:slack": "node scripts/slack-smoke.mjs",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/**/*.test.ts",

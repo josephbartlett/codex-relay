@@ -337,6 +337,14 @@ For Codex CLI installation, authentication, and option details, use OpenAI's off
 - `git -C <repo> status --short`
 - `codex exec --json --cd <repo> --sandbox read-only "summarize this repo"`
 
+On Windows, validate Codex's local write sandbox before relying on live write smokes:
+
+```powershell
+npm run check:codex-windows-sandbox
+```
+
+The check creates a temporary directory, attempts a `codex sandbox windows --full-auto` write, and prints only a compact JSON result. If this fails, read-only Relay flows can still be validated, but approval-gated implementation and direct workspace write smokes should run in an environment where Codex `workspace-write` is known to work.
+
 At gateway startup, the app checks:
 
 - `git --version`
@@ -349,6 +357,32 @@ At gateway startup, the app checks:
 - configured execpolicy rules include guards for recursive deletes, git remote mutation, network tools, and destructive Docker cleanup
 - `codex execpolicy check` can parse the configured rules file; set `CODEX_REQUIRE_EXECPOLICY_CHECK=false` only for known-compatible Codex versions that do not expose that check command
 - `gh auth status` as a warning-only check for PR creation
+
+## Local Slack Smoke Automation
+
+Use a private test channel and a dedicated local Slack test identity to reduce maintainer-in-the-loop smoke testing. Keep the real token, channel ID, test identity, and bot user ID only in local environment or `.env`; do not commit them or paste them into work packets.
+
+Required local environment:
+
+```text
+SLACK_SMOKE_TOKEN=<dedicated local test identity token>
+SLACK_SMOKE_CHANNEL_ID=<private test channel id>
+SLACK_SMOKE_BOT_USER_ID=<Codex Relay app/bot user id>
+```
+
+Run a read-only ask smoke:
+
+```bash
+npm run smoke:slack -- --text "ask repo:default what is the package name in package.json?" --expect "Answer"
+```
+
+To exercise a follow-up inside an existing task thread, pass the thread timestamp only from local runtime context:
+
+```bash
+npm run smoke:slack -- --thread-ts <local-thread-ts> --text "ask which file changed?" --expect "Answer"
+```
+
+The smoke helper posts through Slack Web API and polls thread replies. It prints redacted JSON and does not store Slack IDs, tokens, or raw artifacts in tracked files. Button-bound approval flows still require final maintainer review unless a future test harness adds a safe action simulation path.
 
 ## Runner Hardening
 

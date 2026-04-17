@@ -14,6 +14,13 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 ## Completed Checkpoints
 
 - owner: lead
+  scope: Email ask/reply parser hardening, Windows Codex write-sandbox preflight, local-only Slack smoke automation, and continued Proton Bridge validation; packet `CFO-0044`
+  status: Done
+  objective: Remove live-validation blockers without weakening the default safe execution model or tracking local identities/secrets.
+  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; redacted live email validation
+  handoff: Parser and self-ingestion fixes are in place; SMTP/IMAP ask, reply continuation, local handoff summary email, and direct-mode intake were validated with redacted evidence. Direct workspace execution remains blocked by Windows Codex write-sandbox denial. CFO-0042 remains open for maintainer acceptance; no push, tag, or release.
+
+- owner: lead
   scope: Slack/email lightweight `ask` mode, gated direct workspace quick mode, source-workspace safety markers, local bridge topology review, and v0.2.0 docs/tests; packet `CFO-0043`
   status: Done
   objective: Add lower-ceremony read-only questions and explicitly opt-in direct workspace edits without weakening the default safe worktree workflow.
