@@ -40,14 +40,14 @@ verification:
   completed:
     - npm run validate:live-config
     - node --import tsx --test --test-reporter=spec tests/live-config.test.ts tests/release-readiness.test.ts
-    - gh repo view josephbartlett/codex-relay --json nameWithOwner,isPrivate,defaultBranchRef,deleteBranchOnMerge,hasIssuesEnabled,hasWikiEnabled,isSecurityPolicyEnabled,securityPolicyUrl,viewerPermission,viewerCanAdminister,url
-    - "gh api repos/josephbartlett/codex-relay --jq '{private: .private, default_branch: .default_branch, has_issues: .has_issues, has_wiki: .has_wiki, archived: .archived, security_and_analysis: .security_and_analysis, private_vulnerability_reporting_enabled: .private_vulnerability_reporting_enabled}'"
+    - redacted GitHub repository posture check
+    - redacted GitHub repository API posture check
     - npm run check
   evidence:
     - "`npm run validate:live-config` ran without printing secret values and correctly failed the protected local `.env` because strict Slack user/channel/repo allowlists are missing."
     - Focused validator and release-readiness tests passed.
-    - GitHub CLI reported the repo is private, default branch is `main`, issues are enabled, wiki is disabled, top-level security policy is enabled, and the authenticated user has admin permission.
-    - GitHub branch protection API reported private-repo protection requires GitHub Pro or public visibility in the current repository/account posture.
+    - GitHub CLI checks confirmed default branch, issue/wiki posture, security policy posture, and maintainer-level repository access.
+    - Branch protection capability was reviewed without recording private account details.
     - Full `npm run check` passed with 94 tests, release readiness, high-severity npm audit, and secret scan.
 handoff:
   expected:

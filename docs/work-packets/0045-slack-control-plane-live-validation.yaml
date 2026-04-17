@@ -1,15 +1,20 @@
 id: CFO-0045
 title: Slack control-plane live validation
-status: blocked
+status: active
 owner: lead
 role: verifier
 priority: p1
 objective: Validate Slack as the primary Codex Relay control plane for read-only questions, plan/approve execution, follow-up continuity, local handoff, status, audit, cleanup, and PR-oriented lifecycle behavior without recording local identities, Slack IDs, tokens, or private channel details.
 paths:
+  - apps/orchestrator/src/slackNotifications.ts
+  - apps/slack-gateway/src/blocks/taskCards.ts
+  - apps/slack-gateway/src/listeners/actions.ts
   - docs/MAINTENANCE_AUDIT.md
   - docs/TASKS.md
   - docs/work-packets/0045-slack-control-plane-live-validation.yaml
   - scripts/slack-smoke.mjs
+  - tests/email-notifications.test.ts
+  - tests/slack-notifications.test.ts
 concerns:
   - concern:slack-live-validation
   - concern:mobile-codex-cli-workflow
@@ -49,16 +54,25 @@ verification:
     - redacted Slack Web API auth checks
     - temporary strict-mode Slack gateway startup check
     - temporary local runner daemon startup check
+    - manual Slack ask live smoke
+    - manual Slack threaded ask follow-up live smoke
+    - manual Slack plan/approve/worktree execution live smoke
   evidence:
     - "`npm run check` passed with 127 tests, setup validation, work-packet validation, release readiness, npm audit, and secret scan."
     - "Focused Slack/control-plane regression suite passed with 45 tests covering authorization, mention intent, ask mode, direct workspace gating, approval ownership, PR lifecycle actions, notification publishing, local handoff continuation, and live-config validation."
     - "Slack bot Web API authentication passed without printing token, team, user, bot, or URL values."
     - "Slack Socket Mode app token accepted a redacted `apps.connections.open` check without printing the returned WebSocket URL."
-    - "Slack gateway started under temporary strict deny-all policy with the real app credentials and a temporary ignored state path; no real Slack user/channel/repo allowlists were printed or tracked."
+    - "Slack gateway started under temporary strict deny-all policy with configured Slack app credentials and a temporary ignored state path; no Slack user/channel/repo allowlists were printed or tracked."
     - "Local runner daemon started against the same temporary ignored state path."
-    - "Actual protected `.env` strict validation failed closed because local Slack user/channel allowlists, repo-specific Slack policy, and the WSL repo binding are not configured in this environment."
+    - "Protected local `.env` strict validation failed closed because local Slack user/channel allowlists, repo-specific Slack policy, and the repo binding are not configured in this environment."
     - "`npm run smoke:slack` now loads `.env`, but live posting is blocked until `SLACK_SMOKE_TOKEN`, `SLACK_SMOKE_CHANNEL_ID`, and `SLACK_SMOKE_BOT_USER_ID` are configured locally."
-    - "A temporary non-secret env fixture passed strict live-config validation with fake Slack IDs and the WSL repo path."
+    - "A temporary non-secret env fixture passed strict live-config validation with fake Slack IDs and a generic local repo path."
+    - "Manual Slack ask against the disposable repo returned the package name from `package.json`."
+    - "Manual Slack threaded ask reused the existing Slack session and returned the root files from the disposable repo."
+    - "Manual Slack plan/approve smoke created an isolated worktree, created the requested smoke markdown file, kept the source repo clean, and recorded plan, approval, and execution audit events."
+    - "Live plan text exposed a runner-authored local markdown path and the kickoff details action failed to resolve the session from one Slack action payload shape; both findings are being fixed before release."
+    - "After patching, a fresh Slack plan/approve/worktree smoke completed through a single gateway/runner pair with no local paths in Slack thread history."
+    - "After patching, Slack diff summary opened successfully and displayed only repo id, branch, status, changed file, diff stat, and name-status details for the disposable worktree."
 handoff:
   expected:
     - Report what Slack surfaces were verified, what is blocked by missing local smoke configuration, what remains human/manual, and whether code changes are required.
@@ -66,11 +80,11 @@ handoff:
     - Slack token and Socket Mode connectivity are valid from WSL.
     - Static and automated Slack coverage is passing.
     - Slack smoke helper now matches the runbook by loading local `.env` values.
-    - Real Slack event-originated smoke is not yet possible from this session because the dedicated local smoke identity/channel variables are absent and strict `.env` policy is not configured for WSL.
+    - Real Slack event-originated ask, threaded ask, and plan/approval/worktree execution smokes ran manually through the configured workspace.
+    - Patched Slack plan/approval/worktree execution and diff summary modal behavior were validated manually after duplicate gateway processes were removed.
   next:
-    - Configure a dedicated local Slack smoke identity token, private test channel ID, and Codex Relay bot user ID in local `.env`.
-    - Configure strict local Slack user/channel/repo allowlists and a real WSL repo binding in local `.env`.
-    - Re-run read-only ask, follow-up ask, plan creation, approval execution, diff summary, local handoff, slash command, App Home, cleanup, and PR lifecycle smokes against a disposable repo.
+    - Configure a dedicated local Slack smoke identity token, private test channel ID, and Codex Relay bot user ID in local `.env` if automated Slack smoke posting is still desired.
+    - Re-run local handoff, slash command, App Home, cleanup, and PR lifecycle smokes against a disposable repo when those surfaces are in scope.
 risks:
   - A bot-originated Slack message may not produce a real `app_mention` event; live smoke needs a non-Relay Slack identity.
   - Strict Slack policy may fail closed until local allowlists include the dedicated test identity and private test channel.
@@ -80,4 +94,5 @@ maintenance_audit:
   artifact: "Slack validation packet opened for local verification"
   notes:
     - Opened after email live validation advanced further than Slack live validation and the product direction was clarified as Codex CLI on the go.
-    - Blocked only on local live-smoke prerequisites; automated Slack/control-plane coverage and Slack credential connectivity passed.
+    - Manual live smoke advanced ask, threaded ask, and plan/approval/worktree execution. Validation found local-path leakage in runner-authored Slack plan text and a details-action session lookup gap; both are now tracked in this packet.
+    - Patched live smoke confirmed local-path redaction and diff summary modal behavior after duplicate stale gateway processes were removed.

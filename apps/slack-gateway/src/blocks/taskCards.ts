@@ -8,6 +8,7 @@ import type {
 } from "../../../../packages/shared/src/types.js";
 import { SlackActionIds } from "../../../../packages/shared/src/events.js";
 import type { DiffSummary } from "../../../orchestrator/src/artifacts.js";
+import { sanitizeNotificationText } from "../../../orchestrator/src/slackNotifications.js";
 
 export type SlackBlock = KnownBlock | Block;
 
@@ -19,7 +20,7 @@ export function kickoffBlocks(input: { repoId: string; branchName: string; statu
         `Repo: \`${escapeBackticks(input.repoId)}\``,
         `Mode: \`${escapeBackticks(input.mode ?? "plan")}\``,
         `Branch: \`${escapeBackticks(input.branchName)}\``,
-        `Status: ${escapeSlackText(input.status)}`
+        `Status: ${safeSlackText(input.status)}`
       ].join("\n")
     ),
     actions([
@@ -33,7 +34,7 @@ export function planBlocks(approval: ApprovalRequest): SlackBlock[] {
   const approvalLabel = approval.type === "run_tests" ? "Approve test run" : "Approve execution";
 
   return [
-    section(`*Plan ready*\n${truncate(escapeSlackText(approval.summary), 2500)}`),
+    section(`*Plan ready*\n${truncate(safeSlackText(approval.summary), 2500)}`),
     context(`Approval expires: ${new Date(approval.expiresAt).toLocaleString()}`),
     actions([
       button(approvalLabel, SlackActionIds.approveExecution, approval.id, "primary"),
@@ -44,11 +45,11 @@ export function planBlocks(approval: ApprovalRequest): SlackBlock[] {
 }
 
 export function progressBlocks(input: { title: string; detail: string }): SlackBlock[] {
-  return [section(`*${escapeSlackText(input.title)}*\n${truncate(escapeSlackText(input.detail), 2500)}`)];
+  return [section(`*${safeSlackText(input.title)}*\n${truncate(safeSlackText(input.detail), 2500)}`)];
 }
 
 export function guidanceBlocks(input: { title: string; detail: string }): SlackBlock[] {
-  return [section(`*${escapeSlackText(input.title)}*\n${truncate(escapeSlackText(input.detail), 2500)}`)];
+  return [section(`*${safeSlackText(input.title)}*\n${truncate(safeSlackText(input.detail), 2500)}`)];
 }
 
 export function answerBlocks(input: { session: Session; answer: string }): SlackBlock[] {
@@ -58,7 +59,7 @@ export function answerBlocks(input: { session: Session; answer: string }): Slack
         "*Answer*",
         `Repo: \`${escapeBackticks(input.session.repoId)}\``,
         "",
-        truncate(escapeSlackText(input.answer), 2500)
+        truncate(safeSlackText(input.answer), 2500)
       ].join("\n")
     )
   ];
@@ -81,14 +82,14 @@ export function completionBlocks(input: {
     section(
       [
         mode === "test" ? "*Tests completed*" : "*Completed*",
-        `Summary: ${truncate(escapeSlackText(input.summary), 1200)}`,
+        `Summary: ${truncate(safeSlackText(input.summary), 1200)}`,
         `Branch: \`${escapeBackticks(input.session.branchName)}\``,
         ...(input.session.draftPullRequest ? [`PR: ${escapeSlackText(input.session.draftPullRequest.prUrl)}`] : []),
         `Files changed: ${input.diff.changedFiles.length}`
       ].join("\n")
     ),
     section(files),
-    input.diff.diffStat ? section(`*Diff stat*\n\`\`\`\n${truncate(escapeSlackText(input.diff.diffStat), 1800)}\n\`\`\``) : context("No diff stat."),
+    input.diff.diffStat ? section(`*Diff stat*\n\`\`\`\n${truncate(safeSlackText(input.diff.diffStat), 1800)}\n\`\`\``) : context("No diff stat."),
     mode === "test" || sourceWorkspace
       ? actions([button("Show diff summary", SlackActionIds.openDetails, input.session.id)])
       : actions([
@@ -110,7 +111,7 @@ export function completionBlocks(input: {
 }
 
 export function failureBlocks(input: { title: string; error: string }): SlackBlock[] {
-  return [section(`*${escapeSlackText(input.title)}*\n${truncate(escapeSlackText(input.error), 2500)}`)];
+  return [section(`*${safeSlackText(input.title)}*\n${truncate(safeSlackText(input.error), 2500)}`)];
 }
 
 export function diffSummaryBlocks(input: { session: Session; diff: DiffSummary }): SlackBlock[] {
@@ -129,12 +130,12 @@ export function diffSummaryBlocks(input: { session: Session; diff: DiffSummary }
       ].join("\n")
     ),
     section(files),
-    input.diff.diffStat ? section(`*Diff stat*\n\`\`\`\n${truncate(escapeSlackText(input.diff.diffStat), 1800)}\n\`\`\``) : context("No diff stat.")
+    input.diff.diffStat ? section(`*Diff stat*\n\`\`\`\n${truncate(safeSlackText(input.diff.diffStat), 1800)}\n\`\`\``) : context("No diff stat.")
   ];
 }
 
 export function sessionSummaryBlocks(input: { session: Session; title: string; detail: string }): SlackBlock[] {
-  const detail = truncate(escapeSlackText(input.detail), 1800);
+  const detail = truncate(safeSlackText(input.detail), 1800);
   const actionButtons: SlackBlock[] = [button("Show diff summary", SlackActionIds.openDetails, input.session.id)];
 
   if (input.session.status === "done" && input.session.workspaceKind !== "source") {
@@ -153,7 +154,7 @@ export function sessionSummaryBlocks(input: { session: Session; title: string; d
   return [
     section(
       [
-        `*${escapeSlackText(input.title)}*`,
+        `*${safeSlackText(input.title)}*`,
         `Repo: \`${escapeBackticks(input.session.repoId)}\``,
         `Status: \`${escapeBackticks(input.session.status)}\``,
         `Branch: \`${escapeBackticks(input.session.branchName)}\``,
@@ -348,6 +349,10 @@ function formatCheckDetails(status: DraftPullRequestStatus): string | undefined 
 
 function escapeSlackText(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function safeSlackText(value: string): string {
+  return escapeSlackText(sanitizeNotificationText(value, 10_000));
 }
 
 function escapeSlackLinkLabel(value: string): string {

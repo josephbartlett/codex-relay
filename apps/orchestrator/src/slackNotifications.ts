@@ -61,6 +61,10 @@ export function enqueueSlackNotification(
 
 export function sanitizeNotificationText(value: string, maxLength = 1200): string {
   const normalized = value
+    .replace(/\[([^\]\n]{1,200})\]\(((?:file:\/\/\/)?(?:[A-Za-z]:[\\/]|\/(?:mnt\/[A-Za-z]\/|Users\/|home\/|tmp\/|var\/folders\/|private\/var\/))[^)\n]*)\)/gu, "$1")
+    .replace(/(^|[\s([{"'`])(?:file:\/\/\/(?:[A-Za-z]:[\\/]|\/?(?:mnt\/[A-Za-z]\/|Users\/|home\/|tmp\/|var\/folders\/|private\/var\/))[^\s)\]}"'`<>]*)/gu, "$1[local-path]")
+    .replace(/(^|[\s([{"'`])(?:[A-Za-z]:[\\/][^\s)\]}"'`<>]*)/gu, "$1[local-path]")
+    .replace(/(^|[\s([{"'`])(?:\/(?:mnt\/[A-Za-z]\/|Users\/|home\/|tmp\/|var\/folders\/|private\/var\/)[^\s)\]}"'`<>]*)/gu, "$1[local-path]")
     .replace(/xox[abprs]-[A-Za-z0-9-]+/g, "[redacted-slack-token]")
     .replace(/gh[pousr]_[A-Za-z0-9_]+/g, "[redacted-github-token]")
     .replace(/sk-[A-Za-z0-9_-]{8,}/g, "[redacted-token]")

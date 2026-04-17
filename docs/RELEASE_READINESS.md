@@ -103,7 +103,7 @@ Checked on 2026-04-15 with the authenticated GitHub CLI session:
 - Wiki: disabled
 - Security policy: enabled at https://github.com/josephbartlett/codex-relay/security/policy
 - Authenticated permission: admin
-- Branch protection: not enabled at the time of the latest check. Enable branch protection for `main` once the first public-collaboration settings are finalized.
+- Branch protection: not enabled at the time of the latest check. Enable branch protection for `main` once collaboration settings are finalized.
 
 ## Known Limitations
 
@@ -123,6 +123,6 @@ Do not tag a release until:
 
 - `npm run check` passes on a clean checkout;
 - release notes are finalized;
-- the human maintainer explicitly approves the tag.
+- a maintainer explicitly approves the tag.
 
 Operator note: before normal post-release live use, run `npm run validate:live-config` and update the protected `.env` values if it reports missing strict-mode Slack policy.

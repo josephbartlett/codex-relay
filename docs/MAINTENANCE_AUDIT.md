@@ -24,10 +24,10 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 ### CFO-0045: Slack Control-Plane Live Validation
 
 - owner: lead
-- status: blocked
-- verification: `npm run check:work-packets`, focused Slack/control-plane regression suite, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, redacted Slack bot auth check, redacted Socket Mode app-token check, temporary strict-deny gateway startup, and local runner startup completed
+- status: active
+- verification: `npm run check:work-packets`, focused Slack/control-plane regression suite, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, redacted Slack bot auth check, redacted Socket Mode app-token check, temporary strict-deny gateway startup, local runner startup, manual Slack ask, manual threaded ask, and manual plan/approval/worktree execution completed
 - commit: local checkpoint pending
-- notes: Slack bot and Socket Mode credentials validate from WSL, gateway and runner startup posture passed under temporary strict deny-all policy, and automated Slack/control-plane coverage is passing. Real Slack event-originated smoke is blocked until local `.env` has a dedicated smoke identity token, private test channel, bot user ID, strict user/channel/repo allowlists, and a real WSL repo binding. The Slack smoke helper now loads `.env` so future local smoke runs match the runbook.
+- notes: Slack bot and Socket Mode credentials validate from WSL, gateway and runner startup posture passed under temporary strict deny-all policy, and automated Slack/control-plane coverage is passing. Manual live Slack smoke validated ask, threaded ask continuation, approval creation, approval execution, worktree isolation, and source-repo cleanliness against a disposable repo. The live pass found runner-authored local path leakage in Slack plan text and a details-action session lookup gap; patched live smoke then validated local-path redaction, approval execution through a single gateway/runner pair, and working diff summary modal behavior. The Slack smoke helper now loads local environment values so future local smoke runs match the runbook.
 
 ### CFO-0044: Email Live-Validation Hardening And Local Smoke Automation
 

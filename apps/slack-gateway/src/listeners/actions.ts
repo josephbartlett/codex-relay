@@ -192,13 +192,13 @@ export function registerActionListeners(app: App, orchestrator: Orchestrator, co
 
     const explicitSessionId = action.value && action.value !== "details" ? String(action.value) : undefined;
     const teamId = body.team?.id ?? "";
-    const channel = body.channel?.id;
-    const threadTs = body.message?.thread_ts ?? body.message?.ts;
+    const channel = body.channel?.id ?? body.container?.channel_id;
+    const threadTs = body.message?.thread_ts ?? body.container?.thread_ts ?? body.message?.ts ?? body.container?.message_ts;
     const session =
       explicitSessionId && orchestrator.getSession(explicitSessionId)
         ? orchestrator.getSession(explicitSessionId)
         : channel && threadTs
-          ? orchestrator.getSessionBySlackThread({ teamId, channelId: channel, threadTs })
+          ? getSessionBySlackActionThread(orchestrator, { teamId, channelId: channel, threadTs })
           : undefined;
 
     if (!session) {
@@ -382,4 +382,20 @@ function parseSessionThread(session: Session): { teamId: string; channelId: stri
   }
 
   return { teamId, channelId, threadTs };
+}
+
+function getSessionBySlackActionThread(
+  orchestrator: Orchestrator,
+  input: { teamId: string; channelId: string; threadTs: string }
+): Session | undefined {
+  const exact = orchestrator.getSessionBySlackThread(input);
+
+  if (exact) {
+    return exact;
+  }
+
+  return orchestrator.listSessions().find((session) => {
+    const [, channelId, threadTs] = session.slackThreadKey.split(":");
+    return channelId === input.channelId && threadTs === input.threadTs;
+  });
 }

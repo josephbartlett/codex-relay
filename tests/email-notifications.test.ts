@@ -114,6 +114,20 @@ test("email notification subject strips control characters and newlines", () => 
   assert.equal(notification.subject, "Codex Relay BCC: attacker@example.test");
 });
 
+test("email notifications redact local paths from outbound text", () => {
+  const store = new InMemoryStore();
+  const notification = enqueueEmailNotification(store, {
+    ...sampleNotificationInput(),
+    text:
+      "Plan: edit [README.md](/mnt/c/Users/example/codex-relay/README.md) and inspect C:\\Users\\example\\repo\\package.json."
+  });
+
+  assert.match(notification.text, /Plan: edit README\.md/u);
+  assert.match(notification.text, /\[local-path\]/u);
+  assert.doesNotMatch(notification.text, /\/mnt\/c\/Users/u);
+  assert.doesNotMatch(notification.text, /C:\\Users/u);
+});
+
 test("json store persists email notifications", () => {
   const temp = mkdtempSync(join(tmpdir(), "codex-relay-email-json-"));
 

@@ -39,7 +39,7 @@ verification:
     - npm run check
   evidence:
     - Focused regression suite passed with 24 tests.
-    - Live Slack workflow created `V011_SMOKE.md`, then the patched thread reply created draft PR https://github.com/josephbartlett/codex-relay-test-repo/pull/3 without posting a second plan card.
+    - Live Slack workflow created `V011_SMOKE.md`, then the patched thread reply created a draft PR in the disposable test repository without posting a second plan card.
     - Full gate passed with 102 tests, work-packet validation, release-readiness, audit, and secret scan.
 handoff:
   expected:

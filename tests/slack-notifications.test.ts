@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { publishPendingSlackNotifications } from "../apps/slack-gateway/src/slackNotificationPublisher.js";
-import { completionBlocks, failureBlocks, kickoffBlocks } from "../apps/slack-gateway/src/blocks/taskCards.js";
+import { completionBlocks, failureBlocks, kickoffBlocks, planBlocks } from "../apps/slack-gateway/src/blocks/taskCards.js";
 import { InMemoryStore } from "../apps/orchestrator/src/persistence/inMemory.js";
 import { enqueueSlackNotification } from "../apps/orchestrator/src/slackNotifications.js";
 import type { ApprovalRequest, Session } from "../packages/shared/src/types.js";
@@ -249,6 +249,37 @@ test("Slack task cards escape mrkdwn-controlled content from runner output", () 
   assert.match(kickoffText, /Inspecting &lt;@U123&gt;/);
   assert.doesNotMatch(kickoffText, /<@U123>/);
   assert.doesNotMatch(kickoffText, /<!channel>/);
+});
+
+test("Slack task cards redact local paths from runner-authored summaries", () => {
+  const planText = blockText(
+    planBlocks(
+      sampleApproval({
+        summary:
+          "Create [SLACK_LIVE_SMOKE.md](/mnt/c/Users/example/codex-relay/.codex-slack/worktrees/session/SLACK_LIVE_SMOKE.md) and inspect C:\\Users\\example\\repo\\package.json."
+      })
+    )
+  );
+
+  assert.match(planText, /Create SLACK_LIVE_SMOKE\.md/);
+  assert.match(planText, /\[local-path\]/);
+  assert.doesNotMatch(planText, /\/mnt\/c\/Users/u);
+  assert.doesNotMatch(planText, /C:\\Users/u);
+
+  const completionText = blockText(
+    completionBlocks({
+      session: sampleSession(),
+      summary: "Updated /home/example/project/README.md after checking file:///mnt/c/Users/example/project/README.md.",
+      diff: {
+        changedFiles: ["README.md"],
+        diffStat: "README.md | 1 +"
+      }
+    })
+  );
+
+  assert.match(completionText, /\[local-path\]/);
+  assert.doesNotMatch(completionText, /\/home\/example/u);
+  assert.doesNotMatch(completionText, /\/mnt\/c\/Users/u);
 });
 
 test("Slack notification publisher marks malformed thread notifications failed", async () => {
