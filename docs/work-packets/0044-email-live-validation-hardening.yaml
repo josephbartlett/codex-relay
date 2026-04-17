@@ -58,7 +58,7 @@ verification:
     - "Redacted local handoff plan session completed and sent a plan-ready email summary."
     - "Redacted live email direct workspace intake queued `start_direct` against a disposable repo, but Windows Codex write sandbox rejected writes; the disposable source repo remained unchanged."
     - "Regression coverage now ignores Relay-generated queued/completed/status emails, including direct-workspace status wording, unless an explicit user command is present."
-    - "`npm run check` passed with 127 tests, setup validation, work-packet validation, release readiness, npm audit, and secret scan."
+    - "`npm run check` passed with 127 tests at packet close; later v0.2.0 release gates passed with expanded coverage."
     - "`git diff --check` passed."
     - "`npm run check:codex-windows-sandbox` failed with redacted `codex_windows_sandbox_write_failed`, matching the observed Windows write-sandbox blocker."
     - "WSL verification passed after rebuilding the local native SQLite dependency for the WSL runtime; no tracked dependency or lockfile changes were made."
@@ -69,9 +69,9 @@ handoff:
     - Email parser now selects the first real command line after Relay metadata and ignores Relay-generated status mail without explicit user commands.
     - Local Slack smoke helper was added for a dedicated locally configured test identity/channel without tracking local identity or credential values.
     - Windows Codex sandbox preflight script was added; current Windows environment reports write-sandbox failure with redacted output.
-    - Proton Bridge SMTP/IMAP ask, reply continuation, local handoff email summary, and direct-mode intake were exercised with redacted evidence.
+    - Local bridge SMTP/IMAP ask, reply continuation, local handoff email summary, and direct-mode intake were exercised with redacted evidence.
   next:
-    - Keep CFO-0042 open until the maintainer accepts the redacted live-validation evidence and remaining Windows Codex write-sandbox blocker.
+    - Keep the Windows Codex write-sandbox blocker deferred until it can be reproduced and resolved independently of release publication.
     - Re-run email direct workspace execution after the Windows Codex write-sandbox issue is fixed upstream or locally.
 risks:
   - Live mailbox subjects and reply bodies vary by client; parser changes must stay conservative and avoid turning arbitrary mailbox text into commands.
@@ -92,4 +92,4 @@ maintenance_audit:
   artifact: "local validation hardening checkpoint; commit SHA reported after packet closure"
   notes:
     - Opened after Windows live validation found Proton Bridge TLS-mode overrides, email ask misclassification, and Codex Windows write-sandbox denial despite workspace-write requests.
-    - CFO-0042 remains open until maintainer acceptance of the redacted live-validation evidence and remaining Windows Codex write-sandbox blocker.
+    - CFO-0042 accepted the redacted live-validation evidence for v0.2.0; the remaining Windows Codex write-sandbox blocker is deferred.

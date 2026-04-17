@@ -21,21 +21,37 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 ## 2026-04-17
 
+### CFO-0046: Publish v0.2.0 Control-Plane Release
+
+- owner: lead
+- status: done
+- verification: `npm run check:work-packets`, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, targeted public-risk string scan
+- commit: release metadata checkpoint artifact
+- notes: Prepared v0.2.0 release metadata after explicit maintainer approval to push, tag, and publish. Release notes lead with user-visible Slack ask, email SMTP/IMAP, reply continuation, direct workspace gating, and Slack/email hardening. Gmail-specific live validation and email-originated write approvals remain future work.
+
 ### CFO-0045: Slack Control-Plane Live Validation
 
 - owner: lead
-- status: active
+- status: done
 - verification: `npm run check:work-packets`, focused Slack/control-plane regression suite, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, redacted Slack bot auth check, redacted Socket Mode app-token check, temporary strict-deny gateway startup, local runner startup, manual Slack ask, manual threaded ask, and manual plan/approval/worktree execution completed
-- commit: local checkpoint pending
+- commit: `1160007`
 - notes: Slack bot and Socket Mode credentials validate from WSL, gateway and runner startup posture passed under temporary strict deny-all policy, and automated Slack/control-plane coverage is passing. Manual live Slack smoke validated ask, threaded ask continuation, approval creation, approval execution, worktree isolation, and source-repo cleanliness against a disposable repo. The live pass found runner-authored local path leakage in Slack plan text and a details-action session lookup gap; patched live smoke then validated local-path redaction, approval execution through a single gateway/runner pair, and working diff summary modal behavior. The Slack smoke helper now loads local environment values so future local smoke runs match the runbook.
+
+### CFO-0042: Email Control-Plane Live Validation
+
+- owner: lead
+- status: done
+- verification: `npm run typecheck`, `npm run build`, `npm run validate:live-config`, `npm run email:test`, `npm run email:poll`, `npm run check:work-packets`, `npm run check`, redacted SMTP/IMAP live validation
+- commit: redacted evidence accepted for v0.2.0
+- notes: SMTP, IMAP ask, reply continuation, and local handoff summary validation succeeded through a local mailbox bridge with redacted reporting. Direct workspace intake reached the runner against a disposable repo, but local Windows Codex write sandbox rejected writes and the source repo remained unchanged. Email-originated write approvals remain deferred.
 
 ### CFO-0044: Email Live-Validation Hardening And Local Smoke Automation
 
 - owner: lead
 - status: done
 - verification: `npm run check:work-packets`, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, local WSL Codex sandbox preflight skip, and redacted Windows Codex sandbox preflight completed
-- commit: local checkpoint SHA reported after packet closure
-- notes: Windows Proton Bridge SMTP and IMAP validation continued with redacted reporting. Live ask intake, reply continuation, and local-session email summary paths succeeded. Email direct workspace intake reached the runner against a disposable repo, but Windows Codex reported write-sandbox denial and no source edit occurred. Parser hardening now ignores Relay-generated status mail unless an explicit user command is present. Local Slack smoke automation remains local-config only; no Slack IDs, token values, email addresses, provider endpoint details, or local private paths were recorded. CFO-0042 remains open until maintainer acceptance of the redacted evidence and the remaining Windows Codex write-sandbox blocker.
+- commit: `e012114`
+- notes: Local bridge SMTP and IMAP validation continued with redacted reporting. Live ask intake, reply continuation, and local-session email summary paths succeeded. Email direct workspace intake reached the runner against a disposable repo, but Windows Codex reported write-sandbox denial and no source edit occurred. Parser hardening now ignores Relay-generated status mail unless an explicit user command is present. Local Slack smoke automation remains local-config only; no Slack IDs, token values, email addresses, provider endpoint details, or local private paths were recorded. CFO-0042 accepted the redacted evidence for v0.2.0 while deferring the remaining Windows Codex write-sandbox blocker.
 
 ## 2026-04-13
 

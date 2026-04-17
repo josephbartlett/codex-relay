@@ -62,7 +62,7 @@ verification:
     - npm run check
     - git diff --check
   evidence:
-    - "`npm run check` passed with 127 tests, setup validation, work-packet validation, release readiness, npm audit, and secret scan."
+    - "`npm run check` passed with 127 tests at packet close; later v0.2.0 release gates passed with expanded coverage."
     - "`git diff --check` passed."
     - "Targeted public-risk string scan found no new local email settings, addresses, Windows paths, or token-shaped values in changed files."
 handoff:

@@ -1,0 +1,87 @@
+id: CFO-0046
+title: Publish v0.2.0 control-plane release
+status: done
+owner: lead
+role: release
+priority: p0
+objective: Prepare, verify, tag, push, and publish the v0.2.0 release after maintainer approval, with release notes centered on user-facing Slack and email control-plane improvements.
+paths:
+  - CHANGELOG.md
+  - package.json
+  - package-lock.json
+  - docs/RELEASE_READINESS.md
+  - docs/TASKS.md
+  - docs/MAINTENANCE_AUDIT.md
+  - docs/work-packets/0042-email-proton-live-validation.yaml
+  - docs/work-packets/0045-slack-control-plane-live-validation.yaml
+  - docs/work-packets/0046-v0.2.0-release.yaml
+concerns:
+  - concern:release-v0.2.0
+dependencies:
+  - CFO-0042
+  - CFO-0043
+  - CFO-0044
+  - CFO-0045
+non_goals:
+  - Do not edit `.env`.
+  - Do not print or record Slack tokens, email credentials, mailbox names, email addresses, Slack IDs, local private paths, or live task contents.
+  - Do not add Gmail-specific live validation claims to this release.
+  - Do not enable email-originated write approvals.
+acceptance:
+  - Package metadata is bumped to `0.2.0`.
+  - Changelog has a dated `0.2.0` entry that leads with user-visible changes.
+  - Release readiness records accepted Slack and email validation evidence plus known limitations.
+  - Active release-blocking packets are closed or explicitly deferred before tagging.
+  - Full verification passes before push, tag, and GitHub release publication.
+verification:
+  required:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  completed:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  evidence:
+    - "Release metadata was prepared for `v0.2.0` after explicit maintainer approval to push, tag, and publish."
+    - "`CHANGELOG.md` now has a dated v0.2.0 entry with Slack ask, email SMTP/IMAP, reply continuation, direct workspace gating, and security hardening notes."
+    - "`docs/RELEASE_READINESS.md` records Slack live-smoke evidence, email live-validation evidence, and current v0.2.x limitations."
+    - "Full automated verification and public-risk scanning passed before release publication."
+handoff:
+  expected:
+    - Report the release commit, tag, GitHub release URL, verification results, and any remaining non-blocking follow-up work.
+  completed:
+    - Release docs and metadata were prepared locally.
+    - Validation packets were closed with redacted evidence.
+    - Release publication was approved by the maintainer in the current conversation.
+  next:
+    - Track Gmail/provider-specific live validation separately for a future release.
+    - Keep email-originated write approvals deferred until a nonce-bound or signed approval design exists.
+risks:
+  - GitHub release publication can fail due to local `gh` authentication or network state after the local gate passes.
+  - Direct workspace mode is intentionally powerful and must remain opt-in, repo-scoped, and clearly documented.
+  - Email provider behavior varies by mailbox bridge/client and needs future provider-specific validation.
+maintenance_audit:
+  assigned_at: "2026-04-17"
+  completed_at: "2026-04-17"
+  reviewed_by: "lead"
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - targeted public-risk string scan
+  artifact: "v0.2.0 release metadata checkpoint; commit SHA assigned after verification"
+  notes:
+    - Opened after maintainer approval to push, tag, and publish the next release.
+    - Gmail-specific live validation and email-originated write approvals remain future work, not v0.2.0 claims.

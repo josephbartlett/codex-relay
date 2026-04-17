@@ -4,7 +4,7 @@ Codex Relay controls local or self-hosted code execution from Slack, local hando
 
 ## Supported Versions
 
-The supported public release line is `v0.1.x`.
+The supported public release line is `v0.2.x`.
 
 Security fixes land on `main` first, then ship in the next patch release when appropriate.
 

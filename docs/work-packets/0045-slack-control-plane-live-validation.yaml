@@ -1,6 +1,6 @@
 id: CFO-0045
 title: Slack control-plane live validation
-status: active
+status: done
 owner: lead
 role: verifier
 priority: p1
@@ -26,7 +26,7 @@ non_goals:
   - Do not print, track, or commit Slack tokens, user IDs, channel IDs, team IDs, message timestamps, private channel names, local paths, or live task contents.
   - Do not push, tag, publish, or create a release.
   - Do not weaken authorization, worktree isolation, direct-workspace gates, or approval requirements.
-  - Do not close email live-validation packet `CFO-0042`.
+  - Do not weaken or bypass email-originated write approval deferral.
 acceptance:
   - Static and unit coverage for Slack mention, action, shortcut, command, notification, and local handoff paths is reviewed and rerun.
   - Slack gateway and runner startup posture is validated from WSL without leaking secrets.
@@ -58,7 +58,7 @@ verification:
     - manual Slack threaded ask follow-up live smoke
     - manual Slack plan/approve/worktree execution live smoke
   evidence:
-    - "`npm run check` passed with 127 tests, setup validation, work-packet validation, release readiness, npm audit, and secret scan."
+    - "`npm run check` passed with 129 tests, setup validation, work-packet validation, release readiness, npm audit, and secret scan."
     - "Focused Slack/control-plane regression suite passed with 45 tests covering authorization, mention intent, ask mode, direct workspace gating, approval ownership, PR lifecycle actions, notification publishing, local handoff continuation, and live-config validation."
     - "Slack bot Web API authentication passed without printing token, team, user, bot, or URL values."
     - "Slack Socket Mode app token accepted a redacted `apps.connections.open` check without printing the returned WebSocket URL."
@@ -91,8 +91,19 @@ risks:
   - Full write-mode and PR lifecycle smokes can mutate disposable repos or GitHub PR state and must stay clearly scoped.
 maintenance_audit:
   assigned_at: "2026-04-17"
-  artifact: "Slack validation packet opened for local verification"
+  completed_at: "2026-04-17"
+  reviewed_by: "lead"
+  checks:
+    - npm run check:work-packets
+    - npm run typecheck
+    - npm run build
+    - npm test
+    - npm run check
+    - git diff --check
+    - npm run validate:live-config
+  artifact: "local Slack live-validation hardening checkpoint; commit 1160007"
   notes:
     - Opened after email live validation advanced further than Slack live validation and the product direction was clarified as Codex CLI on the go.
     - Manual live smoke advanced ask, threaded ask, and plan/approval/worktree execution. Validation found local-path leakage in runner-authored Slack plan text and a details-action session lookup gap; both are now tracked in this packet.
     - Patched live smoke confirmed local-path redaction and diff summary modal behavior after duplicate stale gateway processes were removed.
+    - Closed as accepted release evidence for the v0.2.0 Slack control-plane scope.

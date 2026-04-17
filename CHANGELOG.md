@@ -6,6 +6,8 @@ This project uses Semantic Versioning. Release entries are written when a versio
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-17
+
 ### Added
 
 - Added a disabled-by-default email control-plane foundation with generic config, fail-closed sender authorization, plain-text read-only command parsing, and tests.
@@ -21,6 +23,19 @@ This project uses Semantic Versioning. Release entries are written when a versio
 - Updated email roadmap/security wording to keep mutating email approvals behind a future nonce-bound or signed approval design.
 - Rebalanced the documentation guide so user-facing setup and security docs are easier to find before maintainer workflow material.
 - Documented local bridge topology guidance for Proton Mail Bridge when Relay runs from WSL and the bridge runs on Windows.
+
+### Fixed
+
+- Hardened Slack and email summaries so runner-authored local paths are redacted before messages leave the local machine.
+- Fixed Slack details and diff-summary actions to recover the session from channel/thread context when Slack action payloads omit the original task metadata.
+- Hardened email intake so Relay-generated status and completion emails are ignored unless they contain an explicit user command.
+- Added local smoke helpers for Windows Codex write-sandbox checks and Slack control-plane validation.
+
+### Security
+
+- Email-originated write approvals remain out of scope until a nonce-bound or signed approval design is implemented.
+- Direct workspace quick mode remains disabled by default, repo-scoped, and clean-tree gated by default.
+- Release readiness includes Slack live-smoke evidence, email live-validation evidence, full automated checks, npm audit, and secret scanning.
 
 ## [0.1.4] - 2026-04-15
 

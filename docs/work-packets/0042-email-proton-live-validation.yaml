@@ -1,6 +1,6 @@
 id: CFO-0042
 title: Windows Proton email control-plane live validation
-status: active
+status: done
 owner: lead
 role: verifier
 priority: p1
@@ -34,19 +34,49 @@ verification:
     - npm run email:test
     - npm run email:poll
     - npm run check:work-packets
-  completed: []
-  evidence: []
+  completed:
+    - npm run typecheck
+    - npm run build
+    - npm run validate:live-config
+    - npm run email:test
+    - npm run email:poll
+    - npm run check:work-packets
+    - npm run check
+  evidence:
+    - "Redacted SMTP validation through a local mailbox bridge succeeded."
+    - "Redacted IMAP ask intake queued read-only work, the runner completed the answer, and an outbound answer email was sent."
+    - "Redacted reply continuation using `relay:<sessionId>` routed to the existing session and completed as a read-only ask task."
+    - "Redacted local handoff plan session completed and sent a plan-ready email summary."
+    - "Email direct workspace intake reached the runner against a disposable repo, but Windows Codex write sandbox rejected writes; the disposable source repo remained unchanged."
+    - "Email-originated write approvals remain blocked and deferred."
 handoff:
   expected:
     - Report repo state, checks run, redacted SMTP and IMAP results, full-flow outcome, blocked behaviors, and any likely bugs or config issues.
-  completed: []
-  next: []
+  completed:
+    - Redacted SMTP, IMAP ask, reply continuation, and local handoff summary validation were accepted as release evidence.
+    - Windows direct-workspace write denial was recorded as a local Codex CLI sandbox/runtime blocker rather than a Relay routing blocker.
+    - No credentials, mailbox names, email addresses, local private paths, or provider endpoint details were recorded.
+  next:
+    - Re-test email direct workspace execution only after the local Windows Codex write-sandbox issue is resolved.
+    - Track Gmail/provider-specific live validation in a future provider-validation release.
 risks:
   - Live Bridge or mailbox failures may surface only as local connectivity or TLS errors and must be summarized without leaking values.
   - SMTP or IMAP success can still leave the full runner flow blocked on local daemon state or store state.
   - Live validation can leave queued notifications or sessions in the local store if the flow stalls mid-run.
 maintenance_audit:
   assigned_at: "2026-04-16"
-  artifact: "pending live validation outcome"
+  completed_at: "2026-04-17"
+  reviewed_by: "lead"
+  checks:
+    - npm run typecheck
+    - npm run build
+    - npm run validate:live-config
+    - npm run email:test
+    - npm run email:poll
+    - npm run check:work-packets
+    - npm run check
+  artifact: "redacted email live-validation evidence accepted for v0.2.0"
   notes:
     - Started to validate the local Proton Bridge email control plane from Windows PowerShell with strict redaction.
+    - Closed after the maintainer accepted redacted SMTP, IMAP, reply-continuation, and local handoff evidence for the v0.2.0 release scope.
+    - Direct workspace write execution remains blocked by local Windows Codex sandbox behavior and is deferred.

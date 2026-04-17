@@ -4,9 +4,9 @@ This document is the human-readable release gate for Codex Relay releases.
 
 ## Current Status
 
-Status: Release readiness materials are current through `v0.1.4`. Local operator `.env` strict-mode posture may still need a protected-file update before normal live use on a new machine or workspace.
+Status: Release readiness materials are current through `v0.2.0`. Local operator `.env` strict-mode posture may still need protected-file updates before normal live use on a new machine or workspace.
 
-Reason: the automated local gate is repeatable, the live Slack smoke tests passed against the test repository for the runtime release line, and changelog/release notes are current through `v0.1.4`. The local `.env` file remains protected by repo safety rules and must be updated explicitly for strict-mode normal operation if validation reports missing policy values.
+Reason: the automated local gate is repeatable, Slack live smoke tests passed for ask, threaded ask, plan approval, worktree execution, and diff-summary viewing, and email live validation passed for generic SMTP/IMAP ask, reply continuation, and local handoff summary delivery. The local `.env` file remains protected by repo safety rules and must be updated explicitly for strict-mode normal operation if validation reports missing policy values.
 
 ## Automated Gates
 
@@ -47,9 +47,9 @@ It reads the local `.env`, validates strict-mode Slack user/channel/repo policy,
 
 Required before each release tag:
 
-- Run a live Slack task against a disposable or test repository. Status: passed for `v0.1.0` and `v0.1.1`.
-- Approve an implementation and verify the write happens in the session worktree. Status: passed for `v0.1.0` and `v0.1.1`.
-- Create or update a draft PR from the session branch. Status: passed for `v0.1.0` and `v0.1.1`.
+- Run a live Slack task against a disposable or test repository. Status: passed for `v0.1.0`, `v0.1.1`, and `v0.2.0`.
+- Approve an implementation and verify the write happens in the session worktree. Status: passed for `v0.1.0`, `v0.1.1`, and `v0.2.0`.
+- Create or update a draft PR from the session branch. Status: passed for `v0.1.0` and `v0.1.1`; deterministic PR lifecycle tests cover the current release.
 - Verify compact PR status and ready-for-review behavior if a test PR is available. Status: covered by deterministic tests; live PR handoff was exercised during `v0.1.1`.
 - Review `CHANGELOG.md` and convert the pending release section into a dated release entry.
 - Confirm no unapproved `brand-candidates/` assets are tracked. Status: completed by release-readiness gate.
@@ -92,6 +92,46 @@ Result:
 - Draft PR creation succeeded against the test repository.
 - The full local release gate passed after the fix.
 
+## v0.2.0 Slack Live Smoke Result
+
+Date: 2026-04-17
+
+Repository: disposable test repository configured as `repo:default`
+
+Result:
+
+- Slack ask mode answered a read-only package-name question without approval, diff cards, or PR controls.
+- A follow-up ask in the same Slack thread reused the existing session and answered a root-file question.
+- A plan/approval task created an isolated session worktree, wrote the requested smoke markdown file, and kept the source repository clean.
+- The Slack diff-summary action opened successfully and displayed only bounded repository, branch, status, changed-file, diff-stat, and name-status details.
+- Live validation found and fixed runner-authored local path exposure in Slack plan text.
+- Live validation found and fixed a details-action session lookup gap for Slack action payloads that omit task metadata.
+
+Notes:
+
+- A stale duplicate local gateway process caused one transient stale-approval failure during smoke testing. The process was removed, a single gateway/runner pair was restarted, and the patched smoke passed.
+- Automated Slack smoke posting remains optional and local-only. It requires locally configured smoke identity values and does not require tracking Slack IDs or tokens.
+
+## v0.2.0 Email Live Validation Result
+
+Date: 2026-04-17
+
+Transport: generic SMTP/IMAP through a local mailbox bridge
+
+Result:
+
+- Outbound SMTP lifecycle mail succeeded.
+- IMAP ask intake queued a read-only ask task, the runner completed the answer, and an outbound answer email was sent.
+- Reply continuation using a `relay:<sessionId>` marker routed to the existing session and completed as a read-only ask task.
+- Relay-started local session handoff sent a plan-ready email summary.
+- Email direct workspace intake reached the runner against a disposable repository, but the Windows Codex write sandbox denied writes and the source repository remained unchanged.
+
+Notes:
+
+- The direct-workspace write denial is treated as a local Codex CLI Windows sandbox/runtime blocker, not a Relay routing blocker.
+- Email-originated write approvals remain intentionally deferred.
+- Provider-specific Gmail live validation is deferred; `v0.2.0` releases the generic disabled-by-default SMTP/IMAP foundation and provider setup documentation.
+
 ## GitHub Repository Posture
 
 Checked on 2026-04-15 with the authenticated GitHub CLI session:
@@ -107,14 +147,17 @@ Checked on 2026-04-15 with the authenticated GitHub CLI session:
 
 ## Known Limitations
 
-These are acceptable for the `v0.1.x` local-first release line if they remain documented:
+These are acceptable for the `v0.2.x` local-first release line if they remain documented:
 
 - `ExecAdapter` is the only implemented runner adapter.
 - Slack gateway direct execution remains the default solo-local path.
 - Durable queue, runner leases, worker daemon, and queued Slack notifications exist, but Slack mention/action flows are not queue-by-default yet.
 - The audit viewer is local/read-only and remote mode requires explicit operator hardening.
 - Brand and diagram assets remain untracked until rendered screenshot review and maintainer approval.
-- Email is roadmap-only and has no implementation in `v0.1.x`.
+- Email control-plane support is disabled by default and limited to generic SMTP/IMAP ask, reply continuation, local handoff summaries, and lifecycle notifications.
+- Email-originated write approvals remain deferred until a nonce-bound or signed approval design is implemented.
+- Provider-specific Gmail live validation is deferred to a future provider-validation release.
+- Direct workspace quick mode is disabled by default and should be used only for trusted solo repositories after reviewing the security docs.
 - `SdkAdapter`, `AppServerAdapter`, multi-runner pools, and container isolation are deferred.
 
 ## Tag Recommendation

@@ -4,28 +4,37 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 
 ## Active
 
-- owner: lead
-  scope: Slack control-plane validation for ask, follow-up, plan/approval, local handoff, status/audit/cleanup, and PR-oriented lifecycle behavior; packet `CFO-0045`
-  status: Active
-  objective: Verify Slack behaves like a useful mobile extension of Codex CLI without recording local Slack identities, tokens, private channels, or local runtime details.
-  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; `npm run validate:live-config`; live Slack smoke if local smoke identity is configured
-  handoff: Automated Slack/control-plane tests, Slack bot auth, Socket Mode app-token connectivity, gateway startup, runner startup, manual Slack ask, threaded ask, and plan/approve/worktree execution passed from WSL against a disposable repo. Live smoke found runner-authored local paths in Slack summaries and a details-action session lookup gap; patched live smoke confirmed local-path redaction, approval execution, clean source repo custody, and working diff summary modal behavior.
-
-- owner: lead
-  scope: Windows PowerShell live validation of Proton Bridge SMTP smoke, IMAP read-only intake, queued runner plan flow, and redacted outcome capture; packet `CFO-0042`
-  status: Active
-  objective: Validate the new email control plane live without exposing secrets or enabling email-originated write approvals.
-  verification: `git status --short --branch`; `git log --oneline -3`; `npm install`; `npm run typecheck`; `npm run build`; `npm run validate:live-config`; `npm run email:test`; `npm run email:poll`; `npm run check:work-packets`
-  handoff: Redacted live-test summary back in the main Codex session. No push, tag, or release.
+- No active release-blocking packets.
 
 ## Completed Checkpoints
 
 - owner: lead
-  scope: Email ask/reply parser hardening, Windows Codex write-sandbox preflight, local-only Slack smoke automation, and continued Proton Bridge validation; packet `CFO-0044`
+  scope: `CHANGELOG.md`; `package.json`; `package-lock.json`; `docs/RELEASE_READINESS.md`; `docs/TASKS.md`; `docs/MAINTENANCE_AUDIT.md`; v0.2.0 validation packets; packet `CFO-0046`
+  status: Done
+  objective: Prepare, verify, tag, push, and publish the `v0.2.0` release after maintainer approval.
+  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; targeted public-risk string scan
+  handoff: Release metadata, changelog, readiness notes, validation packets, and maintenance audit were prepared for v0.2.0. Push, tag, and GitHub release publication follow after the final clean gate.
+
+- owner: lead
+  scope: Slack control-plane validation for ask, follow-up, plan/approval, local handoff, status/audit/cleanup, and PR-oriented lifecycle behavior; packet `CFO-0045`
+  status: Done
+  objective: Verify Slack behaves like a useful mobile extension of Codex CLI without recording local Slack identities, tokens, private channels, or local runtime details.
+  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; `npm run validate:live-config`; redacted Slack connectivity checks; manual Slack live smoke
+  handoff: Automated Slack/control-plane tests, Slack bot auth, Socket Mode app-token connectivity, gateway startup, runner startup, manual Slack ask, threaded ask, and plan/approve/worktree execution passed from WSL against a disposable repo. Live smoke found runner-authored local paths in Slack summaries and a details-action session lookup gap; patched live smoke confirmed local-path redaction, approval execution, clean source repo custody, and working diff summary modal behavior.
+
+- owner: lead
+  scope: Windows PowerShell live validation of local bridge SMTP smoke, IMAP read-only intake, queued runner plan flow, and redacted outcome capture; packet `CFO-0042`
+  status: Done
+  objective: Validate the new email control plane live without exposing secrets or enabling email-originated write approvals.
+  verification: `npm run typecheck`; `npm run build`; `npm run validate:live-config`; `npm run email:test`; `npm run email:poll`; `npm run check:work-packets`; `npm run check`
+  handoff: Redacted SMTP, IMAP ask, reply continuation, and local handoff summary validation were accepted as v0.2.0 release evidence. Direct workspace write execution remains blocked by local Windows Codex sandbox behavior and is deferred.
+
+- owner: lead
+  scope: Email ask/reply parser hardening, Windows Codex write-sandbox preflight, local-only Slack smoke automation, and continued local bridge validation; packet `CFO-0044`
   status: Done
   objective: Remove live-validation blockers without weakening the default safe execution model or tracking local identities/secrets.
   verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; redacted live email validation
-  handoff: Parser and self-ingestion fixes are in place; SMTP/IMAP ask, reply continuation, local handoff summary email, and direct-mode intake were validated with redacted evidence. Direct workspace execution remains blocked by Windows Codex write-sandbox denial. CFO-0042 remains open for maintainer acceptance; no push, tag, or release.
+  handoff: Parser and self-ingestion fixes are in place; SMTP/IMAP ask, reply continuation, local handoff summary email, and direct-mode intake were validated with redacted evidence. Direct workspace execution remains blocked by Windows Codex write-sandbox denial and is deferred beyond v0.2.0.
 
 - owner: lead
   scope: Slack/email lightweight `ask` mode, gated direct workspace quick mode, source-workspace safety markers, local bridge topology review, and v0.2.0 docs/tests; packet `CFO-0043`
