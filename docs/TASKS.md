@@ -5,6 +5,13 @@ This file is the running implementation tracker for Codex Relay. Keep it current
 ## Active
 
 - owner: lead
+  scope: Slack control-plane validation for ask, follow-up, plan/approval, local handoff, status/audit/cleanup, and PR-oriented lifecycle behavior; packet `CFO-0045`
+  status: Blocked
+  objective: Verify Slack behaves like a useful mobile extension of Codex CLI without recording local Slack identities, tokens, private channels, or local runtime details.
+  verification: `npm run check:work-packets`; `npm run typecheck`; `npm run build`; `npm test`; `npm run check`; `git diff --check`; `npm run validate:live-config`; live Slack smoke if local smoke identity is configured
+  handoff: Automated Slack/control-plane tests, Slack bot auth, Socket Mode app-token connectivity, gateway startup, and runner startup passed from WSL. Real Slack event-originated smoke is blocked until local `.env` has a dedicated smoke identity/channel, bot user ID, strict Slack allowlists, repo policy, and WSL repo binding.
+
+- owner: lead
   scope: Windows PowerShell live validation of Proton Bridge SMTP smoke, IMAP read-only intake, queued runner plan flow, and redacted outcome capture; packet `CFO-0042`
   status: Active
   objective: Validate the new email control plane live without exposing secrets or enabling email-originated write approvals.

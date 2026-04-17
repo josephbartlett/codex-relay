@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import "dotenv/config";
+
 const args = parseArgs(process.argv.slice(2));
 
 if (args.help || !args.text) {

@@ -21,6 +21,14 @@ The machine-readable source of truth is `docs/work-packets/*.yaml`. This file is
 
 ## 2026-04-17
 
+### CFO-0045: Slack Control-Plane Live Validation
+
+- owner: lead
+- status: blocked
+- verification: `npm run check:work-packets`, focused Slack/control-plane regression suite, `npm run typecheck`, `npm run build`, `npm test`, `npm run check`, `git diff --check`, redacted Slack bot auth check, redacted Socket Mode app-token check, temporary strict-deny gateway startup, and local runner startup completed
+- commit: local checkpoint pending
+- notes: Slack bot and Socket Mode credentials validate from WSL, gateway and runner startup posture passed under temporary strict deny-all policy, and automated Slack/control-plane coverage is passing. Real Slack event-originated smoke is blocked until local `.env` has a dedicated smoke identity token, private test channel, bot user ID, strict user/channel/repo allowlists, and a real WSL repo binding. The Slack smoke helper now loads `.env` so future local smoke runs match the runbook.
+
 ### CFO-0044: Email Live-Validation Hardening And Local Smoke Automation
 
 - owner: lead
